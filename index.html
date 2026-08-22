@@ -22,7 +22,6 @@
 
   .app-container { width: 100%; max-width: 420px; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; background: radial-gradient(circle at top, #0d1b2a 0%, #080c14 100%); }
 
-  /* Dashboard Header */
   .header-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px; backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; }
   .user-info { display: flex; align-items: center; gap: 8px; }
   .avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-green)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; }
@@ -31,28 +30,31 @@
   .pill { background: rgba(0,0,0,0.6); border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; }
   .pill span { color: var(--accent-green); }
 
-  /* Development Notice Board */
-  .notice-card { background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning-yellow); border-radius: 12px; padding: 8px 12px; text-align: center; }
-  .notice-title { font-size: 10px; font-weight: 800; color: var(--warning-yellow); text-transform: uppercase; }
-  .notice-body { font-size: 9px; color: var(--text-dim); }
-
-  /* User Inventory Section */
   .inventory-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
   .inventory-title { font-size: 10px; font-weight: bold; color: var(--primary-cyan); }
   .inventory-items { display: flex; gap: 10px; }
   .inv-item { font-size: 9px; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); }
 
-  /* Views Navigation */
   .view-screen { flex: 1; display: none; flex-direction: column; gap: 10px; margin: 10px 0; overflow-y: auto; }
   .view-screen.active { display: flex; }
 
-  /* Grid Farming Plot */
   .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; min-height: 115px; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; position: relative; }
   .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 9px; font-weight: bold; cursor: pointer; }
   .btn-boost { background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color); color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 8px; cursor: pointer; margin-top: 2px; }
 
-  /* Bottom Nav */
+  /* Sub-tabs Market */
+  .market-tabs { display: flex; gap: 4px; background: rgba(0,0,0,0.5); padding: 4px; border-radius: 10px; border: 1px solid var(--border-color); }
+  .market-tab-btn { flex: 1; background: transparent; border: none; color: var(--text-dim); padding: 6px; font-size: 9px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+  .market-tab-btn.active { background: var(--primary-cyan); color: #000; }
+  .market-section { display: none; flex-direction: column; gap: 8px; }
+  .market-section.active { display: flex; }
+
+  .item-row { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
+  .item-info { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+  .item-name { font-size: 10px; font-weight: bold; }
+  .item-desc { font-size: 8px; color: var(--text-dim); }
+
   .navbar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; display: flex; justify-content: space-around; padding: 8px 4px; backdrop-filter: blur(10px); }
   .nav-item { background: transparent; border: none; color: var(--text-dim); font-size: 9px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .nav-item.active { color: var(--primary-cyan); }
@@ -61,7 +63,6 @@
 <body>
 
 <div class="app-container">
-  <!-- Top Header -->
   <div class="header-card">
     <div class="user-info">
       <div class="avatar" id="txtAvatar">A</div>
@@ -78,13 +79,6 @@
 
   <!-- VIEW 1: FARM -->
   <div id="viewFarm" class="view-screen active">
-    <div class="notice-card">
-      <div class="notice-title">⚠️ System Announcement</div>
-      <div class="notice-body">
-        We apologize for any inconvenience. This game is currently under active development.
-      </div>
-    </div>
-
     <div class="inventory-card">
       <span class="inventory-title">🎒 Inventory</span>
       <div class="inventory-items">
@@ -92,16 +86,69 @@
         <div class="inv-item">🧪 Fertilizer: <b id="invFertilizer">1</b></div>
       </div>
     </div>
-
     <div class="farm-grid" id="gridPlots"></div>
   </div>
 
-  <!-- VIEW 2: MARKET -->
+  <!-- VIEW 2: MARKETPLACE & DEX -->
   <div id="viewMarket" class="view-screen">
-    <div class="header-card" style="flex-direction:column; gap:8px; text-align:center;">
-      <span style="font-size:12px; font-weight:bold; color:var(--primary-cyan);">Token Conversion Market</span>
-      <span style="font-size:9px; color:var(--text-dim);">Exchange Apple Coins into ATF Jetton Tokens</span>
-      <button class="btn-action" style="width:100%; margin-top:6px;" onclick="convertCoins()">Convert 10,000 Coins -> 1.0 ATF</button>
+    <div class="market-tabs">
+      <button class="market-tab-btn active" onclick="switchMarketTab('Shop', this)">🛒 Shop</button>
+      <button class="market-tab-btn" onclick="switchMarketTab('Swap', this)">🔄 Swap</button>
+      <button class="market-tab-btn" onclick="switchMarketTab('History', this)">📜 History</button>
+    </div>
+
+    <!-- SUB-TAB 1: SHOP -->
+    <div id="marketShop" class="market-section active">
+      <div class="header-card" style="flex-direction:column; gap:4px; text-align:center; background:linear-gradient(135deg, rgba(245,158,11,0.2), rgba(0,0,0,0.6)); border-color:var(--warning-yellow);">
+        <span style="font-size:11px; font-weight:bold; color:var(--warning-yellow);">🎁 Limited Mystery Box</span>
+        <span style="font-size:8px; color:var(--text-dim);">Cost: 500 Coins (Random Booster or Rare Skin)</span>
+        <button class="btn-action" style="background:var(--warning-yellow); color:#000;" onclick="buyMysteryBox()">Open Box (500 Coins)</button>
+      </div>
+
+      <div style="font-size:9px; font-weight:bold; color:var(--primary-cyan); margin-top:4px;">ITEM STORE (TON ONLY)</div>
+
+      <div class="item-row">
+        <div class="item-info">
+          <span class="item-name">💧 Water Pack (5x)</span>
+          <span class="item-desc">Reduces grow time by -20%</span>
+        </div>
+        <button class="btn-action" onclick="buyTonItem('water_pack', 0.1)">0.1 TON</button>
+      </div>
+
+      <div class="item-row">
+        <div class="item-info">
+          <span class="item-name">🧪 Fert Pack (5x)</span>
+          <span class="item-desc">Reduces grow time by -40%</span>
+        </div>
+        <button class="btn-action" onclick="buyTonItem('fert_pack', 0.2)">0.2 TON</button>
+      </div>
+
+      <div class="item-row">
+        <div class="item-info">
+          <span class="item-name">🚜 Auto-Harvester</span>
+          <span class="item-desc">Auto harvest crops for 8 Hours</span>
+        </div>
+        <button class="btn-action" style="background:linear-gradient(90deg, #00ff87, #00c6ff); color:#000;" onclick="buyTonItem('auto_harvester', 1.5)">1.5 TON</button>
+      </div>
+    </div>
+
+    <!-- SUB-TAB 2: SWAP -->
+    <div id="marketSwap" class="market-section">
+      <div class="header-card" style="flex-direction:column; gap:8px; text-align:center;">
+        <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">Dynamic DEX Converter</span>
+        <span style="font-size:8px; color:var(--text-dim);">Convert Coins to ATF Jetton Token</span>
+        <div class="pill" style="font-size:9px; margin:4px 0;">Rate: 10,000 Coins = 1.0 ATF</div>
+        <div style="font-size:8px; color:var(--warning-yellow);">Daily Cap: Max 10,000 Coins / Day</div>
+        <button class="btn-action" style="width:100%; margin-top:4px;" onclick="convertCoins()">Swap 10,000 Coins -> 1.0 ATF</button>
+      </div>
+    </div>
+
+    <!-- SUB-TAB 3: HISTORY -->
+    <div id="marketHistory" class="market-section">
+      <div style="font-size:9px; font-weight:bold; color:var(--text-dim); margin-bottom:4px;">LAST ACTIVITIES</div>
+      <div id="historyList" style="display:flex; flex-direction:column; gap:6px;">
+        <div class="item-row" style="font-size:8px; color:var(--text-dim);">No transactions recorded yet.</div>
+      </div>
     </div>
   </div>
 
@@ -148,6 +195,7 @@
   const API_URL = "/api";
   let currentUser = null;
   let userPlots = [];
+  let userHistory = [];
   let timerInterval = null;
 
   const BASE_GROW_TIME_MS = 13200000; // 3 Jam 40 Menit
@@ -187,11 +235,13 @@
         if(data.success) {
           currentUser = data.user;
           userPlots = data.plots;
+          userHistory = data.history || [];
           updateUI();
+          renderHistory();
         }
       }
     } catch(e) { 
-      console.warn("Backend server offline. Running on local state.", e); 
+      console.warn("Backend offline. Running locally.", e); 
     }
 
     startTimerLoop();
@@ -200,10 +250,8 @@
   function updateUI() {
     document.getElementById('txtCoins').textContent = currentUser.coins;
     document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance).toFixed(4);
-    
     document.getElementById('invWater').textContent = currentUser.water_inventory ?? 0;
     document.getElementById('invFertilizer').textContent = currentUser.fertilizer_inventory ?? 0;
-    
     renderPlots();
   }
 
@@ -251,12 +299,31 @@
     });
   }
 
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    if(!userHistory || userHistory.length === 0) {
+      list.innerHTML = `<div class="item-row" style="font-size:8px; color:var(--text-dim);">No transactions recorded yet.</div>`;
+      return;
+    }
+    list.innerHTML = '';
+    userHistory.forEach(h => {
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML = `
+        <div class="item-info">
+          <span class="item-name">${h.activity_name}</span>
+          <span class="item-desc">${new Date(h.created_at).toLocaleTimeString()}</span>
+        </div>
+        <span style="font-size:9px; font-weight:bold; color:${h.amount.includes('+') ? 'var(--accent-green)' : '#ff4d4d'}">${h.amount}</span>
+      `;
+      list.appendChild(row);
+    });
+  }
+
   function startTimerLoop() {
     if (timerInterval) clearInterval(timerInterval);
-    
     timerInterval = setInterval(() => {
       let needsRefresh = false;
-
       userPlots.forEach(p => {
         if (p.status === 'growing') {
           const now = Date.now();
@@ -272,7 +339,6 @@
           }
         }
       });
-
       if (needsRefresh) updateUI();
     }, 1000);
   }
@@ -286,29 +352,19 @@
   }
 
   async function plant(plotIndex) {
-    if (!currentUser) return alert("User data not loaded!");
-    if (currentUser.coins < 10) return alert("Not enough coins to plant!");
-
+    if (currentUser.coins < 10) return alert("Not enough coins!");
     currentUser.coins -= 10;
     userPlots[plotIndex].status = 'growing';
     userPlots[plotIndex].harvest_time = new Date(Date.now() + BASE_GROW_TIME_MS).toISOString();
-    
     updateUI();
 
     try {
-      const res = await fetch(`${API_URL}/farm/plant`, {
+      await fetch(`${API_URL}/farm/plant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
-      const data = await res.json();
-      if (data.success && data.plots) {
-        userPlots = data.plots;
-        updateUI();
-      }
-    } catch(e) {
-      console.warn("Backend API offline, state saved locally.", e);
-    }
+    } catch(e) { console.warn("Sync offline.", e); }
   }
 
   async function useBoost(type, plotIndex) {
@@ -326,7 +382,6 @@
       const currentTarget = new Date(plot.harvest_time).getTime();
       plot.harvest_time = new Date(currentTarget - (BASE_GROW_TIME_MS * 0.40)).toISOString();
     }
-
     updateUI();
 
     try {
@@ -335,31 +390,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, boost_type: type })
       });
-    } catch(e) {
-      console.warn("Boost sync offline.", e);
-    }
-  }
-
-  async function unlockPlot(plotIndex, method) {
-    if(method === 'ton') {
-      alert("Redirecting to TON Web3 Payment Provider...");
-      return;
-    }
-    if(currentUser.coins < 5000) return alert("Not enough coins!");
-    
-    currentUser.coins -= 5000;
-    userPlots[plotIndex].status = 'empty';
-    updateUI();
-
-    try {
-      await fetch(`${API_URL}/farm/unlock`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, method })
-      });
-    } catch(e) {
-      console.warn("Unlock sync offline.", e);
-    }
+    } catch(e) { console.warn("Sync offline.", e); }
   }
 
   async function harvest(plotIndex) {
@@ -374,22 +405,68 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
-    } catch(e) {
-      console.warn("Harvest sync offline.", e);
-    }
+    } catch(e) { console.warn("Sync offline.", e); }
+  }
+
+  async function buyMysteryBox() {
+    if(currentUser.coins < 500) return alert("Requires 500 Coins!");
+    
+    currentUser.coins -= 500;
+    const rewards = ['1x Water Pack', '1x Fert Pack', '100 Bonus Coins', 'Common Skin NFT'];
+    const won = rewards[Math.floor(Math.random() * rewards.length)];
+    
+    if(won.includes('Water')) currentUser.water_inventory += 1;
+    if(won.includes('Fert')) currentUser.fertilizer_inventory += 1;
+    if(won.includes('Bonus Coins')) currentUser.coins += 100;
+    
+    updateUI();
+    alert(`🎉 Mystery Box Opened! You got: ${won}`);
+
+    try {
+      await fetch(`${API_URL}/market/mystery-box`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, reward: won })
+      });
+    } catch(e) { console.warn("Sync offline.", e); }
+  }
+
+  function buyTonItem(itemKey, tonAmount) {
+    alert(`Redirecting to TON Web3 Wallet for ${tonAmount} TON payment...`);
   }
 
   async function convertCoins() {
-    if(currentUser.coins < 10000) return alert("Requires 10,000 Coins!");
-    currentUser.coins -= 10000;
-    currentUser.atf_balance += 1.0;
+    if(currentUser.coins < 10000) return alert("Minimum 10,000 Coins required!");
+
+    try {
+      const res = await fetch(`${API_URL}/market/convert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, coin_amount: 10000 })
+      });
+      const data = await res.json();
+      if(data.success) {
+        currentUser.coins -= 10000;
+        currentUser.atf_balance += 1.0;
+        updateUI();
+        alert("Success! Converted 10,000 Coins -> 1.0 ATF");
+      } else {
+        alert(data.error);
+      }
+    } catch(e) { alert("DEX Converter Offline!"); }
+  }
+
+  async function unlockPlot(plotIndex, method) {
+    if(method === 'ton') return alert("Redirecting to TON Payment...");
+    if(currentUser.coins < 5000) return alert("Not enough coins!");
+    currentUser.coins -= 5000;
+    userPlots[plotIndex].status = 'empty';
     updateUI();
-    alert("Converted 10,000 Coins to 1.0 ATF!");
   }
 
   async function withdrawATF() {
     const addr = document.getElementById('walletAddr').value;
-    if(!addr) return alert("Please enter TON Wallet address!");
+    if(!addr) return alert("Enter TON Wallet address!");
     if(currentUser.atf_balance < 5.0) return alert("Minimum withdrawal is 5.0 ATF!");
     alert("Withdrawal request queued!");
   }
@@ -398,6 +475,13 @@
     document.querySelectorAll('.view-screen').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.getElementById(`view${tabName}`).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function switchMarketTab(subTabName, btn) {
+    document.querySelectorAll('.market-section').forEach(m => m.classList.remove('active'));
+    document.querySelectorAll('.market-tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`market${subTabName}`).classList.add('active');
     btn.classList.add('active');
   }
 
