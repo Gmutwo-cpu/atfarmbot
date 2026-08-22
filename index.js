@@ -27,14 +27,6 @@ app.post('/api/user/init', async (req, res) => {
       
       if (error) throw error;
       user = newUser;
-
-      // Inisialisasi 6 Plot Lahan (Plot 0 terbuka, sisa terkunci)
-      const initialPlots = Array.from({ length: 6 }, (_, i) => ({
-        telegram_id,
-        plot_index: i,
-        status: i === 0 ? 'empty' : 'locked'
-      }));
-      await supabase.from('plots').insert(initialPlots);
     }
 
     const { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
@@ -52,11 +44,10 @@ app.post('/api/farm/plant', async (req, res) => {
 
     if (!user || user.coins < 10) return res.status(400).json({ error: "Not enough coins for seed!" });
 
-    // Potong 10 Koin untuk beli bibit, atur panen 10 menit dari waktu server
     const harvestTime = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
     await supabase.from('users').update({ coins: user.coins - 10 }).eq('telegram_id', telegram_id);
-    await supabase.from('plots').update({ status: 'growing', harvest_time: harvestTime }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
+    await supabase.from('plots').update({ status: 'growing', harvest_time: harvestTime, crop_type: 'apple' }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
 
     return res.json({ success: true, harvestTime });
   } catch (err) {
@@ -64,25 +55,24 @@ app.post('/api/farm/plant', async (req, res) => {
   }
 });
 
-// 3. HARVEST APPLE (ANTI-CHEAT VALIDATION)
+// 3. HARVEST APPLE
 app.post('/api/farm/harvest', async (req, res) => {
   try {
     const { telegram_id, plot_index } = req.body;
     const { data: plot } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).eq('plot_index', plot_index).single();
 
-    if (!plot || plot.status !== 'growing') return res.status(400).json({ error: "Invalid plot state" });
+    if (!plot || (plot.status !== 'growing' && plot.status !== 'ready')) return res.status(400).json({ error: "Invalid plot state" });
 
     const now = new Date();
     const harvestTime = new Date(plot.harvest_time);
 
     if (now < harvestTime) {
-      return res.status(400).json({ error: "Crop is not ready yet! Stop cheating." });
+      return res.status(400).json({ error: "Crop is not ready yet!" });
     }
 
-    // Tambah 50 Koin hasil panen apel
     const { data: user } = await supabase.from('users').select('coins').eq('telegram_id', telegram_id).single();
     await supabase.from('users').update({ coins: user.coins + 50 }).eq('telegram_id', telegram_id);
-    await supabase.from('plots').update({ status: 'empty', harvest_time: null }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
+    await supabase.from('plots').update({ status: 'empty', harvest_time: null, boosted_water: false, boosted_fert: false }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
 
     return res.json({ success: true, rewardCoins: 50 });
   } catch (err) {
@@ -90,7 +80,7 @@ app.post('/api/farm/harvest', async (req, res) => {
   }
 });
 
-// 4. AI FOREX CONVERT (COIN TO ATF TOKEN)
+// 4. AI FOREX CONVERT
 app.post('/api/market/convert', async (req, res) => {
   try {
     const { telegram_id, coin_amount } = req.body;
@@ -99,7 +89,6 @@ app.post('/api/market/convert', async (req, res) => {
     const { data: user } = await supabase.from('users').select('coins, atf_balance').eq('telegram_id', telegram_id).single();
     if (user.coins < coin_amount) return res.status(400).json({ error: "Insufficient Coin balance" });
 
-    // Rasio: 10.000 Coins = 1.000000 ATF
     const atfGained = coin_amount / 10000;
 
     await supabase.from('users').update({
@@ -122,11 +111,10 @@ app.post('/api/wallet/withdraw', async (req, res) => {
     const { data: user } = await supabase.from('users').select('atf_balance').eq('telegram_id', telegram_id).single();
     if (parseFloat(user.atf_balance) < amount_atf) return res.status(400).json({ error: "Insufficient ATF balance" });
 
-    // Potong saldo & masukkan antrean
     await supabase.from('users').update({ atf_balance: parseFloat(user.atf_balance) - amount_atf }).eq('telegram_id', telegram_id);
     await supabase.from('withdrawals').insert([{ telegram_id, wallet_address, amount_atf, status: 'PENDING' }]);
 
-    return res.json({ success: true, message: "Withdrawal request queued for admin review." });
+    return res.json({ success: true, message: "Withdrawal request queued." });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
