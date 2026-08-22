@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ATFarmbot - Web3 Agriculture</title>
+<title>ATFarmbot - Web3 Agriculture Ecosystem</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
@@ -88,48 +88,48 @@
         <span style="font-size:9px; color:var(--accent-green);">⚡ Stamina: <b id="txtStamina">10/10</b></span>
       </div>
       <div class="inventory-items">
-        <div class="inv-item">🍎 Apel: <b id="invApple">0</b></div>
-        <div class="inv-item">🍊 Jeruk: <b id="invOrange">0</b></div>
+        <div class="inv-item">🍎 Apple: <b id="invApple">0</b></div>
+        <div class="inv-item">🍊 Orange: <b id="invOrange">0</b></div>
         <div class="inv-item">🍉 Melon: <b id="invMelon">0</b></div>
-        <div class="inv-item">💧 Air: <b id="invWater">0</b></div>
-        <div class="inv-item">🧪 Pupuk: <b id="invFertilizer">0</b></div>
+        <div class="inv-item">💧 Water: <b id="invWater">0</b></div>
+        <div class="inv-item">🧪 Fert: <b id="invFertilizer">0</b></div>
       </div>
     </div>
     <div class="farm-grid" id="gridPlots"></div>
   </div>
 
-  <!-- VIEW 2: MARKETPLACE & TOKO BIBIT -->
+  <!-- VIEW 2: MARKETPLACE & STORE -->
   <div id="viewMarket" class="view-screen">
     <div class="market-tabs">
-      <button class="market-tab-btn active" onclick="switchMarketTab('Shop', this)">🛒 Toko Bibit</button>
+      <button class="market-tab-btn active" onclick="switchMarketTab('Shop', this)">🛒 Seed Store</button>
       <button class="market-tab-btn" onclick="switchMarketTab('Swap', this)">🔄 DEX Swap</button>
-      <button class="market-tab-btn" onclick="switchMarketTab('History', this)">📜 Log</button>
+      <button class="market-tab-btn" onclick="switchMarketTab('History', this)">📜 Logs</button>
     </div>
 
-    <!-- SUB-TAB 1: SHOP (BIBIT & BOOST) -->
+    <!-- SUB-TAB 1: SHOP -->
     <div id="marketShop" class="market-section active">
-      <div style="font-size:9px; font-weight:bold; color:var(--primary-cyan);">DAFTAR PEMBELIAN BIBIT BUAH (COINS)</div>
+      <div style="font-size:9px; font-weight:bold; color:var(--primary-cyan);">BUY FRUIT SEEDS (COINS)</div>
       
       <div class="item-row">
         <div class="item-info">
-          <span class="item-name">🍎 Bibit Apel</span>
-          <span class="item-desc">Waktu: 3 Jam 40m | Panen: 50 Coins</span>
+          <span class="item-name">🍎 Apple Seed</span>
+          <span class="item-desc">Time: 3h 40m | Reward: 50 Coins</span>
         </div>
         <button class="btn-action" onclick="buySeed('apple')">10 Coins</button>
       </div>
 
       <div class="item-row">
         <div class="item-info">
-          <span class="item-name">🍊 Bibit Jeruk</span>
-          <span class="item-desc">Waktu: 6 Jam | Panen: 100 Coins</span>
+          <span class="item-name">🍊 Orange Seed</span>
+          <span class="item-desc">Time: 6 Hours | Reward: 100 Coins</span>
         </div>
         <button class="btn-action" onclick="buySeed('orange')">30 Coins</button>
       </div>
 
       <div class="item-row">
         <div class="item-info">
-          <span class="item-name">🍉 Bibit Melon</span>
-          <span class="item-desc">Waktu: 12 Jam | Panen: 280 Coins</span>
+          <span class="item-name">🍉 Melon Seed</span>
+          <span class="item-desc">Time: 12 Hours | Reward: 280 Coins</span>
         </div>
         <button class="btn-action" onclick="buySeed('melon')">80 Coins</button>
       </div>
@@ -156,8 +156,8 @@
   </div>
 
   <!-- OTHER TABS -->
-  <div id="viewTask" class="view-screen"><div class="header-card"><span>Join Telegram Channel (+150 Coins)</span></div></div>
-  <div id="viewFriends" class="view-screen"><div class="header-card"><span>Undang Teman Dapatkan Bonus Yield</span></div></div>
+  <div id="viewTask" class="view-screen"><div class="header-card"><span>Join Official Telegram Channel (+150 Coins)</span></div></div>
+  <div id="viewFriends" class="view-screen"><div class="header-card"><span>Invite Friends & Earn Yield Bonus</span></div></div>
   <div id="viewWallet" class="view-screen"><div class="header-card"><span>Withdrawal TON Web3 (Min 5 ATF)</span></div></div>
 
   <!-- Bottom Navbar -->
@@ -173,7 +173,7 @@
 <!-- Modal Dialog -->
 <div id="customModal" class="modal-overlay">
   <div class="modal-box">
-    <div style="font-size:12px; font-weight:bold; color:var(--primary-cyan);" id="modalTitle">NOTIFICATION</div>
+    <div style="font-size:12px; font-weight:bold; color:var(--primary-cyan);" id="modalTitle">SYSTEM NOTIFICATION</div>
     <div style="font-size:10px; color:#fff;" id="modalMessage">Content...</div>
     <div id="modalActions" style="display:flex; gap:6px; justify-content:center;">
       <button class="btn-action" style="width:100%;" onclick="closeModal()">OK</button>
@@ -193,7 +193,7 @@
 
   const CROP_ICONS = { apple: '🍎', orange: '🍊', melon: '🍉' };
 
-  function showModal(msg, title = "SYSTEM MESSAGE", actionsHtml = null) {
+  function showModal(msg, title = "SYSTEM NOTIFICATION", actionsHtml = null) {
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('modalMessage').textContent = msg;
     const actions = document.getElementById('modalActions');
@@ -273,7 +273,7 @@
       if(p.status === 'empty') {
         card.innerHTML = `
           <span style="font-size:18px;">🌱</span>
-          <button class="btn-action" onclick="openPlantSelect(${p.plot_index})">Tanam Buah</button>
+          <button class="btn-action" onclick="openPlantSelect(${p.plot_index})">Plant Crop</button>
         `;
       } else if(p.status === 'growing') {
         const icon = CROP_ICONS[p.crop_type] || '⏳';
@@ -293,13 +293,13 @@
         const icon = CROP_ICONS[p.crop_type] || '🍎';
         card.innerHTML = `
           <span style="font-size:20px;">${icon}</span>
-          <button class="btn-action" style="background:#00ff87; color:#000;" onclick="harvest(${p.plot_index})">Panen</button>
+          <button class="btn-action" style="background:#00ff87; color:#000;" onclick="harvest(${p.plot_index})">Harvest</button>
         `;
       } else {
         card.innerHTML = `
           <span style="font-size:16px;">🔒</span>
-          <span style="font-size:8px; color:var(--text-dim);">Lahan #${p.plot_index + 1}</span>
-          <button class="btn-action" style="font-size:7px; background:#334155;" onclick="unlockPlot(${p.plot_index})">Buka (${p.unlock_cost_coins} Coins)</button>
+          <span style="font-size:8px; color:var(--text-dim);">Plot #${p.plot_index + 1}</span>
+          <button class="btn-action" style="font-size:7px; background:#334155;" onclick="unlockPlot(${p.plot_index})">Unlock (${p.unlock_cost_coins} Coins)</button>
         `;
       }
       grid.appendChild(card);
@@ -309,19 +309,19 @@
   function openPlantSelect(plotIndex) {
     const html = `
       <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-        <button class="btn-action" onclick="plantSeed(${plotIndex}, 'apple')">🍎 Tanam Apel (${currentUser.seed_apple || 0})</button>
-        <button class="btn-action" onclick="plantSeed(${plotIndex}, 'orange')">🍊 Tanam Jeruk (${currentUser.seed_orange || 0})</button>
-        <button class="btn-action" onclick="plantSeed(${plotIndex}, 'melon')">🍉 Tanam Melon (${currentUser.seed_melon || 0})</button>
-        <button class="btn-action" style="background:#ef4444;" onclick="closeModal()">Batal</button>
+        <button class="btn-action" onclick="plantSeed(${plotIndex}, 'apple')">🍎 Plant Apple (${currentUser.seed_apple || 0})</button>
+        <button class="btn-action" onclick="plantSeed(${plotIndex}, 'orange')">🍊 Plant Orange (${currentUser.seed_orange || 0})</button>
+        <button class="btn-action" onclick="plantSeed(${plotIndex}, 'melon')">🍉 Plant Melon (${currentUser.seed_melon || 0})</button>
+        <button class="btn-action" style="background:#ef4444;" onclick="closeModal()">Cancel</button>
       </div>
     `;
-    showModal("Pilih Bibit Tanaman dari Inventaris:", "TANAM BIBIT", html);
+    showModal("Select Seed from Inventory:", "PLANT CROP", html);
   }
 
   async function plantSeed(plotIndex, cropType) {
     closeModal();
     const seedKey = `seed_${cropType}`;
-    if((currentUser[seedKey] || 0) <= 0) return showModal(`Bibit ${cropType} habis! Beli di Toko.`, "TIDAK ADA BIBIT");
+    if((currentUser[seedKey] || 0) <= 0) return showModal(`No ${cropType} seeds left! Purchase in Store.`, "OUT OF SEEDS");
 
     currentUser[seedKey] -= 1;
     userPlots[plotIndex].status = 'growing';
@@ -349,11 +349,11 @@
         currentUser.coins = data.user_updates.coins;
         currentUser[`seed_${cropType}`] = data.user_updates[`seed_${cropType}`];
         updateUI();
-        showModal(`Berhasil membeli Bibit ${cropType}!`, "PEMBELIAN SUKSES");
+        showModal(`Successfully purchased ${cropType} seed!`, "PURCHASE SUCCESS");
       } else {
-        showModal(data.error, "GAGAL BELI");
+        showModal(data.error, "PURCHASE FAILED");
       }
-    } catch(e) { showModal("Gagal membeli bibit.", "ERROR"); }
+    } catch(e) { showModal("Failed to buy seed.", "ERROR"); }
   }
 
   async function harvest(plotIndex) {
@@ -370,9 +370,9 @@
         userPlots[plotIndex].status = 'empty';
         userPlots[plotIndex].crop_type = null;
         updateUI();
-        showModal(`Panen Berhasil! (+${data.reward} Coins)`, "SUCCESS");
+        showModal(`Harvest Success! (+${data.reward} Coins)`, "SUCCESS");
       } else {
-        showModal(data.error, "STAMINA HABIS");
+        showModal(data.error, "STAMINA EXHAUSTED");
       }
     } catch(e) {}
   }
@@ -388,9 +388,9 @@
       if(data.success) {
         userPlots[plotIndex].status = 'empty';
         updateUI();
-        showModal("Lahan Baru Berhasil Terbuka!", "SUCCESS");
+        showModal("New Plot Unlocked Successfully!", "SUCCESS");
       } else {
-        showModal(data.error, "GAGAL UNLOCK");
+        showModal(data.error, "UNLOCK FAILED");
       }
     } catch(e) {}
   }
@@ -409,7 +409,7 @@
         if(type === 'fertilizer') currentUser.fertilizer_inventory -= 1;
         updateUI();
       } else {
-        showModal(data.error, "BOOST GAGAL");
+        showModal(data.error, "BOOST FAILED");
       }
     } catch(e) {}
   }
@@ -426,7 +426,7 @@
         currentUser.coins -= 10000;
         currentUser.atf_balance += 1.0;
         updateUI();
-        showModal("Swap 10,000 Coins -> 1.0 ATF Berhasil!", "SWAP SUCCESS");
+        showModal("Swapped 10,000 Coins -> 1.0 ATF Successfully!", "SWAP SUCCESS");
       } else { showModal(data.error, "SWAP ERROR"); }
     } catch(e) {}
   }
