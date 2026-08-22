@@ -8,9 +8,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-const BASE_GROW_TIME_MS = 13200000; // 3 Jam 40 Menit
+const BASE_GROW_TIME_MS = 13200000;
 
-// Helper logging histori aktivitas
 async function logActivity(telegram_id, activity_name, amount) {
   try {
     await supabase.from('activity_logs').insert([{ telegram_id, activity_name, amount }]);
@@ -119,23 +118,47 @@ app.post('/api/farm/harvest', async (req, res) => {
   }
 });
 
-// 5. MYSTERY BOX (COIN SINK)
+// 5. MYSTERY BOX WITH PROPORTIONAL DROP RATE (COIN SINK)
 app.post('/api/market/mystery-box', async (req, res) => {
-  const { telegram_id, reward } = req.body;
+  const { telegram_id } = req.body;
 
   try {
     const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
-    if (user.coins < 500) return res.status(400).json({ error: 'Coins tidak cukup' });
+    if (!user || user.coins < 500) return res.status(400).json({ error: 'Coins tidak cukup (500 Coins)' });
+
+    // Weight Gacha Drop Rate
+    const rand = Math.random() * 100;
+    let reward = {};
+
+    if (rand < 60) {
+      // 60% Common Title
+      reward = { type: 'title', name: '🏷️ Title: "Novice Farmer"' };
+    } else if (rand < 80) {
+      // 20% Water Booster
+      reward = { type: 'water', name: '💧 1x Water Pack' };
+    } else if (rand < 90) {
+      // 10% Fertilizer Booster
+      reward = { type: 'fertilizer', name: '🧪 1x Fertilizer Pack' };
+    } else if (rand < 98) {
+      // 8% Cashback
+      reward = { type: 'coins', name: '💰 Cashback 100 Coins' };
+    } else {
+      // 2% Rare Skin
+      reward = { type: 'skin', name: '🎨 Rare Cyber-Farm Theme' };
+    }
 
     let updates = { coins: user.coins - 500 };
-    if (reward.includes('Water')) updates.water_inventory = user.water_inventory + 1;
-    if (reward.includes('Fert')) updates.fertilizer_inventory = user.fertilizer_inventory + 1;
-    if (reward.includes('Bonus Coins')) updates.coins = updates.coins + 100;
+    if (reward.type === 'water') updates.water_inventory = user.water_inventory + 1;
+    if (reward.type === 'fertilizer') updates.fertilizer_inventory = user.fertilizer_inventory + 1;
+    if (reward.type === 'coins') updates.coins = updates.coins + 100;
+    if (reward.type === 'title' || reward.type === 'skin') {
+      updates.equipped_title = reward.name;
+    }
 
     await supabase.from('users').update(updates).eq('telegram_id', telegram_id);
     await logActivity(telegram_id, 'Buka Mystery Box', '-500 Coins');
 
-    return res.json({ success: true });
+    return res.json({ success: true, reward });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
