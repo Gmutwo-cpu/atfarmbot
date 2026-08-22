@@ -10,11 +10,18 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const MAX_DAILY_HARVEST = 10;
+const MAX_DAILY_WATER_BUY = 3;
+const MAX_DAILY_FERT_BUY = 2;
 
 const CROPS = {
   apple: { name: 'Apple', seedCost: 10, reward: 50, growMs: 13200000 },    // 3h 40m
   orange: { name: 'Orange', seedCost: 30, reward: 100, growMs: 21600000 },  // 6h
   melon: { name: 'Melon', seedCost: 80, reward: 280, growMs: 43200000 }    // 12h
+};
+
+const BOOST_PRICES = {
+  water: 15,       // Reduces growth time by 20%
+  fertilizer: 35   // Reduces growth time by 40%
 };
 
 async function logActivity(telegram_id, activity_name, amount) {
@@ -23,7 +30,7 @@ async function logActivity(telegram_id, activity_name, amount) {
   } catch(e) { console.error("Log failed", e); }
 }
 
-// 1. INIT USER, PLOTS & SYSTEM NOTICES
+// 1. INIT USER
 app.post('/api/user/init', async (req, res) => {
   const { telegram_id, username } = req.body;
   if (!telegram_id) return res.status(400).json({ error: 'Missing telegram_id' });
@@ -83,7 +90,44 @@ app.post('/api/market/buy-seed', async (req, res) => {
   }
 });
 
-// 3. PLANT CROP
+// 3. BUY BOOST ITEM (WATER / FERTILIZER)
+app.post('/api/market/buy-boost', async (req, res) => {
+  const { telegram_id, item_type } = req.body;
+  const price = BOOST_PRICES[item_type];
+  if (!price) return res.status(400).json({ error: 'Invalid boost item type' });
+
+  try {
+    const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
+    if (!user || user.coins < price) return res.status(400).json({ error: 'Insufficient Coins!' });
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isNewDay = user.last_boost_buy_date !== todayStr;
+    
+    let waterBought = isNewDay ? 0 : (user.daily_water_bought || 0);
+    let fertBought = isNewDay ? 0 : (user.daily_fert_bought || 0);
+
+    let updates = { coins: user.coins - price, last_boost_buy_date: todayStr };
+
+    if (item_type === 'water') {
+      if (waterBought >= MAX_DAILY_WATER_BUY) return res.status(400).json({ error: 'Daily Water Purchase Limit Reached (Max 3/day)!' });
+      updates.water_inventory = (user.water_inventory || 0) + 1;
+      updates.daily_water_bought = waterBought + 1;
+    } else if (item_type === 'fertilizer') {
+      if (fertBought >= MAX_DAILY_FERT_BUY) return res.status(400).json({ error: 'Daily Fertilizer Purchase Limit Reached (Max 2/day)!' });
+      updates.fertilizer_inventory = (user.fertilizer_inventory || 0) + 1;
+      updates.daily_fert_bought = fertBought + 1;
+    }
+
+    await supabase.from('users').update(updates).eq('telegram_id', telegram_id);
+    await logActivity(telegram_id, `Bought ${item_type.toUpperCase()} Pack`, `-${price} Coins`);
+
+    return res.json({ success: true, user_updates: updates });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. PLANT CROP
 app.post('/api/farm/plant', async (req, res) => {
   const { telegram_id, plot_index, crop_type } = req.body;
   const crop = CROPS[crop_type];
@@ -115,7 +159,69 @@ app.post('/api/farm/plant', async (req, res) => {
   }
 });
 
-// 4. HARVEST CROP
+// 5. APPLY BOOST (TIME REDUCTION FIX)
+app.post('/api/farm/boost', async (req, res) => {
+  const { telegram_id, plot_index, boost_type } = req.body;
+
+  try {
+    const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
+    const { data: plot } = await supabase.from('plots').select('*').match({ telegram_id, plot_index }).single();
+
+    if (!plot || plot.status !== 'growing' || !plot.harvest_time) {
+      return res.status(400).json({ error: 'Plot is not currently growing!' });
+    }
+
+    const crop = CROPS[plot.crop_type || 'apple'];
+    let reductionMs = 0;
+    let updatePlot = {};
+    let updateUserData = {};
+
+    if (boost_type === 'water') {
+      if (plot.boosted_water) return res.status(400).json({ error: 'Water Boost already applied to this crop!' });
+      if ((user.water_inventory || 0) <= 0) return res.status(400).json({ error: 'No Water Pack in inventory!' });
+      
+      reductionMs = crop.growMs * 0.20;
+      updatePlot.boosted_water = true;
+      updateUserData.water_inventory = user.water_inventory - 1;
+    } else if (boost_type === 'fertilizer') {
+      if (plot.boosted_fert) return res.status(400).json({ error: 'Fertilizer Boost already applied to this crop!' });
+      if ((user.fertilizer_inventory || 0) <= 0) return res.status(400).json({ error: 'No Fertilizer Pack in inventory!' });
+      
+      reductionMs = crop.growMs * 0.40;
+      updatePlot.boosted_fert = true;
+      updateUserData.fertilizer_inventory = user.fertilizer_inventory - 1;
+    } else {
+      return res.status(400).json({ error: 'Invalid boost type!' });
+    }
+
+    // Precise Millisecond Math
+    const currentHarvestMs = new Date(plot.harvest_time).getTime();
+    const nowMs = Date.now();
+    const newHarvestMs = Math.max(nowMs, currentHarvestMs - reductionMs);
+    const newHarvestTimeISO = new Date(newHarvestMs).toISOString();
+
+    updatePlot.harvest_time = newHarvestTimeISO;
+    if (newHarvestMs <= nowMs) {
+      updatePlot.status = 'ready';
+    }
+
+    await supabase.from('users').update(updateUserData).eq('telegram_id', telegram_id);
+    await supabase.from('plots').update(updatePlot).match({ telegram_id, plot_index });
+
+    await logActivity(telegram_id, `Used ${boost_type.toUpperCase()}`, `-1 Item`);
+
+    return res.json({ 
+      success: true, 
+      harvest_time: newHarvestTimeISO,
+      status: updatePlot.status || 'growing',
+      user_updates: updateUserData
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6. HARVEST CROP
 app.post('/api/farm/harvest', async (req, res) => {
   const { telegram_id, plot_index } = req.body;
 
@@ -153,7 +259,7 @@ app.post('/api/farm/harvest', async (req, res) => {
   }
 });
 
-// 5. UNLOCK PLOT
+// 7. UNLOCK PLOT
 app.post('/api/farm/unlock-plot', async (req, res) => {
   const { telegram_id, plot_index } = req.body;
 
@@ -169,47 +275,6 @@ app.post('/api/farm/unlock-plot', async (req, res) => {
 
     await logActivity(telegram_id, `Unlocked Plot #${plot_index + 1}`, `-${plot.unlock_cost_coins} Coins`);
     return res.json({ success: true });
-  } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// 6. APPLY BOOST (WATER & FERTILIZER)
-app.post('/api/farm/boost', async (req, res) => {
-  const { telegram_id, plot_index, boost_type } = req.body;
-
-  try {
-    const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
-    const { data: plot } = await supabase.from('plots').select('*').match({ telegram_id, plot_index }).single();
-
-    if (!plot || plot.status !== 'growing' || !plot.harvest_time) return res.status(400).json({ error: 'Plot not growing!' });
-
-    const crop = CROPS[plot.crop_type || 'apple'];
-    let reductionMs = 0;
-    let updatePlot = {};
-
-    if (boost_type === 'water') {
-      if (plot.boosted_water) return res.status(400).json({ error: 'Water boost already applied!' });
-      if (user.water_inventory <= 0) return res.status(400).json({ error: 'No Water Pack available!' });
-      reductionMs = crop.growMs * 0.20;
-      updatePlot.boosted_water = true;
-      await supabase.from('users').update({ water_inventory: user.water_inventory - 1 }).eq('telegram_id', telegram_id);
-    } else if (boost_type === 'fertilizer') {
-      if (plot.boosted_fert) return res.status(400).json({ error: 'Fertilizer boost already applied!' });
-      if (user.fertilizer_inventory <= 0) return res.status(400).json({ error: 'No Fertilizer Pack available!' });
-      reductionMs = crop.growMs * 0.40;
-      updatePlot.boosted_fert = true;
-      await supabase.from('users').update({ fertilizer_inventory: user.fertilizer_inventory - 1 }).eq('telegram_id', telegram_id);
-    }
-
-    const currentHarvestTime = new Date(plot.harvest_time).getTime();
-    const newHarvestTime = new Date(currentHarvestTime - reductionMs).toISOString();
-    updatePlot.harvest_time = newHarvestTime;
-
-    await supabase.from('plots').update(updatePlot).match({ telegram_id, plot_index });
-    await logActivity(telegram_id, `Used ${boost_type.toUpperCase()}`, `-1 Item`);
-
-    return res.json({ success: true, harvest_time: newHarvestTime });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
