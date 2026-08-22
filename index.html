@@ -39,12 +39,11 @@
   .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; min-height: 125px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px; position: relative; }
   .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; }
   
-  /* Booster Buttons Container */
+  /* Booster Buttons */
   .booster-group { display: flex; gap: 6px; margin-top: 4px; }
   .btn-boost { background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); padding: 3px 6px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; }
-  .btn-boost:hover { background: var(--primary-cyan); color: #000; }
 
-  /* Bottom Nav FIX (Supaya tidak menumpuk) */
+  /* Bottom Nav FIX (Agar Sejajar & Tidak Menumpuk) */
   .navbar {
     position: absolute;
     bottom: 0;
@@ -66,7 +65,7 @@
     background: transparent;
     border: none;
     color: var(--text-dim);
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
     cursor: pointer;
     display: flex;
@@ -204,8 +203,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: tgUser.id, username: tgUser.first_name })
       });
-      const textRes = await res.text();
-      const data = JSON.parse(textRes);
+      const data = await res.json();
       if(data.success) {
         currentUser = data.user;
         userPlots = data.plots;
@@ -254,10 +252,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
-      const data = JSON.parse(await res.text());
+      const data = await res.json();
       if(data.success) initGame();
       else alert(data.error);
-    } catch(err) { alert("Network error / Server non-JSON"); }
+    } catch(err) { alert("Network error"); }
   }
 
   async function harvest(plotIndex) {
@@ -267,10 +265,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
-      const data = JSON.parse(await res.text());
+      const data = await res.json();
       if(data.success) initGame();
       else alert(data.error);
-    } catch(err) { alert("Network error / Server non-JSON"); }
+    } catch(err) { alert("Network error"); }
   }
 
   async function useBoost(plotIndex, boostType) {
@@ -280,7 +278,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, boost_type: boostType })
       });
-      const data = JSON.parse(await res.text());
+      const data = await res.json();
       if(data.success) {
         initGame();
       } else {
@@ -298,7 +296,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, coin_amount: 10000 })
       });
-      const data = JSON.parse(await res.text());
+      const data = await res.json();
       if(data.success) { alert("Converted successfully!"); initGame(); }
       else alert(data.error);
     } catch(err) { alert("Error conversion"); }
@@ -313,7 +311,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, wallet_address: addr, amount_atf: 5.0 })
       });
-      const data = JSON.parse(await res.text());
+      const data = await res.json();
       if(data.success) { alert("Withdrawal Queued!"); initGame(); }
       else alert(data.error);
     } catch(err) { alert("Error withdrawal"); }
