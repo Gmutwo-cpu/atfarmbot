@@ -37,7 +37,7 @@
   /* Grid Farming Plot */
   .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
   .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; position: relative; }
-  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; }
+  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center; }
 
   /* Bottom Nav */
   .navbar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; display: flex; justify-content: space-around; padding: 8px 4px; backdrop-filter: blur(10px); }
@@ -84,7 +84,7 @@
   <div id="viewTask" class="view-screen">
     <div class="header-card" style="justify-content:space-between;">
       <span style="font-size:10px;">Join Official Telegram Channel</span>
-      <button class="btn-action" onclick="alert('Task Reward Claimed!')">+150 Coins</button>
+      <button class="btn-action" onclick="claimWelcomeBonus()">Claim 100 Coins</button>
     </div>
   </div>
 
@@ -125,11 +125,11 @@
   let userPlots = [];
 
   async function initGame() {
-    const tgUser = tg?.initDataUnsafe?.user || { id: 99988877, first_name: "DemoFarmer" };
+    const tgUser = tg?.initDataUnsafe?.user || { id: 8560233709, first_name: "Gamutwo" };
     document.getElementById('txtUsername').textContent = tgUser.first_name;
     document.getElementById('txtAvatar').textContent = tgUser.first_name[0];
     document.getElementById('txtUid').textContent = "ID: " + tgUser.id;
-    document.getElementById('refUrl').value = `https://t.me/ATFarmbot?start=${tgUser.id}`;
+    document.getElementById('refUrl').value = `https://t.me/moneytree_game_bot?start=${tgUser.id}`;
 
     try {
       const res = await fetch(`${API_URL}/user/init`, {
@@ -140,7 +140,7 @@
       const data = await res.json();
       if(data.success) {
         currentUser = data.user;
-        userPlots = data.plots;
+        userPlots = data.plots || [];
         updateUI();
       }
     } catch(e) { console.error("Init Error", e); }
@@ -155,6 +155,23 @@
   function renderPlots() {
     const grid = document.getElementById('gridPlots');
     grid.innerHTML = '';
+
+    // PAPAN PENGUMUMAN TUGAS AWAL (Muncul jika saldo koin masih 0 dan tidak ada tanaman aktif)
+    if (currentUser.coins === 0 && !userPlots.some(p => p.status === 'growing' || p.status === 'ready')) {
+      grid.innerHTML = `
+        <div style="grid-column: span 2; background: var(--card-bg); border: 1px solid var(--primary-cyan); border-radius: 16px; padding: 16px; text-align: center; display: flex; flex-direction: column; gap: 10px;">
+          <span style="font-size: 28px;">📢</span>
+          <span style="font-size: 13px; font-weight: bold; color: var(--primary-cyan);">PAPAN PENGUMUMAN TUGAS</span>
+          <span style="font-size: 10px; color: var(--text-dim);">Selamat datang! Kerjakan tugas pertama untuk mendapatkan modal awal bertanam.</span>
+          
+          <a href="https://t.me/moneytree_game_bot" target="_blank" class="btn-action" style="text-decoration: none; padding: 8px; margin-top: 4px;">1. Join Telegram Channel</a>
+          <button class="btn-action" style="background: linear-gradient(90deg, #00ff87, #60efff); color: #000; padding: 8px;" onclick="claimWelcomeBonus()">2. Klaim Bonus +100 Coins 🍎</button>
+        </div>
+      `;
+      return;
+    }
+
+    // TAMPILAN LAHAN NORMAL
     userPlots.forEach(p => {
       const card = document.createElement('div');
       card.className = 'plot-card';
@@ -169,6 +186,25 @@
       }
       grid.appendChild(card);
     });
+  }
+
+  async function claimWelcomeBonus() {
+    try {
+      const res = await fetch(`${API_URL}/task/claim-welcome`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id })
+      });
+      const data = await res.json();
+      if(data.success) {
+        alert("Selamat! Bonus 100 Coins berhasil diklaim.");
+        initGame();
+      } else {
+        alert(data.error || "Gagal mengklaim bonus.");
+      }
+    } catch(e) {
+      alert("Terjadi kesalahan jaringan.");
+    }
   }
 
   async function plant(plotIndex) {
