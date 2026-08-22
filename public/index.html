@@ -36,14 +36,15 @@
 
   /* Grid Farming Plot */
   .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 5px; }
-  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; min-height: 125px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px; position: relative; }
-  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; }
+  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; min-height: 135px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px; position: relative; text-align: center; }
+  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+  .btn-action:active { opacity: 0.8; }
   
   /* Booster Buttons */
-  .booster-group { display: flex; gap: 6px; margin-top: 4px; }
+  .booster-group { display: flex; gap: 4px; margin-top: 4px; }
   .btn-boost { background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); padding: 3px 6px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; }
 
-  /* Bottom Nav FIX */
+  /* Bottom Nav */
   .navbar {
     position: absolute;
     bottom: 0;
@@ -79,18 +80,9 @@
     transition: color 0.2s ease;
   }
 
-  .nav-item span {
-    display: block;
-    line-height: 1.1;
-  }
-
-  .nav-item .nav-icon {
-    font-size: 16px;
-  }
-
-  .nav-item.active {
-    color: var(--primary-cyan);
-  }
+  .nav-item span { display: block; line-height: 1.1; }
+  .nav-item .nav-icon { font-size: 16px; }
+  .nav-item.active { color: var(--primary-cyan); }
 </style>
 </head>
 <body>
@@ -189,13 +181,14 @@
   const API_URL = "/api";
   let currentUser = null;
   let userPlots = [];
+  let timerInterval = null;
 
   async function initGame() {
-    const tgUser = tg?.initDataUnsafe?.user || { id: 99988877, first_name: "DemoFarmer" };
+    const tgUser = tg?.initDataUnsafe?.user || { id: 856023370, first_name: "Farmer" };
     document.getElementById('txtUsername').textContent = tgUser.first_name;
     document.getElementById('txtAvatar').textContent = tgUser.first_name[0];
     document.getElementById('txtUid').textContent = "ID: " + tgUser.id;
-    document.getElementById('refUrl').value = `https://t.me/ATFarmbot?start=${tgUser.id}`;
+    document.getElementById('refUrl').value = `https://t.me/atfarmbot?start=${tgUser.id}`;
 
     try {
       const res = await fetch(`${API_URL}/user/init`, {
@@ -213,13 +206,10 @@
       }
     } catch(e) { 
       console.warn("Using fallback local data due to network error", e);
-      // Fallback lokal agar game tetap tampil walau backend belum merespons
-      currentUser = { telegram_id: tgUser.id, coins: 100, atf_balance: 0, water_inventory: 1, fertilizer_inventory: 1 };
+      currentUser = { telegram_id: tgUser.id, coins: 150, atf_balance: 0.0000, water_inventory: 2, fertilizer_inventory: 1 };
       userPlots = [
         { plot_index: 0, status: 'empty' },
-        { plot_index: 1, status: 'locked' },
-        { plot_index: 2, status: 'locked' },
-        { plot_index: 3, status: 'locked' }
+        { plot_index: 1, status: 'locked' }
       ];
       updateUI();
     }
@@ -237,26 +227,87 @@
   function renderPlots() {
     const grid = document.getElementById('gridPlots');
     grid.innerHTML = '';
+    
     userPlots.forEach(p => {
       const card = document.createElement('div');
       card.className = 'plot-card';
+      
       if(p.status === 'empty') {
-        card.innerHTML = `<span style="font-size:22px;">🪴</span><span style="font-size:9px;color:var(--text-dim);">Plot #${p.plot_index}</span><button class="btn-action" onclick="plant(${p.plot_index})">Plant (-10 Coins)</button>`;
-      } else if(p.status === 'growing') {
         card.innerHTML = `
-          <span style="font-size:20px;">🍎</span>
+          <span style="font-size:24px;">🪴</span>
+          <span style="font-size:9px;color:var(--text-dim);">Plot #${p.plot_index}</span>
+          <button class="btn-action" onclick="plant(${p.plot_index})">Plant (-10 Coins)</button>`;
+      } 
+      else if(p.status === 'growing') {
+        const remainingTime = calculateRemainingTime(p.harvest_time);
+        if (remainingTime <= 0) {
+          p.status = 'ready';
+          renderPlots();
+          return;
+        }
+        card.innerHTML = `
+          <span style="font-size:22px;">🍎</span>
           <span style="font-size:9px; color:var(--primary-cyan);">Growing...</span>
+          <span style="font-size:11px; font-weight:bold; color:var(--text-white);" id="timer-${p.plot_index}">${formatTime(remainingTime)}</span>
           <div class="booster-group">
             <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'water')">💧 -20%</button>
             <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'fertilizer')">🧪 -40%</button>
           </div>`;
-      } else if(p.status === 'ready') {
-        card.innerHTML = `<span style="font-size:22px;">🍎</span><span style="font-size:9px; color:var(--accent-green);">Ready!</span><button class="btn-action" style="background:#00ff87; color:#000;" onclick="harvest(${p.plot_index})">Harvest (+50)</button>`;
-      } else {
-        card.innerHTML = `<span style="font-size:22px;">🔒</span><span style="font-size:8px;">Locked</span>`;
+      } 
+      else if(p.status === 'ready') {
+        card.innerHTML = `
+          <span style="font-size:24px;">🍎</span>
+          <span style="font-size:9px; color:var(--accent-green); font-weight:bold;">Ready to Harvest!</span>
+          <button class="btn-action" style="background:var(--accent-green); color:#000; width:100%; margin-top:4px;" onclick="harvest(${p.plot_index})">Harvest (+50 Coins)</button>`;
+      } 
+      else {
+        card.innerHTML = `
+          <span style="font-size:24px;">🔒</span>
+          <span style="font-size:9px; color:var(--text-dim);">Locked Plot</span>
+          <button class="btn-action" style="background:#334155; font-size:9px;" onclick="unlockPlot(${p.plot_index})">Unlock (5k Coins)</button>`;
       }
       grid.appendChild(card);
     });
+
+    startGlobalTimer();
+  }
+
+  function calculateRemainingTime(harvestTimeISO) {
+    if (!harvestTimeISO) return 0;
+    const now = new Date().getTime();
+    const target = new Date(harvestTimeISO).getTime();
+    return Math.max(0, Math.floor((target - now) / 1000));
+  }
+
+  function formatTime(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) {
+      return `${h}h ${m}m ${s}s`;
+    }
+    return `${m}m ${s < 10 ? '0' : ''}${s}s`;
+  }
+
+  function startGlobalTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      let needsRender = false;
+      userPlots.forEach(p => {
+        if (p.status === 'growing') {
+          const rem = calculateRemainingTime(p.harvest_time);
+          const timerEl = document.getElementById(`timer-${p.plot_index}`);
+          if (timerEl) {
+            timerEl.textContent = formatTime(rem);
+          }
+          if (rem <= 0) {
+            p.status = 'ready';
+            needsRender = true;
+          }
+        }
+      });
+      if (needsRender) renderPlots();
+    }, 1000);
   }
 
   async function plant(plotIndex) {
@@ -267,9 +318,12 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
       const data = await res.json();
-      if(data.success) initGame();
-      else alert(data.error);
-    } catch(err) { alert("Network error"); }
+      if(data.success) {
+        initGame();
+      } else {
+        alert(data.error || "Failed to plant");
+      }
+    } catch(err) { alert("Network error during planting"); }
   }
 
   async function harvest(plotIndex) {
@@ -280,9 +334,12 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
       const data = await res.json();
-      if(data.success) initGame();
-      else alert(data.error);
-    } catch(err) { alert("Network error"); }
+      if(data.success) {
+        initGame();
+      } else {
+        alert(data.error || "Failed to harvest");
+      }
+    } catch(err) { alert("Network error during harvest"); }
   }
 
   async function useBoost(plotIndex, boostType) {
@@ -296,11 +353,15 @@
       if(data.success) {
         initGame();
       } else {
-        alert(data.error || "Failed to use boost");
+        alert(data.error || "Failed to apply booster");
       }
     } catch(err) {
       alert("Error executing boost request.");
     }
+  }
+
+  async function unlockPlot(plotIndex) {
+    alert("Unlock feature integration ready!");
   }
 
   async function convertCoins() {
