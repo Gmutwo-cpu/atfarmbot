@@ -31,11 +31,11 @@
   .pill span { color: var(--accent-green); }
 
   /* Views Navigation */
-  .view-screen { flex: 1; display: none; flex-direction: column; gap: 10px; margin: 12px 0; overflow-y: auto; }
+  .view-screen { flex: 1; display: none; flex-direction: column; gap: 12px; margin: 12px 0; overflow-y: auto; }
   .view-screen.active { display: flex; }
 
   /* Grid Farming Plot */
-  .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 6px; }
+  .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
   .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; position: relative; }
   .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; }
 
@@ -71,61 +71,49 @@
     <div class="farm-grid" id="gridPlots"></div>
   </div>
 
-  <!-- VIEW 2: MARKET EXPANDED -->
+  <!-- VIEW 2: MARKET TERINTEGRASI -->
   <div id="viewMarket" class="view-screen">
-    <!-- Sub Navigation Tabs -->
-    <div style="display:flex; gap:4px; background:rgba(0,0,0,0.4); padding:4px; border-radius:10px;">
-      <button class="btn-action" id="tabBtnStore" style="flex:1; font-size:9px;" onclick="switchMarketSubTab('store')">🛒 Store</button>
-      <button class="btn-action" id="tabBtnSwap" style="flex:1; font-size:9px; background:transparent; border:1px solid var(--border-color);" onclick="switchMarketSubTab('swap')">🔄 Swap</button>
-      <button class="btn-action" id="tabBtnHistory" style="flex:1; font-size:9px; background:transparent; border:1px solid var(--border-color);" onclick="switchMarketSubTab('history')">📜 Histori</button>
-    </div>
-
-    <!-- SUB-TAB 1: STORE & MYSTERY BOX -->
-    <div id="marketStoreTab" class="market-subtab" style="display:flex; flex-direction:column; gap:8px;">
-      <!-- Mystery Box Banner (P2W Soft) -->
-      <div class="header-card" style="flex-direction:column; background:linear-gradient(135deg, rgba(0,242,254,0.15), rgba(0,255,135,0.15)); border-color:var(--primary-cyan);">
-        <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">🎁 AI Mystery Box</span>
-        <span style="font-size:8px; color:var(--text-dim);">Dapatkan Booster & Instant Water Pack</span>
-        <button class="btn-action" style="margin-top:6px; background:linear-gradient(90deg, #ff007a, #7928ca); width:100%;" onclick="buyCryptoItem('Mystery Box', 0.2)">Beli (0.2 TON / Stars)</button>
-      </div>
-
-      <!-- Supplies Store (In-Game Coins) -->
-      <div class="header-card" style="justify-content:space-between;">
+    
+    <!-- TOKO BIBIT (Core Farm Loop) -->
+    <div class="header-card" style="flex-direction:column; gap:6px;">
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">🌱 Toko Bibit & Lahan</span>
+      
+      <div style="display:flex; justify-content:space-between; width:100%; align-items:center; background:rgba(0,0,0,0.4); padding:6px; border-radius:8px;">
         <div>
-          <div style="font-size:10px; font-weight:bold;">💧 Water Pack</div>
-          <div style="font-size:8px; color:var(--text-dim);">Booster Siram Lahan</div>
+          <div style="font-size:10px; font-weight:bold;">Bibit Apel Basic</div>
+          <div style="font-size:8px; color:var(--text-dim);">Panen 10 Menit (+50 Coins)</div>
         </div>
-        <button class="btn-action" onclick="buyInGameItem('Water Pack', 100)">100 Coins</button>
+        <button class="btn-action" onclick="alert('Tanam langsung dari slot lahan di tab Farm!')">10 Coins</button>
       </div>
 
-      <div class="header-card" style="justify-content:space-between;">
+      <div style="display:flex; justify-content:space-between; width:100%; align-items:center; background:rgba(0,0,0,0.4); padding:6px; border-radius:8px;">
         <div>
-          <div style="font-size:10px; font-weight:bold;">🧪 Super Fertilizer</div>
-          <div style="font-size:8px; color:var(--text-dim);">Memotong Waktu Panen</div>
+          <div style="font-size:10px; font-weight:bold; color:var(--accent-green);">Bibit Golden Apple (P2W)</div>
+          <div style="font-size:8px; color:var(--text-dim);">Dapat Extra Yield + Booster</div>
         </div>
-        <button class="btn-action" onclick="buyInGameItem('Super Fertilizer', 250)">250 Coins</button>
+        <button class="btn-action" style="background:linear-gradient(90deg, #00ff87, #00c6ff); color:#000;" onclick="buyGoldenSeed()">0.1 TON</button>
       </div>
     </div>
 
-    <!-- SUB-TAB 2: CONVERT / SWAP -->
-    <div id="marketSwapTab" class="market-subtab" style="display:none; flex-direction:column; gap:8px;">
-      <div class="header-card" style="flex-direction:column; gap:8px; text-align:center;">
-        <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">AI Forex Token Swap</span>
-        <span style="font-size:8px; color:var(--text-dim);">Rasio Dinamis Berdasarkan Liquidity Vault</span>
-        <input type="number" id="swapAmount" placeholder="Min 10000 Coins" style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:10px; padding:6px; border-radius:6px; text-align:center;">
-        <button class="btn-action" style="width:100%;" onclick="convertCoins()">Convert to ATF</button>
+    <!-- PENUKARAN HASIL PANEN KE TOKEN ATF (30% Pool Allocation) -->
+    <div class="header-card" style="flex-direction:column; gap:6px; text-align:center;">
+      <span style="font-size:11px; font-weight:bold; color:var(--accent-green);">⚖️ Tukar Apel ke Token ATF</span>
+      <span style="font-size:8px; color:var(--text-dim);">Dapatkan ATF secara perlahan dari hasil ketelatenan menanam.</span>
+      
+      <div style="margin:4px 0; width:100%;">
+        <input type="number" id="slowSwapAmt" placeholder="Masukkan Koin (Min 5,000)" style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:10px; padding:6px; border-radius:6px; text-align:center;">
       </div>
+      
+      <button class="btn-action" style="width:100%;" onclick="claimSlowATF()">Klaim ATF Token</button>
     </div>
 
-    <!-- SUB-TAB 3: TRANSACTION HISTORY -->
-    <div id="marketHistoryTab" class="market-subtab" style="display:none;">
-      <div class="header-card" style="flex-direction:column; gap:6px;">
-        <span style="font-size:10px; font-weight:bold; color:var(--primary-cyan);">📜 Histori Aktivitas</span>
-        <div id="historyList" style="width:100%; display:flex; flex-direction:column; gap:4px; max-height:160px; overflow-y:auto;">
-          <span style="font-size:8px; color:var(--text-dim); text-align:center;">Belum ada aktivitas.</span>
-        </div>
-      </div>
+    <!-- ADS WATCH / TASK FOR REVENUE (Sumber Uang Dev & Player Reward) -->
+    <div class="header-card" style="flex-direction:column; gap:6px; background:linear-gradient(135deg, rgba(255,215,0,0.1), rgba(0,0,0,0.4));">
+      <span style="font-size:10px; font-weight:bold; color:#ffd700;">📺 Nonton Iklan / Tonton Video</span>
+      <span style="font-size:8px; color:var(--text-dim);">Dapatkan +100 Coins gratis & bantu percepat akumulasi ATF.</span>
+      <button class="btn-action" style="background:#ffd700; color:#000;" onclick="watchAdTask()">Nonton Iklan (+100 Coins)</button>
     </div>
+
   </div>
 
   <!-- VIEW 3: TASK -->
@@ -171,7 +159,6 @@
   const API_URL = "/api";
   let currentUser = null;
   let userPlots = [];
-  let txHistory = [];
 
   async function initGame() {
     const tgUser = tg?.initDataUnsafe?.user || { id: 99988877, first_name: "DemoFarmer" };
@@ -199,7 +186,6 @@
     document.getElementById('txtCoins').textContent = currentUser.coins;
     document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance).toFixed(4);
     renderPlots();
-    renderHistory();
   }
 
   function renderPlots() {
@@ -221,30 +207,6 @@
     });
   }
 
-  function logTransaction(type, detail, amount) {
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    txHistory.unshift({ type, detail, amount, time });
-    renderHistory();
-  }
-
-  function renderHistory() {
-    const container = document.getElementById('historyList');
-    if (!container) return;
-    if (txHistory.length === 0) {
-      container.innerHTML = '<span style="font-size:8px; color:var(--text-dim); text-align:center;">Belum ada aktivitas.</span>';
-      return;
-    }
-    container.innerHTML = txHistory.map(tx => `
-      <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.5); padding:4px 8px; border-radius:6px; font-size:8px;">
-        <div>
-          <span style="font-weight:bold; color:${tx.amount.startsWith('+') ? 'var(--accent-green)' : '#ff4d4d'};">[${tx.type}]</span> 
-          <span>${tx.detail}</span>
-        </div>
-        <div style="color:var(--text-dim);">${tx.amount} | ${tx.time}</div>
-      </div>
-    `).join('');
-  }
-
   async function plant(plotIndex) {
     const res = await fetch(`${API_URL}/farm/plant`, {
       method: 'POST',
@@ -252,10 +214,8 @@
       body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
     });
     const data = await res.json();
-    if(data.success) {
-      logTransaction("TANAM", `Plot #${plotIndex + 1}`, "-10 Coins");
-      initGame();
-    } else alert(data.error);
+    if(data.success) initGame();
+    else alert(data.error);
   }
 
   async function harvest(plotIndex) {
@@ -265,55 +225,52 @@
       body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
     });
     const data = await res.json();
-    if(data.success) {
-      logTransaction("PANEN", `Plot #${plotIndex + 1}`, "+50 Coins");
-      initGame();
-    } else alert(data.error);
+    if(data.success) initGame();
+    else alert(data.error);
   }
 
-  async function buyInGameItem(itemName, cost) {
-    const res = await fetch(`${API_URL}/market/buy-item`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, cost, item_type: itemName })
-    });
-    const data = await res.json();
-    if(data.success) {
-      logTransaction("BELI", itemName, `-${cost} Coins`);
-      alert(`Berhasil membeli ${itemName}!`);
-      initGame();
-    } else alert(data.error);
-  }
+  // LOGIKA BARU: Klaim ATF Perlahan di Market
+  async function claimSlowATF() {
+    const amt = parseInt(document.getElementById('slowSwapAmt').value);
+    if (!amt || amt < 5000) return alert("Minimal penukaran adalah 5,000 Coins!");
 
-  async function buyCryptoItem(itemName, tonCost) {
-    if(!confirm(`Beli ${itemName} seharga ${tonCost} TON / Stars?`)) return;
-
-    const res = await fetch(`${API_URL}/store/buy-stars`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, item_type: itemName, ton_amount: tonCost })
-    });
-    const data = await res.json();
-    if(data.success) {
-      logTransaction("PURCHASE", itemName, `+${tonCost} TON`);
-      alert(`🎉 Pembayaran berhasil! Transaksi Anda masuk ke Liquidity Pool.`);
-      initGame();
-    } else alert(data.error);
-  }
-
-  async function convertCoins() {
-    const amt = parseInt(document.getElementById('swapAmount').value) || 10000;
-    const res = await fetch(`${API_URL}/market/convert`, {
+    const res = await fetch(`${API_URL}/market/convert-slow`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ telegram_id: currentUser.telegram_id, coin_amount: amt })
     });
+    
     const data = await res.json();
     if(data.success) {
-      logTransaction("SWAP", "Coin to ATF", `-${amt} Coins / +${data.atfGained.toFixed(4)} ATF`);
-      alert(`Converted successfully! Received: ${data.atfGained.toFixed(4)} ATF`);
+      alert(`Berhasil! Anda mendapatkan ${data.atfEarned} ATF.`);
       initGame();
-    } else alert(data.error);
+    } else {
+      alert(data.error);
+    }
+  }
+
+  // LOGIKA BARU: Nonton Iklan (70% Dev / 30% Player Pool)
+  async function watchAdTask() {
+    alert("Iklan Selesai Ditonton!");
+    
+    const res = await fetch(`${API_URL}/task/claim-ad`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegram_id: currentUser.telegram_id })
+    });
+    
+    const data = await res.json();
+    if(data.success) {
+      alert(data.message);
+      initGame();
+    } else {
+      alert(data.error);
+    }
+  }
+
+  // LOGIKA BARU: Beli Bibit Premium
+  function buyGoldenSeed() {
+    alert("Fitur pembayaran TON Invoice dihubungkan di sini.");
   }
 
   async function withdrawATF() {
@@ -325,11 +282,8 @@
       body: JSON.stringify({ telegram_id: currentUser.telegram_id, wallet_address: addr, amount_atf: 5.0 })
     });
     const data = await res.json();
-    if(data.success) {
-      logTransaction("WITHDRAW", "Req Out", "-5.00 ATF");
-      alert("Withdrawal Queued!");
-      initGame();
-    } else alert(data.error);
+    if(data.success) { alert("Withdrawal Queued!"); initGame(); }
+    else alert(data.error);
   }
 
   function switchTab(tabName, btn) {
@@ -337,23 +291,6 @@
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.getElementById(`view${tabName}`).classList.add('active');
     btn.classList.add('active');
-  }
-
-  function switchMarketSubTab(subTabName) {
-    document.getElementById('marketStoreTab').style.display = subTabName === 'store' ? 'flex' : 'none';
-    document.getElementById('marketSwapTab').style.display = subTabName === 'swap' ? 'flex' : 'none';
-    document.getElementById('marketHistoryTab').style.display = subTabName === 'history' ? 'block' : 'none';
-
-    // Style indikator tombol
-    const setBtnStyle = (btnId, active) => {
-      const el = document.getElementById(btnId);
-      el.style.background = active ? 'linear-gradient(90deg, #00c6ff, #0072ff)' : 'transparent';
-      el.style.border = active ? 'none' : '1px solid var(--border-color)';
-    };
-
-    setBtnStyle('tabBtnStore', subTabName === 'store');
-    setBtnStyle('tabBtnSwap', subTabName === 'swap');
-    setBtnStyle('tabBtnHistory', subTabName === 'history');
   }
 
   function copyRef() {
