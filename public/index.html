@@ -204,15 +204,29 @@
         body: JSON.stringify({ telegram_id: tgUser.id, username: tgUser.first_name })
       });
       const data = await res.json();
-      if(data.success) {
+      if(data.success && data.user && data.plots) {
         currentUser = data.user;
         userPlots = data.plots;
         updateUI();
+      } else {
+        throw new Error("Invalid response format");
       }
-    } catch(e) { console.error("Init Error", e); }
+    } catch(e) { 
+      console.warn("Using fallback local data due to network error", e);
+      // Fallback lokal agar game tetap tampil walau backend belum merespons
+      currentUser = { telegram_id: tgUser.id, coins: 100, atf_balance: 0, water_inventory: 1, fertilizer_inventory: 1 };
+      userPlots = [
+        { plot_index: 0, status: 'empty' },
+        { plot_index: 1, status: 'locked' },
+        { plot_index: 2, status: 'locked' },
+        { plot_index: 3, status: 'locked' }
+      ];
+      updateUI();
+    }
   }
 
   function updateUI() {
+    if (!currentUser) return;
     document.getElementById('txtCoins').textContent = currentUser.coins;
     document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance || 0).toFixed(4);
     document.getElementById('invWater').textContent = currentUser.water_inventory || 0;
