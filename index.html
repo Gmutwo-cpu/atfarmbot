@@ -26,13 +26,14 @@
   .user-info { display: flex; align-items: center; gap: 8px; }
   .avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-green)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; }
   .username { font-size: 12px; font-weight: 700; }
+  .title-tag { font-size: 8px; color: var(--warning-yellow); font-weight: bold; }
   .balances { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
   .pill { background: rgba(0,0,0,0.6); border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; }
   .pill span { color: var(--accent-green); }
 
   .inventory-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
   .inventory-title { font-size: 10px; font-weight: bold; color: var(--primary-cyan); }
-  .inventory-items { display: flex; gap: 10px; }
+  .inventory-items { display: flex; gap: 8px; }
   .inv-item { font-size: 9px; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); }
 
   .view-screen { flex: 1; display: none; flex-direction: column; gap: 10px; margin: 10px 0; overflow-y: auto; }
@@ -43,7 +44,6 @@
   .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 9px; font-weight: bold; cursor: pointer; }
   .btn-boost { background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color); color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 8px; cursor: pointer; margin-top: 2px; }
 
-  /* Sub-tabs Market */
   .market-tabs { display: flex; gap: 4px; background: rgba(0,0,0,0.5); padding: 4px; border-radius: 10px; border: 1px solid var(--border-color); }
   .market-tab-btn { flex: 1; background: transparent; border: none; color: var(--text-dim); padding: 6px; font-size: 9px; font-weight: bold; border-radius: 6px; cursor: pointer; }
   .market-tab-btn.active { background: var(--primary-cyan); color: #000; }
@@ -96,7 +96,7 @@
       <div class="avatar" id="txtAvatar">A</div>
       <div>
         <div class="username" id="txtUsername">Loading...</div>
-        <div style="font-size: 8px; color: var(--text-dim);" id="txtUid">ID: -----</div>
+        <div class="title-tag" id="txtTitle">Novice Farmer</div>
       </div>
     </div>
     <div class="balances">
@@ -108,10 +108,11 @@
   <!-- VIEW 1: FARM -->
   <div id="viewFarm" class="view-screen active">
     <div class="inventory-card">
-      <span class="inventory-title">🎒 Inventory</span>
+      <span class="inventory-title">🎒 Inventory & Stamina</span>
       <div class="inventory-items">
+        <div class="inv-item">⚡ Stamina: <b id="txtStamina" style="color:var(--accent-green);">10/10</b></div>
         <div class="inv-item">💧 Water: <b id="invWater">0</b></div>
-        <div class="inv-item">🧪 Fertilizer: <b id="invFertilizer">0</b></div>
+        <div class="inv-item">🧪 Fert: <b id="invFertilizer">0</b></div>
       </div>
     </div>
     <div class="farm-grid" id="gridPlots"></div>
@@ -149,14 +150,6 @@
           <span class="item-desc">Reduces grow time by -40%</span>
         </div>
         <button class="btn-action" onclick="buyTonItem('fert_pack', 0.2)">0.2 TON</button>
-      </div>
-
-      <div class="item-row">
-        <div class="item-info">
-          <span class="item-name">🚜 Auto-Harvester</span>
-          <span class="item-desc">Auto harvest crops for 8 Hours</span>
-        </div>
-        <button class="btn-action" style="background:linear-gradient(90deg, #00ff87, #00c6ff); color:#000;" onclick="buyTonItem('auto_harvester', 1.5)">1.5 TON</button>
       </div>
     </div>
 
@@ -237,7 +230,6 @@
 
   const BASE_GROW_TIME_MS = 13200000;
 
-  // CUSTOM MODAL SYSTEM
   function showModal(msg, title = "SYSTEM MESSAGE") {
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('modalMessage').textContent = msg;
@@ -253,7 +245,6 @@
     
     document.getElementById('txtUsername').textContent = tgUser.first_name;
     document.getElementById('txtAvatar').textContent = tgUser.first_name[0];
-    document.getElementById('txtUid').textContent = "ID: " + tgUser.id;
     document.getElementById('refUrl').value = `https://t.me/ATFarmbot?start=${tgUser.id}`;
 
     currentUser = {
@@ -261,7 +252,9 @@
       coins: 100,
       atf_balance: 0.0000,
       water_inventory: 1,
-      fertilizer_inventory: 1
+      fertilizer_inventory: 1,
+      equipped_title: 'Novice Farmer',
+      daily_harvest_count: 0
     };
     
     userPlots = [
@@ -288,9 +281,7 @@
           renderHistory();
         }
       }
-    } catch(e) { 
-      console.warn("Backend offline. Running locally.", e); 
-    }
+    } catch(e) { console.warn("Backend offline. Running locally.", e); }
 
     startTimerLoop();
   }
@@ -300,6 +291,14 @@
     document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance).toFixed(4);
     document.getElementById('invWater').textContent = currentUser.water_inventory ?? 0;
     document.getElementById('invFertilizer').textContent = currentUser.fertilizer_inventory ?? 0;
+    document.getElementById('txtTitle').textContent = currentUser.equipped_title || 'Novice Farmer';
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isNewDay = currentUser.last_harvest_date !== todayStr;
+    const currentHarvests = isNewDay ? 0 : (currentUser.daily_harvest_count || 0);
+    const staminaRemaining = Math.max(0, 10 - currentHarvests);
+    
+    document.getElementById('txtStamina').textContent = `${staminaRemaining}/10`;
     renderPlots();
   }
 
@@ -315,7 +314,7 @@
         card.innerHTML = `
           <span style="font-size:18px;">🪴</span>
           <button class="btn-action" onclick="plant(${p.plot_index})">Plant (-10 Coins)</button>
-          <span style="font-size:7px; color:var(--text-dim);">Duration: 3h 40m</span>
+          <span style="font-size:7px; color:var(--text-dim);">Grow Time: 3h 40m</span>
         `;
       } else if(p.status === 'growing') {
         const now = Date.now();
@@ -338,9 +337,8 @@
       } else {
         card.innerHTML = `
           <span style="font-size:16px;">🔒</span>
-          <span style="font-size:8px; color:var(--text-dim);">Land Locked</span>
-          <button class="btn-action" style="font-size:7px; background:#334155; margin-bottom:2px;" onclick="unlockPlot(${p.plot_index}, 'coins')">Unlock (5,000 Coins)</button>
-          <button class="btn-action" style="font-size:7px; background:linear-gradient(90deg, #00ff87, #00c6ff); color:#000;" onclick="unlockPlot(${p.plot_index}, 'ton')">Instant (0.2 TON)</button>
+          <span style="font-size:8px; color:var(--text-dim);">Locked Land</span>
+          <button class="btn-action" style="font-size:7px; background:#334155;" onclick="unlockPlot(${p.plot_index}, 'coins')">Unlock (5k Coins)</button>
         `;
       }
       grid.appendChild(card);
@@ -349,10 +347,7 @@
 
   function renderHistory() {
     const list = document.getElementById('historyList');
-    if(!userHistory || userHistory.length === 0) {
-      list.innerHTML = `<div class="item-row" style="font-size:8px; color:var(--text-dim);">No transactions recorded yet.</div>`;
-      return;
-    }
+    if(!userHistory || userHistory.length === 0) return;
     list.innerHTML = '';
     userHistory.forEach(h => {
       const row = document.createElement('div');
@@ -377,7 +372,6 @@
           const now = Date.now();
           const target = p.harvest_time ? new Date(p.harvest_time).getTime() : now;
           const diff = target - now;
-
           const timerEl = document.getElementById(`timer-${p.plot_index}`);
           if (diff <= 0) {
             p.status = 'ready';
@@ -400,7 +394,7 @@
   }
 
   async function plant(plotIndex) {
-    if (currentUser.coins < 10) return showModal("Requires at least 10 Coins to plant!", "INSUFFICIENT FUNDS");
+    if (currentUser.coins < 10) return showModal("Membutuhkan 10 Coins untuk membeli bibit apel!", "COINS TIDAK CUKUP");
     currentUser.coins -= 10;
     userPlots[plotIndex].status = 'growing';
     userPlots[plotIndex].harvest_time = new Date(Date.now() + BASE_GROW_TIME_MS).toISOString();
@@ -415,20 +409,43 @@
     } catch(e) { console.warn("Sync offline.", e); }
   }
 
+  async function harvest(plotIndex) {
+    try {
+      const res = await fetch(`${API_URL}/farm/harvest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentUser.coins += 50;
+        currentUser.daily_harvest_count = data.daily_harvest_count;
+        userPlots[plotIndex].status = 'empty';
+        userPlots[plotIndex].harvest_time = null;
+        updateUI();
+        showModal("Panen Berhasil! (+50 Coins)", "SUCCESS");
+      } else {
+        showModal(data.error, "STAMINA HABIS");
+      }
+    } catch(e) {
+      currentUser.coins += 50;
+      userPlots[plotIndex].status = 'empty';
+      updateUI();
+    }
+  }
+
   async function useBoost(type, plotIndex) {
     const plot = userPlots[plotIndex];
     if (plot.status !== 'growing' || !plot.harvest_time) return;
 
     if (type === 'water') {
-      if (currentUser.water_inventory <= 0) return showModal("No Water Pack available in inventory!", "BOOSTER EMPTY");
+      if (currentUser.water_inventory <= 0) return showModal("Tidak ada Water Pack tersisa!", "BOOSTER KOSONG");
       currentUser.water_inventory -= 1;
-      const currentTarget = new Date(plot.harvest_time).getTime();
-      plot.harvest_time = new Date(currentTarget - (BASE_GROW_TIME_MS * 0.20)).toISOString();
+      plot.harvest_time = new Date(new Date(plot.harvest_time).getTime() - (BASE_GROW_TIME_MS * 0.20)).toISOString();
     } else if (type === 'fertilizer') {
-      if (currentUser.fertilizer_inventory <= 0) return showModal("No Fertilizer Pack available in inventory!", "BOOSTER EMPTY");
+      if (currentUser.fertilizer_inventory <= 0) return showModal("Tidak ada Fertilizer Pack tersisa!", "BOOSTER KOSONG");
       currentUser.fertilizer_inventory -= 1;
-      const currentTarget = new Date(plot.harvest_time).getTime();
-      plot.harvest_time = new Date(currentTarget - (BASE_GROW_TIME_MS * 0.40)).toISOString();
+      plot.harvest_time = new Date(new Date(plot.harvest_time).getTime() - (BASE_GROW_TIME_MS * 0.40)).toISOString();
     }
     updateUI();
 
@@ -441,23 +458,8 @@
     } catch(e) { console.warn("Sync offline.", e); }
   }
 
-  async function harvest(plotIndex) {
-    currentUser.coins += 50;
-    userPlots[plotIndex].status = 'empty';
-    userPlots[plotIndex].harvest_time = null;
-    updateUI();
-
-    try {
-      await fetch(`${API_URL}/farm/harvest`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
-      });
-    } catch(e) { console.warn("Sync offline.", e); }
-  }
-
   async function buyMysteryBox() {
-    if(currentUser.coins < 500) return showModal("Opening Mystery Box requires 500 Coins!", "INSUFFICIENT COINS");
+    if(currentUser.coins < 500) return showModal("Buka Mystery Box butuh 500 Coins!", "COINS TIDAK CUKUP");
 
     try {
       const res = await fetch(`${API_URL}/market/mystery-box`, {
@@ -468,27 +470,25 @@
       const data = await res.json();
       if(data.success) {
         currentUser.coins -= 500;
-        
         if (data.reward.type === 'water') currentUser.water_inventory += 1;
         if (data.reward.type === 'fertilizer') currentUser.fertilizer_inventory += 1;
         if (data.reward.type === 'coins') currentUser.coins += 100;
+        if (data.reward.type === 'title' || data.reward.type === 'skin') currentUser.equipped_title = data.reward.name;
 
         updateUI();
-        showModal(`🎉 Mystery Box Unlocked!\n\nYou Received: ${data.reward.name}`, "MYSTERY BOX REWARD");
+        showModal(`🎉 Mystery Box Unlocked!\n\nHadiah: ${data.reward.name}`, "MYSTERY BOX REWARD");
       } else {
         showModal(data.error, "ERROR");
       }
-    } catch(e) { 
-      showModal("Network error while opening Mystery Box", "ERROR"); 
-    }
+    } catch(e) { showModal("Gagal membuka Mystery Box", "ERROR"); }
   }
 
   function buyTonItem(itemKey, tonAmount) {
-    showModal(`Redirecting to TON Web3 Wallet for ${tonAmount} TON transaction...`, "TON PAYMENT");
+    showModal(`Mengarahkan ke Wallet TON untuk transaksi ${tonAmount} TON...`, "TON PAYMENT");
   }
 
   async function convertCoins() {
-    if(currentUser.coins < 10000) return showModal("Minimum 10,000 Coins required for DEX Conversion!", "DEX SWAP ERROR");
+    if(currentUser.coins < 10000) return showModal("Minimal 10,000 Coins untuk Swap!", "DEX SWAP ERROR");
 
     try {
       const res = await fetch(`${API_URL}/market/convert`, {
@@ -501,26 +501,11 @@
         currentUser.coins -= 10000;
         currentUser.atf_balance += 1.0;
         updateUI();
-        showModal("Successfully swapped 10,000 Coins -> 1.0 ATF Token", "SWAP COMPLETED");
+        showModal("Berhasil Swap 10,000 Coins -> 1.0 ATF Token", "SWAP SUCCESS");
       } else {
-        showModal(data.error, "SWAP REJECTED");
+        showModal(data.error, "SWAP DISETOP");
       }
     } catch(e) { showModal("DEX Converter Offline!", "ERROR"); }
-  }
-
-  async function unlockPlot(plotIndex, method) {
-    if(method === 'ton') return showModal("Redirecting to TON Wallet Payment...", "TON PAYMENT");
-    if(currentUser.coins < 5000) return showModal("Unlocking Plot requires 5,000 Coins!", "INSUFFICIENT COINS");
-    currentUser.coins -= 5000;
-    userPlots[plotIndex].status = 'empty';
-    updateUI();
-  }
-
-  async function withdrawATF() {
-    const addr = document.getElementById('walletAddr').value;
-    if(!addr) return showModal("Please enter valid TON Wallet Address!", "INVALID ADDRESS");
-    if(currentUser.atf_balance < 5.0) return showModal("Minimum withdrawal amount is 5.0 ATF!", "INSUFFICIENT ATF");
-    showModal("Withdrawal request has been queued!", "WITHDRAWAL QUEUED");
   }
 
   function switchTab(tabName, btn) {
@@ -539,7 +524,14 @@
 
   function copyRef() {
     navigator.clipboard.writeText(document.getElementById('refUrl').value);
-    showModal("Referral link copied to clipboard!", "SUCCESS");
+    showModal("Link Referral berhasil disalin!", "SUCCESS");
+  }
+
+  function withdrawATF() {
+    const addr = document.getElementById('walletAddr').value;
+    if(!addr) return showModal("Masukkan alamat TON Wallet!", "INVALID ADDRESS");
+    if(currentUser.atf_balance < 5.0) return showModal("Minimal penarikan adalah 5.0 ATF!", "ATF TIDAK CUKUP");
+    showModal("Penarikan dikirim ke antrean server!", "WITHDRAWAL QUEUED");
   }
 
   initGame();
