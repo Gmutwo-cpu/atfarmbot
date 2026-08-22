@@ -22,9 +22,9 @@ app.post('/api/user/init', async (req, res) => {
       const { data: newUser, error } = await supabase.from('users').insert([{
         telegram_id,
         username: username || 'Farmer',
-        coins: 100,
-        atf_balance: 0,
-        water_inventory: 1,
+        coins: 150,
+        atf_balance: 0.0000,
+        water_inventory: 2,
         fertilizer_inventory: 1
       }]).select().single();
       
@@ -34,13 +34,10 @@ app.post('/api/user/init', async (req, res) => {
 
     let { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
     
-    // Fallback jika trigger supabase belum jalan
     if (!plots || plots.length === 0) {
       const defaultPlots = [
         { telegram_id, plot_index: 0, status: 'empty' },
-        { telegram_id, plot_index: 1, status: 'locked' },
-        { telegram_id, plot_index: 2, status: 'locked' },
-        { telegram_id, plot_index: 3, status: 'locked' }
+        { telegram_id, plot_index: 1, status: 'locked' }
       ];
       await supabase.from('plots').insert(defaultPlots);
       const { data: newPlots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
@@ -53,7 +50,7 @@ app.post('/api/user/init', async (req, res) => {
   }
 });
 
-// 2. PLANT SEED
+// 2. PLANT SEED (Duration: 3 Hours 40 Minutes = 13,200,000 ms)
 app.post('/api/farm/plant', async (req, res) => {
   try {
     const { telegram_id, plot_index } = req.body;
@@ -61,10 +58,15 @@ app.post('/api/farm/plant', async (req, res) => {
 
     if (!user || user.coins < 10) return res.status(400).json({ error: "Not enough coins for seed!" });
 
-    const harvestTime = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const harvestTime = new Date(Date.now() + 13200000).toISOString();
 
     await supabase.from('users').update({ coins: user.coins - 10 }).eq('telegram_id', telegram_id);
-    await supabase.from('plots').update({ status: 'growing', harvest_time: harvestTime, crop_type: 'apple' }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
+    await supabase.from('plots').update({ 
+      status: 'growing', 
+      harvest_time: harvestTime, 
+      boosted_water: false, 
+      boosted_fert: false 
+    }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
 
     return res.json({ success: true, harvestTime });
   } catch (err) {
@@ -72,22 +74,27 @@ app.post('/api/farm/plant', async (req, res) => {
   }
 });
 
-// 3. HARVEST APPLE
+// 3. HARVEST CROP
 app.post('/api/farm/harvest', async (req, res) => {
   try {
     const { telegram_id, plot_index } = req.body;
     const { data: plot } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).eq('plot_index', plot_index).single();
 
-    if (!plot) return res.status(400).json({ error: "Invalid plot" });
+    if (!plot) return res.status(400).json({ error: "Invalid plot index" });
 
     const now = new Date();
     if (plot.harvest_time && now < new Date(plot.harvest_time)) {
-      return res.status(400).json({ error: "Crop is not ready yet!" });
+      return res.status(400).json({ error: "Crop is not ready for harvest yet!" });
     }
 
     const { data: user } = await supabase.from('users').select('coins').eq('telegram_id', telegram_id).single();
     await supabase.from('users').update({ coins: user.coins + 50 }).eq('telegram_id', telegram_id);
-    await supabase.from('plots').update({ status: 'empty', harvest_time: null, boosted_water: false, boosted_fert: false }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
+    await supabase.from('plots').update({ 
+      status: 'empty', 
+      harvest_time: null, 
+      boosted_water: false, 
+      boosted_fert: false 
+    }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
 
     return res.json({ success: true });
   } catch (err) {
@@ -100,7 +107,7 @@ app.post('/api/market/convert', async (req, res) => {
   try {
     const { telegram_id, coin_amount } = req.body;
     const { data: user } = await supabase.from('users').select('coins, atf_balance').eq('telegram_id', telegram_id).single();
-    if (user.coins < coin_amount) return res.status(400).json({ error: "Insufficient Coins" });
+    if (!user || user.coins < coin_amount) return res.status(400).json({ error: "Insufficient Coins balance" });
 
     const atfGained = coin_amount / 10000;
     await supabase.from('users').update({
@@ -118,10 +125,10 @@ app.post('/api/market/convert', async (req, res) => {
 app.post('/api/wallet/withdraw', async (req, res) => {
   try {
     const { telegram_id, wallet_address, amount_atf } = req.body;
-    if (amount_atf < 5.0) return res.status(400).json({ error: "Minimum withdraw 5.0 ATF" });
+    if (amount_atf < 5.0) return res.status(400).json({ error: "Minimum withdrawal limit is 5.0 ATF" });
 
     const { data: user } = await supabase.from('users').select('atf_balance').eq('telegram_id', telegram_id).single();
-    if (parseFloat(user.atf_balance) < amount_atf) return res.status(400).json({ error: "Insufficient ATF balance" });
+    if (!user || parseFloat(user.atf_balance) < amount_atf) return res.status(400).json({ error: "Insufficient ATF token balance" });
 
     await supabase.from('users').update({ atf_balance: parseFloat(user.atf_balance) - amount_atf }).eq('telegram_id', telegram_id);
     await supabase.from('withdrawals').insert([{ telegram_id, wallet_address, amount_atf, status: 'PENDING' }]);
