@@ -1,78 +1,69 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-const CROPS = {
-  apple: { name: 'Apple', growMs: 10 * 60 * 1000 },
-  orange: { name: 'Orange', growMs: 21600000 },
-  melon: { name: 'Melon', growMs: 43200000 }
-};
-
-module.exports = async (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { telegram_id, plot_index, boost_type } = req.body;
-
   try {
-    const { data: user, error: userErr } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
-    if (userErr || !user) return res.status(400).json({ success: false, error: 'User not found!' });
-
-    const { data: plot, error: plotErr } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).eq('plot_index', plot_index).single();
-    if (plotErr || !plot) return res.status(400).json({ success: false, error: 'Plot not found!' });
-
-    if (plot.status !== 'growing' || !plot.harvest_time) {
-      return res.status(400).json({ success: false, error: 'Plot is not currently growing!' });
+    const { telegram_id, plot_index, boost_type } = req.body;
+    if (!telegram_id || plot_index === undefined || !boost_type) {
+      return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    const crop = CROPS[plot.crop_type || 'apple'];
-    let reductionMs = 0;
-    let updatePlot = {};
-    let updateUserData = {};
+    // Ambil data user & plot
+    const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
+    const { data: plot } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).eq('plot_index', plot_index).single();
+
+    if (!user || !plot) return res.status(404).json({ error: 'User or Plot not found' });
+    if (plot.status !== 'growing') return res.status(400).json({ error: 'Plot is not currently growing' });
+
+    let currentHarvestTime = new Date(plot.harvest_time).getTime();
+    let now = Date.now();
+    let remainingTime = currentHarvestTime - now;
+
+    if (remainingTime <= 0) {
+      return res.status(400).json({ error: 'Crop is already ready for harvest!' });
+    }
+
+    let updateFields = {};
 
     if (boost_type === 'water') {
-      if (plot.boosted_water) return res.status(400).json({ success: false, error: 'Water Boost already applied!' });
-      if ((user.water_inventory || 0) <= 0) return res.status(400).json({ success: false, error: 'No Water Pack in inventory!' });
+      if (plot.boosted_water) return res.status(400).json({ error: 'Water booster already applied to this plot!' });
+      if (user.water_inventory < 1) return res.status(400).json({ error: 'Insufficient Water inventory!' });
 
-      reductionMs = crop.growMs * 0.20;
-      updatePlot.boosted_water = true;
-      updateUserData.water_inventory = Math.max(0, (user.water_inventory || 0) - 1);
+      // Kurangi 20% dari sisa waktu
+      let reducedTime = remainingTime * 0.80;
+      updateFields.harvest_time = new Date(now + reducedTime).toISOString();
+      updateFields.boosted_water = true;
+
+      // Kurangi inventory user
+      await supabase.from('users').update({ water_inventory: user.water_inventory - 1 }).eq('telegram_id', telegram_id);
+
     } else if (boost_type === 'fertilizer') {
-      if (plot.boosted_fert) return res.status(400).json({ success: false, error: 'Fertilizer Boost already applied!' });
-      if ((user.fertilizer_inventory || 0) <= 0) return res.status(400).json({ success: false, error: 'No Fertilizer Pack in inventory!' });
+      if (plot.boosted_fert) return res.status(400).json({ error: 'Fertilizer booster already applied to this plot!' });
+      if (user.fertilizer_inventory < 1) return res.status(400).json({ error: 'Insufficient Fertilizer inventory!' });
 
-      reductionMs = crop.growMs * 0.40;
-      updatePlot.boosted_fert = true;
-      updateUserData.fertilizer_inventory = Math.max(0, (user.fertilizer_inventory || 0) - 1);
+      // Kurangi 40% dari sisa waktu
+      let reducedTime = remainingTime * 0.60;
+      updateFields.harvest_time = new Date(now + reducedTime).toISOString();
+      updateFields.boosted_fert = true;
+
+      // Kurangi inventory user
+      await supabase.from('users').update({ fertilizer_inventory: user.fertilizer_inventory - 1 }).eq('telegram_id', telegram_id);
     } else {
-      return res.status(400).json({ success: false, error: 'Invalid boost type!' });
+      return res.status(400).json({ error: 'Invalid boost type' });
     }
 
-    const currentHarvestMs = new Date(plot.harvest_time).getTime();
-    const nowMs = Date.now();
-    const newHarvestMs = Math.max(nowMs, currentHarvestMs - reductionMs);
-    const newHarvestTimeISO = new Date(newHarvestMs).toISOString();
+    // Update plot
+    await supabase.from('plots').update(updateFields).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
 
-    updatePlot.harvest_time = newHarvestTimeISO;
-    if (newHarvestMs <= nowMs) {
-      updatePlot.status = 'ready';
-    }
-
-    await supabase.from('users').update(updateUserData).eq('telegram_id', telegram_id);
-    await supabase.from('plots').update(updatePlot).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
-
-    return res.status(200).json({ 
-      success: true, 
-      harvest_time: newHarvestTimeISO,
-      status: updatePlot.status || 'growing',
-      user_updates: updateUserData
-    });
+    return res.json({ success: true, message: `${boost_type} booster applied successfully!` });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message || 'Internal server error' });
+    return res.status(500).json({ error: err.message });
   }
 };
