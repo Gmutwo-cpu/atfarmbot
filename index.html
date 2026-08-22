@@ -392,6 +392,7 @@
     } catch(e) {}
   }
 
+  // FIXED USEBOOST FUNCTION WITH ACCURATE ERROR PARSING
   async function useBoost(type, plotIndex) {
     try {
       const res = await fetch(`${API_URL}/farm/boost`, {
@@ -399,16 +400,18 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, boost_type: type })
       });
+      
       const data = await res.json();
-      if(data.success) {
+      
+      if(res.ok && data.success) {
         userPlots[plotIndex].harvest_time = data.harvest_time;
         if(type === 'water') {
           userPlots[plotIndex].boosted_water = true;
-          currentUser.water_inventory = Math.max(0, currentUser.water_inventory - 1);
+          currentUser.water_inventory = Math.max(0, (currentUser.water_inventory || 0) - 1);
         }
         if(type === 'fertilizer') {
           userPlots[plotIndex].boosted_fert = true;
-          currentUser.fertilizer_inventory = Math.max(0, currentUser.fertilizer_inventory - 1);
+          currentUser.fertilizer_inventory = Math.max(0, (currentUser.fertilizer_inventory || 0) - 1);
         }
 
         if(data.status === 'ready') {
@@ -418,9 +421,11 @@
         updateUI();
         showModal(`Growth accelerated by ${type === 'water' ? '20%' : '40%'}!`, "BOOST APPLIED");
       } else {
-        showModal(data.error, "BOOST FAILED");
+        showModal(data.error || "Failed to apply boost.", "BOOST FAILED");
       }
-    } catch(e) { showModal("Failed to apply boost.", "ERROR"); }
+    } catch(e) { 
+      showModal(e.message || "Network Error: Failed to apply boost.", "ERROR"); 
+    }
   }
 
   async function buySeed(cropType) {
