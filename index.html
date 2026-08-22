@@ -58,6 +58,34 @@
   .navbar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; display: flex; justify-content: space-around; padding: 8px 4px; backdrop-filter: blur(10px); }
   .nav-item { background: transparent; border: none; color: var(--text-dim); font-size: 9px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .nav-item.active { color: var(--primary-cyan); }
+
+  /* Custom Cyberpunk Modal Overlay */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(4, 8, 16, 0.85);
+    backdrop-filter: blur(6px);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-box {
+    background: var(--card-bg);
+    border: 1px solid var(--primary-cyan);
+    box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+    border-radius: 16px;
+    padding: 20px;
+    width: 85%;
+    max-width: 320px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .modal-title { font-size: 14px; font-weight: bold; color: var(--primary-cyan); }
+  .modal-text { font-size: 10px; color: #fff; line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -82,8 +110,8 @@
     <div class="inventory-card">
       <span class="inventory-title">🎒 Inventory</span>
       <div class="inventory-items">
-        <div class="inv-item">💧 Water: <b id="invWater">1</b></div>
-        <div class="inv-item">🧪 Fertilizer: <b id="invFertilizer">1</b></div>
+        <div class="inv-item">💧 Water: <b id="invWater">0</b></div>
+        <div class="inv-item">🧪 Fertilizer: <b id="invFertilizer">0</b></div>
       </div>
     </div>
     <div class="farm-grid" id="gridPlots"></div>
@@ -101,7 +129,7 @@
     <div id="marketShop" class="market-section active">
       <div class="header-card" style="flex-direction:column; gap:4px; text-align:center; background:linear-gradient(135deg, rgba(245,158,11,0.2), rgba(0,0,0,0.6)); border-color:var(--warning-yellow);">
         <span style="font-size:11px; font-weight:bold; color:var(--warning-yellow);">🎁 Limited Mystery Box</span>
-        <span style="font-size:8px; color:var(--text-dim);">Cost: 500 Coins (Random Booster or Rare Skin)</span>
+        <span style="font-size:8px; color:var(--text-dim);">Cost: 500 Coins (Titles, Boosters, Skins)</span>
         <button class="btn-action" style="background:var(--warning-yellow); color:#000;" onclick="buyMysteryBox()">Open Box (500 Coins)</button>
       </div>
 
@@ -156,7 +184,7 @@
   <div id="viewTask" class="view-screen">
     <div class="header-card" style="justify-content:space-between;">
       <span style="font-size:10px;">Join Official Telegram Channel</span>
-      <button class="btn-action" onclick="alert('Task Reward Claimed!')">+150 Coins</button>
+      <button class="btn-action" onclick="showModal('Task Reward Claimed!')">+150 Coins</button>
     </div>
   </div>
 
@@ -188,6 +216,15 @@
   </div>
 </div>
 
+<!-- Custom Cyberpunk Modal Overlay -->
+<div id="customModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">NOTIFICATION</div>
+    <div class="modal-text" id="modalMessage">Message content goes here...</div>
+    <button class="btn-action" style="width:100%; margin-top:4px;" onclick="closeModal()">OK</button>
+  </div>
+</div>
+
 <script>
   const tg = window.Telegram?.WebApp;
   if(tg) tg.expand();
@@ -198,7 +235,18 @@
   let userHistory = [];
   let timerInterval = null;
 
-  const BASE_GROW_TIME_MS = 13200000; // 3 Jam 40 Menit
+  const BASE_GROW_TIME_MS = 13200000;
+
+  // CUSTOM MODAL SYSTEM
+  function showModal(msg, title = "SYSTEM MESSAGE") {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMessage').textContent = msg;
+    document.getElementById('customModal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('customModal').style.display = 'none';
+  }
 
   async function initGame() {
     const tgUser = tg?.initDataUnsafe?.user || { id: 99988877, first_name: "DemoFarmer" };
@@ -352,7 +400,7 @@
   }
 
   async function plant(plotIndex) {
-    if (currentUser.coins < 10) return alert("Not enough coins!");
+    if (currentUser.coins < 10) return showModal("Requires at least 10 Coins to plant!", "INSUFFICIENT FUNDS");
     currentUser.coins -= 10;
     userPlots[plotIndex].status = 'growing';
     userPlots[plotIndex].harvest_time = new Date(Date.now() + BASE_GROW_TIME_MS).toISOString();
@@ -372,12 +420,12 @@
     if (plot.status !== 'growing' || !plot.harvest_time) return;
 
     if (type === 'water') {
-      if (currentUser.water_inventory <= 0) return alert("No Water left!");
+      if (currentUser.water_inventory <= 0) return showModal("No Water Pack available in inventory!", "BOOSTER EMPTY");
       currentUser.water_inventory -= 1;
       const currentTarget = new Date(plot.harvest_time).getTime();
       plot.harvest_time = new Date(currentTarget - (BASE_GROW_TIME_MS * 0.20)).toISOString();
     } else if (type === 'fertilizer') {
-      if (currentUser.fertilizer_inventory <= 0) return alert("No Fertilizer left!");
+      if (currentUser.fertilizer_inventory <= 0) return showModal("No Fertilizer Pack available in inventory!", "BOOSTER EMPTY");
       currentUser.fertilizer_inventory -= 1;
       const currentTarget = new Date(plot.harvest_time).getTime();
       plot.harvest_time = new Date(currentTarget - (BASE_GROW_TIME_MS * 0.40)).toISOString();
@@ -409,34 +457,38 @@
   }
 
   async function buyMysteryBox() {
-    if(currentUser.coins < 500) return alert("Requires 500 Coins!");
-    
-    currentUser.coins -= 500;
-    const rewards = ['1x Water Pack', '1x Fert Pack', '100 Bonus Coins', 'Common Skin NFT'];
-    const won = rewards[Math.floor(Math.random() * rewards.length)];
-    
-    if(won.includes('Water')) currentUser.water_inventory += 1;
-    if(won.includes('Fert')) currentUser.fertilizer_inventory += 1;
-    if(won.includes('Bonus Coins')) currentUser.coins += 100;
-    
-    updateUI();
-    alert(`🎉 Mystery Box Opened! You got: ${won}`);
+    if(currentUser.coins < 500) return showModal("Opening Mystery Box requires 500 Coins!", "INSUFFICIENT COINS");
 
     try {
-      await fetch(`${API_URL}/market/mystery-box`, {
+      const res = await fetch(`${API_URL}/market/mystery-box`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, reward: won })
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id })
       });
-    } catch(e) { console.warn("Sync offline.", e); }
+      const data = await res.json();
+      if(data.success) {
+        currentUser.coins -= 500;
+        
+        if (data.reward.type === 'water') currentUser.water_inventory += 1;
+        if (data.reward.type === 'fertilizer') currentUser.fertilizer_inventory += 1;
+        if (data.reward.type === 'coins') currentUser.coins += 100;
+
+        updateUI();
+        showModal(`🎉 Mystery Box Unlocked!\n\nYou Received: ${data.reward.name}`, "MYSTERY BOX REWARD");
+      } else {
+        showModal(data.error, "ERROR");
+      }
+    } catch(e) { 
+      showModal("Network error while opening Mystery Box", "ERROR"); 
+    }
   }
 
   function buyTonItem(itemKey, tonAmount) {
-    alert(`Redirecting to TON Web3 Wallet for ${tonAmount} TON payment...`);
+    showModal(`Redirecting to TON Web3 Wallet for ${tonAmount} TON transaction...`, "TON PAYMENT");
   }
 
   async function convertCoins() {
-    if(currentUser.coins < 10000) return alert("Minimum 10,000 Coins required!");
+    if(currentUser.coins < 10000) return showModal("Minimum 10,000 Coins required for DEX Conversion!", "DEX SWAP ERROR");
 
     try {
       const res = await fetch(`${API_URL}/market/convert`, {
@@ -449,16 +501,16 @@
         currentUser.coins -= 10000;
         currentUser.atf_balance += 1.0;
         updateUI();
-        alert("Success! Converted 10,000 Coins -> 1.0 ATF");
+        showModal("Successfully swapped 10,000 Coins -> 1.0 ATF Token", "SWAP COMPLETED");
       } else {
-        alert(data.error);
+        showModal(data.error, "SWAP REJECTED");
       }
-    } catch(e) { alert("DEX Converter Offline!"); }
+    } catch(e) { showModal("DEX Converter Offline!", "ERROR"); }
   }
 
   async function unlockPlot(plotIndex, method) {
-    if(method === 'ton') return alert("Redirecting to TON Payment...");
-    if(currentUser.coins < 5000) return alert("Not enough coins!");
+    if(method === 'ton') return showModal("Redirecting to TON Wallet Payment...", "TON PAYMENT");
+    if(currentUser.coins < 5000) return showModal("Unlocking Plot requires 5,000 Coins!", "INSUFFICIENT COINS");
     currentUser.coins -= 5000;
     userPlots[plotIndex].status = 'empty';
     updateUI();
@@ -466,9 +518,9 @@
 
   async function withdrawATF() {
     const addr = document.getElementById('walletAddr').value;
-    if(!addr) return alert("Enter TON Wallet address!");
-    if(currentUser.atf_balance < 5.0) return alert("Minimum withdrawal is 5.0 ATF!");
-    alert("Withdrawal request queued!");
+    if(!addr) return showModal("Please enter valid TON Wallet Address!", "INVALID ADDRESS");
+    if(currentUser.atf_balance < 5.0) return showModal("Minimum withdrawal amount is 5.0 ATF!", "INSUFFICIENT ATF");
+    showModal("Withdrawal request has been queued!", "WITHDRAWAL QUEUED");
   }
 
   function switchTab(tabName, btn) {
@@ -487,7 +539,7 @@
 
   function copyRef() {
     navigator.clipboard.writeText(document.getElementById('refUrl').value);
-    alert("Referral link copied!");
+    showModal("Referral link copied to clipboard!", "SUCCESS");
   }
 
   initGame();
