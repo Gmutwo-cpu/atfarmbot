@@ -31,21 +31,26 @@
   .pill span { color: var(--accent-green); }
 
   /* Views Navigation */
-  .view-screen { flex: 1; display: none; flex-direction: column; gap: 12px; margin: 12px 0; overflow-y: auto; padding-bottom: 70px; }
+  .view-screen { flex: 1; display: none; flex-direction: column; gap: 10px; margin: 8px 0; overflow-y: auto; padding-bottom: 75px; }
   .view-screen.active { display: flex; }
 
   /* Grid Farming Plot */
-  .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
-  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; position: relative; }
+  .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 5px; }
+  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; min-height: 125px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px; position: relative; }
   .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; }
+  
+  /* Booster Buttons Container */
+  .booster-group { display: flex; gap: 6px; margin-top: 4px; }
+  .btn-boost { background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); padding: 3px 6px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; }
+  .btn-boost:hover { background: var(--primary-cyan); color: #000; }
 
-  /* Bottom Nav (Perbaikan agar rapi, sejajar, dan tidak menumpuk) */
+  /* Bottom Nav FIX (Supaya tidak menumpuk) */
   .navbar {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 65px;
+    height: 60px;
     background: var(--card-bg);
     border-top: 1px solid var(--border-color);
     display: flex;
@@ -53,7 +58,7 @@
     align-items: center;
     padding: 0 4px;
     backdrop-filter: blur(10px);
-    z-index: 100;
+    z-index: 1000;
     box-sizing: border-box;
   }
 
@@ -61,7 +66,7 @@
     background: transparent;
     border: none;
     color: var(--text-dim);
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 700;
     cursor: pointer;
     display: flex;
@@ -75,8 +80,13 @@
     transition: color 0.2s ease;
   }
 
-  .nav-item span:first-child {
-    font-size: 16px; /* Ukuran Emoji / Ikon */
+  .nav-item span {
+    display: block;
+    line-height: 1.1;
+  }
+
+  .nav-item .nav-icon {
+    font-size: 16px;
   }
 
   .nav-item.active {
@@ -102,11 +112,14 @@
     </div>
   </div>
 
+  <!-- INVENTORY PANEL -->
+  <div class="header-card" style="padding: 8px 12px; font-size: 10px;">
+    <span>💧 Water: <b id="invWater" style="color:var(--primary-cyan);">0</b></span>
+    <span>🧪 Fert: <b id="invFert" style="color:var(--accent-green);">0</b></span>
+  </div>
+
   <!-- VIEW 1: FARM -->
   <div id="viewFarm" class="view-screen active">
-    <div style="font-size:11px; text-align:center; color: var(--text-dim);">
-      🤖 <b>AI Forex Farming Node</b>: Plant Apples to fuel AI Compute Power.
-    </div>
     <div class="farm-grid" id="gridPlots"></div>
   </div>
 
@@ -148,23 +161,23 @@
   <!-- Bottom Navbar -->
   <div class="navbar">
     <button class="nav-item active" onclick="switchTab('Farm', this)">
-      <span>🌾</span>
+      <span class="nav-icon">🌾</span>
       <span>FARM</span>
     </button>
     <button class="nav-item" onclick="switchTab('Market', this)">
-      <span>📈</span>
+      <span class="nav-icon">📈</span>
       <span>MARKET</span>
     </button>
     <button class="nav-item" onclick="switchTab('Task', this)">
-      <span>📝</span>
+      <span class="nav-icon">📝</span>
       <span>TASK</span>
     </button>
     <button class="nav-item" onclick="switchTab('Friends', this)">
-      <span>👥</span>
+      <span class="nav-icon">👥</span>
       <span>FRIENDS</span>
     </button>
     <button class="nav-item" onclick="switchTab('Wallet', this)">
-      <span>💎</span>
+      <span class="nav-icon">💎</span>
       <span>WALLET</span>
     </button>
   </div>
@@ -191,7 +204,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: tgUser.id, username: tgUser.first_name })
       });
-      const data = await res.json();
+      const textRes = await res.text();
+      const data = JSON.parse(textRes);
       if(data.success) {
         currentUser = data.user;
         userPlots = data.plots;
@@ -202,7 +216,9 @@
 
   function updateUI() {
     document.getElementById('txtCoins').textContent = currentUser.coins;
-    document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance).toFixed(4);
+    document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance || 0).toFixed(4);
+    document.getElementById('invWater').textContent = currentUser.water_inventory || 0;
+    document.getElementById('invFert').textContent = currentUser.fertilizer_inventory || 0;
     renderPlots();
   }
 
@@ -213,62 +229,94 @@
       const card = document.createElement('div');
       card.className = 'plot-card';
       if(p.status === 'empty') {
-        card.innerHTML = `<span style="font-size:20px;">🪴</span><button class="btn-action" onclick="plant(${p.plot_index})">Plant (-10 Coins)</button>`;
+        card.innerHTML = `<span style="font-size:22px;">🪴</span><span style="font-size:9px;color:var(--text-dim);">Plot #${p.plot_index}</span><button class="btn-action" onclick="plant(${p.plot_index})">Plant (-10 Coins)</button>`;
       } else if(p.status === 'growing') {
-        card.innerHTML = `<span style="font-size:20px;">⏳</span><span style="font-size:9px; color:var(--primary-cyan);">AI Compute Active</span>`;
+        card.innerHTML = `
+          <span style="font-size:20px;">🍎</span>
+          <span style="font-size:9px; color:var(--primary-cyan);">Growing...</span>
+          <div class="booster-group">
+            <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'water')">💧 -20%</button>
+            <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'fertilizer')">🧪 -40%</button>
+          </div>`;
       } else if(p.status === 'ready') {
-        card.innerHTML = `<span style="font-size:20px;">🍎</span><button class="btn-action" style="background:#00ff87; color:#000;" onclick="harvest(${p.plot_index})">Harvest (+50)</button>`;
+        card.innerHTML = `<span style="font-size:22px;">🍎</span><span style="font-size:9px; color:var(--accent-green);">Ready!</span><button class="btn-action" style="background:#00ff87; color:#000;" onclick="harvest(${p.plot_index})">Harvest (+50)</button>`;
       } else {
-        card.innerHTML = `<span style="font-size:20px;">🔒</span><span style="font-size:8px;">Locked</span>`;
+        card.innerHTML = `<span style="font-size:22px;">🔒</span><span style="font-size:8px;">Locked</span>`;
       }
       grid.appendChild(card);
     });
   }
 
   async function plant(plotIndex) {
-    const res = await fetch(`${API_URL}/farm/plant`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
-    });
-    const data = await res.json();
-    if(data.success) initGame();
-    else alert(data.error);
+    try {
+      const res = await fetch(`${API_URL}/farm/plant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
+      });
+      const data = JSON.parse(await res.text());
+      if(data.success) initGame();
+      else alert(data.error);
+    } catch(err) { alert("Network error / Server non-JSON"); }
   }
 
   async function harvest(plotIndex) {
-    const res = await fetch(`${API_URL}/farm/harvest`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
-    });
-    const data = await res.json();
-    if(data.success) initGame();
-    else alert(data.error);
+    try {
+      const res = await fetch(`${API_URL}/farm/harvest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
+      });
+      const data = JSON.parse(await res.text());
+      if(data.success) initGame();
+      else alert(data.error);
+    } catch(err) { alert("Network error / Server non-JSON"); }
+  }
+
+  async function useBoost(plotIndex, boostType) {
+    try {
+      const res = await fetch(`${API_URL}/farm/boost`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, boost_type: boostType })
+      });
+      const data = JSON.parse(await res.text());
+      if(data.success) {
+        initGame();
+      } else {
+        alert(data.error || "Failed to use boost");
+      }
+    } catch(err) {
+      alert("Error executing boost request.");
+    }
   }
 
   async function convertCoins() {
-    const res = await fetch(`${API_URL}/market/convert`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, coin_amount: 10000 })
-    });
-    const data = await res.json();
-    if(data.success) { alert("Converted successfully!"); initGame(); }
-    else alert(data.error);
+    try {
+      const res = await fetch(`${API_URL}/market/convert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, coin_amount: 10000 })
+      });
+      const data = JSON.parse(await res.text());
+      if(data.success) { alert("Converted successfully!"); initGame(); }
+      else alert(data.error);
+    } catch(err) { alert("Error conversion"); }
   }
 
   async function withdrawATF() {
     const addr = document.getElementById('walletAddr').value;
     if(!addr) return alert("Enter TON Wallet address!");
-    const res = await fetch(`${API_URL}/wallet/withdraw`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, wallet_address: addr, amount_atf: 5.0 })
-    });
-    const data = await res.json();
-    if(data.success) { alert("Withdrawal Queued!"); initGame(); }
-    else alert(data.error);
+    try {
+      const res = await fetch(`${API_URL}/wallet/withdraw`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, wallet_address: addr, amount_atf: 5.0 })
+      });
+      const data = JSON.parse(await res.text());
+      if(data.success) { alert("Withdrawal Queued!"); initGame(); }
+      else alert(data.error);
+    } catch(err) { alert("Error withdrawal"); }
   }
 
   function switchTab(tabName, btn) {
