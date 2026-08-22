@@ -1,11 +1,11 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const CROPS = {
-  apple: { name: 'Apple', growMs: 13200000 },
+  apple: { name: 'Apple', growMs: 10 * 60 * 1000 },
   orange: { name: 'Orange', growMs: 21600000 },
   melon: { name: 'Melon', growMs: 43200000 }
 };
