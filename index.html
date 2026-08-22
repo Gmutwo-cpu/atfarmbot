@@ -78,7 +78,6 @@
 
   <!-- VIEW 1: FARM -->
   <div id="viewFarm" class="view-screen active">
-    <!-- Notice Board Banner -->
     <div class="notice-card">
       <div class="notice-title">⚠️ System Announcement</div>
       <div class="notice-body">
@@ -86,7 +85,6 @@
       </div>
     </div>
 
-    <!-- User Inventory Section -->
     <div class="inventory-card">
       <span class="inventory-title">🎒 Inventory</span>
       <div class="inventory-items">
@@ -95,7 +93,6 @@
       </div>
     </div>
 
-    <!-- Plot Grid -->
     <div class="farm-grid" id="gridPlots"></div>
   </div>
 
@@ -151,6 +148,9 @@
   const API_URL = "/api";
   let currentUser = null;
   let userPlots = [];
+  let timerInterval = null;
+
+  const BASE_GROW_TIME_MS = 13200000; // 3 Jam 40 Menit
 
   async function initGame() {
     const tgUser = tg?.initDataUnsafe?.user || { id: 99988877, first_name: "DemoFarmer" };
@@ -169,8 +169,8 @@
     };
     
     userPlots = [
-      { plot_index: 0, status: 'empty' },
-      { plot_index: 1, status: 'locked', cost_coins: 5000, cost_ton: 0.2 }
+      { plot_index: 0, status: 'empty', harvest_time: null },
+      { plot_index: 1, status: 'locked', harvest_time: null }
     ];
 
     updateUI();
@@ -193,14 +193,16 @@
     } catch(e) { 
       console.warn("Backend server offline. Running on local state.", e); 
     }
+
+    startTimerLoop();
   }
 
   function updateUI() {
     document.getElementById('txtCoins').textContent = currentUser.coins;
     document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance).toFixed(4);
     
-    document.getElementById('invWater').textContent = currentUser.water_inventory ?? 1;
-    document.getElementById('invFertilizer').textContent = currentUser.fertilizer_inventory ?? 1;
+    document.getElementById('invWater').textContent = currentUser.water_inventory ?? 0;
+    document.getElementById('invFertilizer').textContent = currentUser.fertilizer_inventory ?? 0;
     
     renderPlots();
   }
@@ -220,9 +222,13 @@
           <span style="font-size:7px; color:var(--text-dim);">Duration: 3h 40m</span>
         `;
       } else if(p.status === 'growing') {
+        const now = Date.now();
+        const target = p.harvest_time ? new Date(p.harvest_time).getTime() : now + BASE_GROW_TIME_MS;
+        const diff = Math.max(0, target - now);
+
         card.innerHTML = `
           <span style="font-size:18px;">⏳</span>
-          <span style="font-size:8px; color:var(--primary-cyan);">Growing...</span>
+          <span id="timer-${p.plot_index}" style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">${formatTime(diff)}</span>
           <div style="display:flex; gap:3px;">
             <button class="btn-boost" onclick="useBoost('water', ${p.plot_index})">💧 -20%</button>
             <button class="btn-boost" onclick="useBoost('fertilizer', ${p.plot_index})">🧪 -40%</button>
@@ -245,17 +251,50 @@
     });
   }
 
-  // FUNGSI PLANT BARU (Optimistic Update & Fast Reaction)
+  function startTimerLoop() {
+    if (timerInterval) clearInterval(timerInterval);
+    
+    timerInterval = setInterval(() => {
+      let needsRefresh = false;
+
+      userPlots.forEach(p => {
+        if (p.status === 'growing') {
+          const now = Date.now();
+          const target = p.harvest_time ? new Date(p.harvest_time).getTime() : now;
+          const diff = target - now;
+
+          const timerEl = document.getElementById(`timer-${p.plot_index}`);
+          if (diff <= 0) {
+            p.status = 'ready';
+            needsRefresh = true;
+          } else if (timerEl) {
+            timerEl.textContent = formatTime(diff);
+          }
+        }
+      });
+
+      if (needsRefresh) updateUI();
+    }, 1000);
+  }
+
+  function formatTime(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const hrs = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = totalSec % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
   async function plant(plotIndex) {
     if (!currentUser) return alert("User data not loaded!");
     if (currentUser.coins < 10) return alert("Not enough coins to plant!");
 
-    // 1. Ubah UI secara lokal langsung tanpa menunggu delay backend
     currentUser.coins -= 10;
     userPlots[plotIndex].status = 'growing';
+    userPlots[plotIndex].harvest_time = new Date(Date.now() + BASE_GROW_TIME_MS).toISOString();
+    
     updateUI();
 
-    // 2. Kirim sinkronisasi ke server di background
     try {
       const res = await fetch(`${API_URL}/farm/plant`, {
         method: 'POST',
@@ -263,26 +302,32 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
       const data = await res.json();
-      if (!data.success) {
-        console.warn("Server sync error:", data.error);
+      if (data.success && data.plots) {
+        userPlots = data.plots;
+        updateUI();
       }
     } catch(e) {
       console.warn("Backend API offline, state saved locally.", e);
     }
   }
 
-  // FUNGSI BOOST BARU
   async function useBoost(type, plotIndex) {
+    const plot = userPlots[plotIndex];
+    if (plot.status !== 'growing' || !plot.harvest_time) return;
+
     if (type === 'water') {
       if (currentUser.water_inventory <= 0) return alert("No Water left!");
       currentUser.water_inventory -= 1;
+      const currentTarget = new Date(plot.harvest_time).getTime();
+      plot.harvest_time = new Date(currentTarget - (BASE_GROW_TIME_MS * 0.20)).toISOString();
     } else if (type === 'fertilizer') {
       if (currentUser.fertilizer_inventory <= 0) return alert("No Fertilizer left!");
       currentUser.fertilizer_inventory -= 1;
+      const currentTarget = new Date(plot.harvest_time).getTime();
+      plot.harvest_time = new Date(currentTarget - (BASE_GROW_TIME_MS * 0.40)).toISOString();
     }
 
     updateUI();
-    alert(`Applied ${type === 'water' ? 'Water (-20%)' : 'Fertilizer (-40%)'} boost!`);
 
     try {
       await fetch(`${API_URL}/farm/boost`, {
@@ -320,6 +365,7 @@
   async function harvest(plotIndex) {
     currentUser.coins += 50;
     userPlots[plotIndex].status = 'empty';
+    userPlots[plotIndex].harvest_time = null;
     updateUI();
 
     try {
