@@ -1,142 +1,121 @@
 const express = require('express');
-const cors = require('cors');
-const { createClient } = require('@supabase/supabase-js');
-
 const app = express();
-app.use(cors());
 app.use(express.json());
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+// In-Memory Database Dummy (Ganti dengan PostgreSQL/MongoDB di produksi)
+let users = {};
+let plots = {};
 
-// 1. INIT USER & SYNC STATE (DILENGKAPI AUTO-CREATE LAHAN)
-app.post('/api/user/init', async (req, res) => {
-  try {
-    const { telegram_id, username, ref_by } = req.body;
-    if (!telegram_id) return res.status(400).json({ error: "Missing telegram_id" });
+// Helper: Hitung Durasi Panen (Default: 3 Jam 40 Menit = 13,200,000 ms)
+const BASE_HARVEST_TIME_MS = (3 * 3600 + 40 * 60) * 1000;
 
-    // Cek atau buat user di database
-    let { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
+// 1. INIT USER & PLOTS
+app.post('/api/user/init', (req, res) => {
+  const { telegram_id, username } = req.body;
+  
+  if (!users[telegram_id]) {
+    // Inisialisasi User Baru dengan Bonus Gratis Pertama (Air & Pupuk)
+    users[telegram_id] = {
+      telegram_id,
+      username,
+      coins: 500,
+      atf_balance: 0.0,
+      water_inventory: 1,      // Booster gratis awal
+      fertilizer_inventory: 1  // Booster gratis awal
+    };
 
-    if (!user) {
-      const { data: newUser, error } = await supabase.from('users').insert([{
-        telegram_id,
-        username: username || 'Farmer',
-        referred_by: ref_by ? parseInt(ref_by) : null
-      }]).select().single();
-      
-      if (error) throw error;
-      user = newUser;
-    }
-
-    // Ambil data lahan user
-    let { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
-
-    // Jika user belum punya data lahan di database, buatkan 6 lahan otomatis
-    if (!plots || plots.length === 0) {
-      const initialPlots = Array.from({ length: 6 }, (_, i) => ({
-        telegram_id,
-        plot_index: i,
-        status: i === 0 ? 'empty' : 'locked'
-      }));
-      
-      const { data: newPlots, error: plotErr } = await supabase.from('plots').insert(initialPlots).select();
-      if (!plotErr) plots = newPlots;
-    }
-
-    return res.json({ success: true, user, plots });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
+    // Inisialisasi Plot Lahan (Plot 0 terbuka, Plot 1 terkunci - Soft P2W)
+    plots[telegram_id] = [
+      { plot_index: 0, status: 'empty', planted_at: null, harvest_at: null, boosted_water: false, boosted_fert: false },
+      { plot_index: 1, status: 'locked', cost_coins: 5000, cost_ton: 0.2 }
+    ];
   }
+
+  res.json({ success: true, user: users[telegram_id], plots: plots[telegram_id] });
 });
 
-// 2. PLANT SEED (SERVER-SIDE TIMER)
-app.post('/api/farm/plant', async (req, res) => {
-  try {
-    const { telegram_id, plot_index } = req.body;
-    const { data: user } = await supabase.from('users').select('coins').eq('telegram_id', telegram_id).single();
+// 2. PLANTING (BERTANAM)
+app.post('/api/farm/plant', (req, res) => {
+  const { telegram_id, plot_index } = req.body;
+  const user = users[telegram_id];
+  const userPlot = plots[telegram_id]?.[plot_index];
 
-    if (!user || user.coins < 10) return res.status(400).json({ error: "Not enough coins for seed!" });
+  if (!user || !userPlot) return res.status(400).json({ error: "User or Plot not found" });
+  if (user.coins < 10) return res.status(400).json({ error: "Not enough coins!" });
+  if (userPlot.status !== 'empty') return res.status(400).json({ error: "Plot is not empty" });
 
-    // Potong 10 Koin untuk beli bibit, atur panen 10 menit dari waktu server
-    const harvestTime = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const now = Date.now();
+  user.coins -= 10;
+  userPlot.status = 'growing';
+  userPlot.planted_at = now;
+  userPlot.harvest_at = now + BASE_HARVEST_TIME_MS; // 3 jam 40 menit
+  userPlot.boosted_water = false;
+  userPlot.boosted_fert = false;
 
-    await supabase.from('users').update({ coins: user.coins - 10 }).eq('telegram_id', telegram_id);
-    await supabase.from('plots').update({ status: 'growing', harvest_time: harvestTime }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
-
-    return res.json({ success: true, harvestTime });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
+  res.json({ success: true });
 });
 
-// 3. HARVEST APPLE (ANTI-CHEAT VALIDATION)
-app.post('/api/farm/harvest', async (req, res) => {
-  try {
-    const { telegram_id, plot_index } = req.body;
-    const { data: plot } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).eq('plot_index', plot_index).single();
+// 3. USE BOOST (AIR 20% & PUPUK 40%)
+app.post('/api/farm/boost', (req, res) => {
+  const { telegram_id, plot_index, boost_type } = req.body;
+  const user = users[telegram_id];
+  const userPlot = plots[telegram_id]?.[plot_index];
 
-    if (!plot || plot.status !== 'growing') return res.status(400).json({ error: "Invalid plot state" });
+  if (userPlot.status !== 'growing') return res.status(400).json({ error: "Crop is not growing" });
 
-    const now = new Date();
-    const harvestTime = new Date(plot.harvest_time);
+  let reductionPercentage = 0;
 
-    if (now < harvestTime) {
-      return res.status(400).json({ error: "Crop is not ready yet! Stop cheating." });
-    }
-
-    // Tambah 50 Koin hasil panen apel
-    const { data: user } = await supabase.from('users').select('coins').eq('telegram_id', telegram_id).single();
-    await supabase.from('users').update({ coins: user.coins + 50 }).eq('telegram_id', telegram_id);
-    await supabase.from('plots').update({ status: 'empty', harvest_time: null }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
-
-    return res.json({ success: true, rewardCoins: 50 });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
+  if (boost_type === 'water') {
+    if (user.water_inventory <= 0) return res.status(400).json({ error: "No Water left! Buy in Market." });
+    if (userPlot.boosted_water) return res.status(400).json({ error: "Water already applied to this crop!" });
+    
+    user.water_inventory -= 1;
+    userPlot.boosted_water = true;
+    reductionPercentage = 0.20; // 20%
+  } else if (boost_type === 'fertilizer') {
+    if (user.fertilizer_inventory <= 0) return res.status(400).json({ error: "No Fertilizer left! Buy in Market." });
+    if (userPlot.boosted_fert) return res.status(400).json({ error: "Fertilizer already applied to this crop!" });
+    
+    user.fertilizer_inventory -= 1;
+    userPlot.boosted_fert = true;
+    reductionPercentage = 0.40; // 40%
   }
+
+  // Pangkas sisa waktu tanam
+  const timeReductionMs = BASE_HARVEST_TIME_MS * reductionPercentage;
+  userPlot.harvest_at -= timeReductionMs;
+
+  res.json({ success: true, remaining_time: userPlot.harvest_at - Date.now() });
 });
 
-// 4. AI FOREX CONVERT (COIN TO ATF TOKEN)
-app.post('/api/market/convert', async (req, res) => {
-  try {
-    const { telegram_id, coin_amount } = req.body;
-    if (coin_amount < 10000) return res.status(400).json({ error: "Min convert 10,000 Coins" });
+// 4. UNLOCK PLOT (SOFT P2W)
+app.post('/api/farm/unlock', (req, res) => {
+  const { telegram_id, plot_index, method } = req.body;
+  const user = users[telegram_id];
+  const userPlot = plots[telegram_id]?.[plot_index];
 
-    const { data: user } = await supabase.from('users').select('coins, atf_balance').eq('telegram_id', telegram_id).single();
-    if (user.coins < coin_amount) return res.status(400).json({ error: "Insufficient Coin balance" });
-
-    // Rasio: 10.000 Coins = 1.000000 ATF
-    const atfGained = coin_amount / 10000;
-
-    await supabase.from('users').update({
-      coins: user.coins - coin_amount,
-      atf_balance: parseFloat(user.atf_balance) + atfGained
-    }).eq('telegram_id', telegram_id);
-
-    return res.json({ success: true, atfGained });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
+  if (method === 'coins') {
+    if (user.coins < userPlot.cost_coins) return res.status(400).json({ error: "Not enough Coins!" });
+    user.coins -= userPlot.cost_coins;
+    userPlot.status = 'empty';
   }
+
+  res.json({ success: true });
 });
 
-// 5. REQUEST WITHDRAW QUEUE
-app.post('/api/wallet/withdraw', async (req, res) => {
-  try {
-    const { telegram_id, wallet_address, amount_atf } = req.body;
-    if (amount_atf < 5.0) return res.status(400).json({ error: "Minimum withdraw is 5.0 ATF" });
+// 5. HARVEST
+app.post('/api/farm/harvest', (req, res) => {
+  const { telegram_id, plot_index } = req.body;
+  const user = users[telegram_id];
+  const userPlot = plots[telegram_id]?.[plot_index];
 
-    const { data: user } = await supabase.from('users').select('atf_balance').eq('telegram_id', telegram_id).single();
-    if (parseFloat(user.atf_balance) < amount_atf) return res.status(400).json({ error: "Insufficient ATF balance" });
-
-    // Potong saldo & masukkan antrean
-    await supabase.from('users').update({ atf_balance: parseFloat(user.atf_balance) - amount_atf }).eq('telegram_id', telegram_id);
-    await supabase.from('withdrawals').insert([{ telegram_id, wallet_address, amount_atf, status: 'PENDING' }]);
-
-    return res.json({ success: true, message: "Withdrawal request queued for admin review." });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
+  if (Date.now() < userPlot.harvest_at) {
+    return res.status(400).json({ error: "Crop is not ready yet!" });
   }
+
+  user.coins += 50;
+  userPlot.status = 'empty';
+  res.json({ success: true });
 });
 
 module.exports = app;
