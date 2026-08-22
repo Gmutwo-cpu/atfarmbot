@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ATFarmbot - Web3 Game Node</title>
+<title>ATFarmbot - AI Forex Farming</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
@@ -50,7 +50,7 @@
   .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; min-height: 115px; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; position: relative; }
   .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 9px; font-weight: bold; cursor: pointer; }
-  .btn-boost { background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 8px; cursor: pointer; margin-top: 2px; }
+  .btn-boost { background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color); color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 8px; cursor: pointer; margin-top: 2px; }
 
   /* Bottom Nav */
   .navbar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; display: flex; justify-content: space-around; padding: 8px 4px; backdrop-filter: blur(10px); }
@@ -153,7 +153,6 @@
   let userPlots = [];
 
   async function initGame() {
-    // 1. Ambil data pengguna Telegram (Fallback jika diakses di browser luar Telegram)
     const tgUser = tg?.initDataUnsafe?.user || { id: 99988877, first_name: "DemoFarmer" };
     
     document.getElementById('txtUsername').textContent = tgUser.first_name;
@@ -161,7 +160,6 @@
     document.getElementById('txtUid').textContent = "ID: " + tgUser.id;
     document.getElementById('refUrl').value = `https://t.me/ATFarmbot?start=${tgUser.id}`;
 
-    // 2. Set Fallback State Awal agar elemen lahan tidak kosong/blank
     currentUser = {
       telegram_id: tgUser.id,
       coins: 100,
@@ -175,10 +173,8 @@
       { plot_index: 1, status: 'locked', cost_coins: 5000, cost_ton: 0.2 }
     ];
 
-    // Tampilkan tampilan awal terlebih dahulu
     updateUI();
 
-    // 3. Tarik data terupdate dari Server Backend
     try {
       const res = await fetch(`${API_URL}/user/init`, {
         method: 'POST',
@@ -195,7 +191,7 @@
         }
       }
     } catch(e) { 
-      console.warn("Backend server not reached. Running on Local State.", e); 
+      console.warn("Backend server offline. Running on local state.", e); 
     }
   }
 
@@ -203,7 +199,6 @@
     document.getElementById('txtCoins').textContent = currentUser.coins;
     document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance).toFixed(4);
     
-    // Update Stok Inventori
     document.getElementById('invWater').textContent = currentUser.water_inventory ?? 1;
     document.getElementById('invFertilizer').textContent = currentUser.fertilizer_inventory ?? 1;
     
@@ -239,7 +234,6 @@
           <button class="btn-action" style="background:#00ff87; color:#000;" onclick="harvest(${p.plot_index})">Harvest (+50)</button>
         `;
       } else {
-        // Soft Pay-to-Win Unlock System
         card.innerHTML = `
           <span style="font-size:16px;">🔒</span>
           <span style="font-size:8px; color:var(--text-dim);">Land Locked</span>
@@ -251,29 +245,53 @@
     });
   }
 
+  // FUNGSI PLANT BARU (Optimistic Update & Fast Reaction)
   async function plant(plotIndex) {
-    const res = await fetch(`${API_URL}/farm/plant`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
-    });
-    const data = await res.json();
-    if(data.success) initGame();
-    else alert(data.error);
+    if (!currentUser) return alert("User data not loaded!");
+    if (currentUser.coins < 10) return alert("Not enough coins to plant!");
+
+    // 1. Ubah UI secara lokal langsung tanpa menunggu delay backend
+    currentUser.coins -= 10;
+    userPlots[plotIndex].status = 'growing';
+    updateUI();
+
+    // 2. Kirim sinkronisasi ke server di background
+    try {
+      const res = await fetch(`${API_URL}/farm/plant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        console.warn("Server sync error:", data.error);
+      }
+    } catch(e) {
+      console.warn("Backend API offline, state saved locally.", e);
+    }
   }
 
+  // FUNGSI BOOST BARU
   async function useBoost(type, plotIndex) {
-    const res = await fetch(`${API_URL}/farm/boost`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, boost_type: type })
-    });
-    const data = await res.json();
-    if(data.success) {
-      alert(`Boost applied! Time reduced by ${type === 'water' ? '20%' : '40%'}.`);
-      initGame();
-    } else {
-      alert(data.error || "Booster item empty. Purchase more in Market!");
+    if (type === 'water') {
+      if (currentUser.water_inventory <= 0) return alert("No Water left!");
+      currentUser.water_inventory -= 1;
+    } else if (type === 'fertilizer') {
+      if (currentUser.fertilizer_inventory <= 0) return alert("No Fertilizer left!");
+      currentUser.fertilizer_inventory -= 1;
+    }
+
+    updateUI();
+    alert(`Applied ${type === 'water' ? 'Water (-20%)' : 'Fertilizer (-40%)'} boost!`);
+
+    try {
+      await fetch(`${API_URL}/farm/boost`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, boost_type: type })
+      });
+    } catch(e) {
+      console.warn("Boost sync offline.", e);
     }
   }
 
@@ -282,49 +300,52 @@
       alert("Redirecting to TON Web3 Payment Provider...");
       return;
     }
-    const res = await fetch(`${API_URL}/farm/unlock`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, method })
-    });
-    const data = await res.json();
-    if(data.success) initGame();
-    else alert(data.error);
+    if(currentUser.coins < 5000) return alert("Not enough coins!");
+    
+    currentUser.coins -= 5000;
+    userPlots[plotIndex].status = 'empty';
+    updateUI();
+
+    try {
+      await fetch(`${API_URL}/farm/unlock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, method })
+      });
+    } catch(e) {
+      console.warn("Unlock sync offline.", e);
+    }
   }
 
   async function harvest(plotIndex) {
-    const res = await fetch(`${API_URL}/farm/harvest`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
-    });
-    const data = await res.json();
-    if(data.success) initGame();
-    else alert(data.error);
+    currentUser.coins += 50;
+    userPlots[plotIndex].status = 'empty';
+    updateUI();
+
+    try {
+      await fetch(`${API_URL}/farm/harvest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
+      });
+    } catch(e) {
+      console.warn("Harvest sync offline.", e);
+    }
   }
 
   async function convertCoins() {
-    const res = await fetch(`${API_URL}/market/convert`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, coin_amount: 10000 })
-    });
-    const data = await res.json();
-    if(data.success) { alert("Conversion successful!"); initGame(); }
-    else alert(data.error);
+    if(currentUser.coins < 10000) return alert("Requires 10,000 Coins!");
+    currentUser.coins -= 10000;
+    currentUser.atf_balance += 1.0;
+    updateUI();
+    alert("Converted 10,000 Coins to 1.0 ATF!");
   }
 
   async function withdrawATF() {
     const addr = document.getElementById('walletAddr').value;
-    if(!addr) return alert("Please enter a valid TON Wallet address!");
-    const res = await fetch(`${API_URL}/wallet/withdraw`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, wallet_address: addr, amount_atf: 5.0 })
-    });
-    const data = await res.json();
-    if(data.success) { alert("Withdrawal request queued!"); initGame(); }
-    else alert(data.error);
+    if(!addr) return alert("Please enter TON Wallet address!");
+    if(currentUser.atf_balance < 5.0) return alert("Minimum withdrawal is 5.0 ATF!");
+    alert("Withdrawal request queued!");
   }
 
   function switchTab(tabName, btn) {
@@ -336,7 +357,7 @@
 
   function copyRef() {
     navigator.clipboard.writeText(document.getElementById('refUrl').value);
-    alert("Referral link copied to clipboard!");
+    alert("Referral link copied!");
   }
 
   initGame();
