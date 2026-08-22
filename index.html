@@ -68,6 +68,13 @@
     <div style="font-size:11px; text-align:center; color: var(--text-dim);">
       🤖 <b>AI Forex Farming Node</b>: Plant Apples to fuel AI Compute Power.
     </div>
+    
+    <!-- BANNER PENGUMUMAN MODAL AWAL (MUNCUL JIKA COINS = 0) -->
+    <div id="noticeBanner" class="header-card" style="display:none; flex-direction:column; gap:6px; background: rgba(0,242,254,0.1); border-color: var(--primary-cyan); text-align:center;">
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📢 MODAL BERTANAM KOSONG!</span>
+      <span style="font-size:9px; color:var(--text-white);">Buka menu <b>TASK</b> untuk klaim 100 Coins Modal Bertanam pertama Anda secara gratis!</span>
+    </div>
+
     <div class="farm-grid" id="gridPlots"></div>
   </div>
 
@@ -82,9 +89,16 @@
 
   <!-- VIEW 3: TASK -->
   <div id="viewTask" class="view-screen">
-    <div class="header-card" style="justify-content:space-between;">
-      <span style="font-size:10px;">Join Official Telegram Channel</span>
-      <button class="btn-action" onclick="alert('Task Reward Claimed!')">+150 Coins</button>
+    <div class="header-card" style="flex-direction:column; gap:8px; text-align:left;">
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📢 PAPAN PENGUMUMAN TUGAS</span>
+      <span style="font-size:9px; color:var(--text-dim);">Selesaikan tugas sederhana di bawah untuk klaim modal bertanam!</span>
+    </div>
+    <div class="header-card" style="justify-content:space-between; margin-top:6px;">
+      <div style="display:flex; flex-direction:column;">
+        <span style="font-size:10px; font-weight:bold;">Join Official Channel</span>
+        <span style="font-size:8px; color:var(--accent-green);">Reward: +100 Coins</span>
+      </div>
+      <button class="btn-action" style="background:linear-gradient(90deg, #00ff87, #60efff); color:#000;" onclick="claimBonus()">Claim Reward 🍎</button>
     </div>
   </div>
 
@@ -125,11 +139,11 @@
   let userPlots = [];
 
   async function initGame() {
-    const tgUser = tg?.initDataUnsafe?.user || { id: 99988877, first_name: "DemoFarmer" };
+    const tgUser = tg?.initDataUnsafe?.user || { id: 8560233709, first_name: "Gamutwo" };
     document.getElementById('txtUsername').textContent = tgUser.first_name;
     document.getElementById('txtAvatar').textContent = tgUser.first_name[0];
     document.getElementById('txtUid').textContent = "ID: " + tgUser.id;
-    document.getElementById('refUrl').value = `https://t.me/ATFarmbot?start=${tgUser.id}`;
+    document.getElementById('refUrl').value = `https://t.me/moneytree_game_bot?start=${tgUser.id}`;
 
     try {
       const res = await fetch(`${API_URL}/user/init`, {
@@ -140,7 +154,7 @@
       const data = await res.json();
       if(data.success) {
         currentUser = data.user;
-        userPlots = data.plots;
+        userPlots = data.plots || [];
         updateUI();
       }
     } catch(e) { console.error("Init Error", e); }
@@ -149,12 +163,25 @@
   function updateUI() {
     document.getElementById('txtCoins').textContent = currentUser.coins;
     document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance).toFixed(4);
+    
+    // Tampilkan banner peringatan jika saldo koin = 0
+    const banner = document.getElementById('noticeBanner');
+    if(banner) {
+      banner.style.display = (currentUser.coins === 0) ? 'flex' : 'none';
+    }
+
     renderPlots();
   }
 
   function renderPlots() {
     const grid = document.getElementById('gridPlots');
     grid.innerHTML = '';
+    
+    if(!userPlots || userPlots.length === 0) {
+      grid.innerHTML = '<div style="grid-column: span 2; text-align:center; font-size:10px; color:var(--text-dim);">Loading lahan...</div>';
+      return;
+    }
+
     userPlots.forEach(p => {
       const card = document.createElement('div');
       card.className = 'plot-card';
@@ -171,7 +198,19 @@
     });
   }
 
+  async function claimBonus() {
+    // Memberikan 100 koin langsung
+    try {
+      const res = await fetch(`${API_URL}/farm/plant`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: 0 }) });
+    } catch(e){}
+    
+    alert("Tugas Berhasil! Bonus +100 Coins ditambahkan.");
+    currentUser.coins += 100;
+    updateUI();
+  }
+
   async function plant(plotIndex) {
+    if(currentUser.coins < 10) return alert("Koin tidak cukup! Selesaikan tugas di menu TASK.");
     const res = await fetch(`${API_URL}/farm/plant`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
