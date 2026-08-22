@@ -10,12 +10,13 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// 1. INIT USER & SYNC STATE
+// 1. INIT USER & SYNC STATE (DILENGKAPI AUTO-CREATE LAHAN)
 app.post('/api/user/init', async (req, res) => {
   try {
     const { telegram_id, username, ref_by } = req.body;
     if (!telegram_id) return res.status(400).json({ error: "Missing telegram_id" });
 
+    // Cek atau buat user di database
     let { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
 
     if (!user) {
@@ -27,17 +28,23 @@ app.post('/api/user/init', async (req, res) => {
       
       if (error) throw error;
       user = newUser;
+    }
 
-      // Inisialisasi 6 Plot Lahan (Plot 0 terbuka, sisa terkunci)
+    // Ambil data lahan user
+    let { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
+
+    // Jika user belum punya data lahan di database, buatkan 6 lahan otomatis
+    if (!plots || plots.length === 0) {
       const initialPlots = Array.from({ length: 6 }, (_, i) => ({
         telegram_id,
         plot_index: i,
         status: i === 0 ? 'empty' : 'locked'
       }));
-      await supabase.from('plots').insert(initialPlots);
+      
+      const { data: newPlots, error: plotErr } = await supabase.from('plots').insert(initialPlots).select();
+      if (!plotErr) plots = newPlots;
     }
 
-    const { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
     return res.json({ success: true, user, plots });
   } catch (err) {
     return res.status(500).json({ error: err.message });
