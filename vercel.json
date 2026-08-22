@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/api/farm/boost", "destination": "/api/farm/boost.js" },
+    { "source": "/api/(.*)", "destination": "/index.js" },
+    { "source": "/(.*)", "destination": "/public/index.html" }
+  ]
+}
