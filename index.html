@@ -153,32 +153,57 @@
   let userPlots = [];
 
   async function initGame() {
+    // 1. Ambil data pengguna Telegram (Fallback jika diakses di browser luar Telegram)
     const tgUser = tg?.initDataUnsafe?.user || { id: 99988877, first_name: "DemoFarmer" };
+    
     document.getElementById('txtUsername').textContent = tgUser.first_name;
     document.getElementById('txtAvatar').textContent = tgUser.first_name[0];
     document.getElementById('txtUid').textContent = "ID: " + tgUser.id;
     document.getElementById('refUrl').value = `https://t.me/ATFarmbot?start=${tgUser.id}`;
 
+    // 2. Set Fallback State Awal agar elemen lahan tidak kosong/blank
+    currentUser = {
+      telegram_id: tgUser.id,
+      coins: 100,
+      atf_balance: 0.0000,
+      water_inventory: 1,
+      fertilizer_inventory: 1
+    };
+    
+    userPlots = [
+      { plot_index: 0, status: 'empty' },
+      { plot_index: 1, status: 'locked', cost_coins: 5000, cost_ton: 0.2 }
+    ];
+
+    // Tampilkan tampilan awal terlebih dahulu
+    updateUI();
+
+    // 3. Tarik data terupdate dari Server Backend
     try {
       const res = await fetch(`${API_URL}/user/init`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: tgUser.id, username: tgUser.first_name })
       });
-      const data = await res.json();
-      if(data.success) {
-        currentUser = data.user;
-        userPlots = data.plots;
-        updateUI();
+      
+      if(res.ok) {
+        const data = await res.json();
+        if(data.success) {
+          currentUser = data.user;
+          userPlots = data.plots;
+          updateUI();
+        }
       }
-    } catch(e) { console.error("Init Error", e); }
+    } catch(e) { 
+      console.warn("Backend server not reached. Running on Local State.", e); 
+    }
   }
 
   function updateUI() {
     document.getElementById('txtCoins').textContent = currentUser.coins;
     document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance).toFixed(4);
     
-    // Update Inventori Aset Pengguna (Default: Air = 1, Pupuk = 1)
+    // Update Stok Inventori
     document.getElementById('invWater').textContent = currentUser.water_inventory ?? 1;
     document.getElementById('invFertilizer').textContent = currentUser.fertilizer_inventory ?? 1;
     
@@ -245,7 +270,7 @@
     });
     const data = await res.json();
     if(data.success) {
-      alert(`Boost applied successfully! Time reduced by ${type === 'water' ? '20%' : '40%'}.`);
+      alert(`Boost applied! Time reduced by ${type === 'water' ? '20%' : '40%'}.`);
       initGame();
     } else {
       alert(data.error || "Booster item empty. Purchase more in Market!");
