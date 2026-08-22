@@ -1,4 +1,5 @@
 {
+  "version": 2,
   "rewrites": [
     { "source": "/api/farm/boost", "destination": "/api/farm/boost.js" },
     { "source": "/api/(.*)", "destination": "/index.js" },
