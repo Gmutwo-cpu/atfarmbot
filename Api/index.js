@@ -31,11 +31,6 @@ app.post('/api/user/init', async (req, res) => {
 
       if (createError) throw createError;
       user = newUser;
-
-      await supabase.from('plots').insert([
-        { telegram_id, plot_index: 0, status: 'empty' },
-        { telegram_id, plot_index: 1, status: 'locked', cost_coins: 5000, cost_ton: 0.2 }
-      ]);
     }
 
     const { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
