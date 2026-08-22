@@ -30,7 +30,6 @@
   .balances { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
   .pill { background: rgba(0,0,0,0.6); border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; }
 
-  /* BOARD NOTICE UI */
   .notice-board { background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(16, 24, 40, 0.9)); border: 1px dashed var(--warning-yellow); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 4px; }
   .notice-header { display: flex; justify-content: space-between; align-items: center; }
   .notice-badge { background: var(--warning-yellow); color: #000; font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
@@ -49,7 +48,8 @@
   .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; min-height: 120px; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; position: relative; }
   .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 9px; font-weight: bold; cursor: pointer; }
-  .btn-boost { background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color); color: #fff; padding: 4px 6px; border-radius: 6px; font-size: 8px; cursor: pointer; }
+  .btn-boost { background: rgba(0, 0, 0, 0.6); border: 1px solid var(--border-color); color: #fff; padding: 4px 6px; border-radius: 6px; font-size: 8px; font-weight: bold; cursor: pointer; }
+  .btn-boost:disabled { opacity: 0.4; cursor: not-allowed; border-color: rgba(255,255,255,0.1); }
 
   .market-tabs { display: flex; gap: 4px; background: rgba(0,0,0,0.5); padding: 4px; border-radius: 10px; border: 1px solid var(--border-color); }
   .market-tab-btn { flex: 1; background: transparent; border: none; color: var(--text-dim); padding: 6px; font-size: 9px; font-weight: bold; border-radius: 6px; cursor: pointer; }
@@ -89,7 +89,6 @@
 
   <!-- VIEW 1: FARMING PLOTS -->
   <div id="viewFarm" class="view-screen active">
-    <!-- PAPAN TULIS INFORMASI (NOTICE BOARD) -->
     <div class="notice-board">
       <div class="notice-header">
         <span class="notice-title" id="noticeTitle">📋 BULLETIN BOARD</span>
@@ -117,19 +116,19 @@
   <!-- VIEW 2: MARKETPLACE & STORE -->
   <div id="viewMarket" class="view-screen">
     <div class="market-tabs">
-      <button class="market-tab-btn active" onclick="switchMarketTab('Shop', this)">🛒 Seed Store</button>
+      <button class="market-tab-btn active" onclick="switchMarketTab('Shop', this)">🛒 Store</button>
       <button class="market-tab-btn" onclick="switchMarketTab('Swap', this)">🔄 DEX Swap</button>
       <button class="market-tab-btn" onclick="switchMarketTab('History', this)">📜 Logs</button>
     </div>
 
     <!-- SUB-TAB 1: SHOP -->
     <div id="marketShop" class="market-section active">
-      <div style="font-size:9px; font-weight:bold; color:var(--primary-cyan);">BUY FRUIT SEEDS (COINS)</div>
+      <div style="font-size:9px; font-weight:bold; color:var(--primary-cyan); margin-top:2px;">BUY SEEDS (COINS)</div>
       
       <div class="item-row">
         <div class="item-info">
           <span class="item-name">🍎 Apple Seed</span>
-          <span class="item-desc">Time: 3h 40m | Reward: 50 Coins</span>
+          <span class="item-desc">Time: 3h 40m | Yield: 50 Coins</span>
         </div>
         <button class="btn-action" onclick="buySeed('apple')">10 Coins</button>
       </div>
@@ -137,7 +136,7 @@
       <div class="item-row">
         <div class="item-info">
           <span class="item-name">🍊 Orange Seed</span>
-          <span class="item-desc">Time: 6 Hours | Reward: 100 Coins</span>
+          <span class="item-desc">Time: 6 Hours | Yield: 100 Coins</span>
         </div>
         <button class="btn-action" onclick="buySeed('orange')">30 Coins</button>
       </div>
@@ -145,9 +144,27 @@
       <div class="item-row">
         <div class="item-info">
           <span class="item-name">🍉 Melon Seed</span>
-          <span class="item-desc">Time: 12 Hours | Reward: 280 Coins</span>
+          <span class="item-desc">Time: 12 Hours | Yield: 280 Coins</span>
         </div>
         <button class="btn-action" onclick="buySeed('melon')">80 Coins</button>
+      </div>
+
+      <div style="font-size:9px; font-weight:bold; color:var(--warning-yellow); margin-top:6px;">BUY GROWTH BOOSTERS (MAX LIMIT / DAY)</div>
+
+      <div class="item-row">
+        <div class="item-info">
+          <span class="item-name">💧 Water Pack (-20% Time)</span>
+          <span class="item-desc">Limit: 3/day | Accelerates growth speed</span>
+        </div>
+        <button class="btn-action" style="background:linear-gradient(90deg, #0052D4, #4364F7);" onclick="buyBoostItem('water')">15 Coins</button>
+      </div>
+
+      <div class="item-row">
+        <div class="item-info">
+          <span class="item-name">🧪 Fertilizer Pack (-40% Time)</span>
+          <span class="item-desc">Limit: 2/day | Maximum growth acceleration</span>
+        </div>
+        <button class="btn-action" style="background:linear-gradient(90deg, #11998e, #38ef7d); color:#000;" onclick="buyBoostItem('fertilizer')">35 Coins</button>
       </div>
     </div>
 
@@ -232,10 +249,10 @@
     };
 
     userPlots = [
-      { plot_index: 0, status: 'empty', crop_type: null, harvest_time: null, unlock_cost_coins: 0 },
-      { plot_index: 1, status: 'locked', crop_type: null, harvest_time: null, unlock_cost_coins: 5000 },
-      { plot_index: 2, status: 'locked', crop_type: null, harvest_time: null, unlock_cost_coins: 15000 },
-      { plot_index: 3, status: 'locked', crop_type: null, harvest_time: null, unlock_cost_coins: 35000 }
+      { plot_index: 0, status: 'empty', crop_type: null, harvest_time: null, unlock_cost_coins: 0, boosted_water: false, boosted_fert: false },
+      { plot_index: 1, status: 'locked', crop_type: null, harvest_time: null, unlock_cost_coins: 5000, boosted_water: false, boosted_fert: false },
+      { plot_index: 2, status: 'locked', crop_type: null, harvest_time: null, unlock_cost_coins: 15000, boosted_water: false, boosted_fert: false },
+      { plot_index: 3, status: 'locked', crop_type: null, harvest_time: null, unlock_cost_coins: 35000, boosted_water: false, boosted_fert: false }
     ];
 
     updateUI();
@@ -304,12 +321,15 @@
         const target = p.harvest_time ? new Date(p.harvest_time).getTime() : (now + 10000);
         const diff = Math.max(0, target - now);
 
+        const waterDisabled = (p.boosted_water || (currentUser.water_inventory || 0) <= 0) ? 'disabled' : '';
+        const fertDisabled = (p.boosted_fert || (currentUser.fertilizer_inventory || 0) <= 0) ? 'disabled' : '';
+
         card.innerHTML = `
           <span style="font-size:18px;">${icon}</span>
           <span id="timer-${p.plot_index}" style="font-size:10px; font-weight:bold; color:var(--primary-cyan);">${formatTime(diff)}</span>
           <div style="display:flex; gap:3px; margin-top:2px;">
-            <button class="btn-boost" onclick="useBoost('water', ${p.plot_index})">💧 -20%</button>
-            <button class="btn-boost" onclick="useBoost('fertilizer', ${p.plot_index})">🧪 -40%</button>
+            <button class="btn-boost" ${waterDisabled} onclick="useBoost('water', ${p.plot_index})">💧 -20%</button>
+            <button class="btn-boost" ${fertDisabled} onclick="useBoost('fertilizer', ${p.plot_index})">🧪 -40%</button>
           </div>
         `;
       } else if(p.status === 'ready') {
@@ -353,6 +373,8 @@
     userPlots[plotIndex].status = 'growing';
     userPlots[plotIndex].crop_type = cropType;
     userPlots[plotIndex].harvest_time = estimatedHarvestTime;
+    userPlots[plotIndex].boosted_water = false;
+    userPlots[plotIndex].boosted_fert = false;
     
     updateUI();
 
@@ -368,6 +390,37 @@
         updateUI();
       }
     } catch(e) {}
+  }
+
+  async function useBoost(type, plotIndex) {
+    try {
+      const res = await fetch(`${API_URL}/farm/boost`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, boost_type: type })
+      });
+      const data = await res.json();
+      if(data.success) {
+        userPlots[plotIndex].harvest_time = data.harvest_time;
+        if(type === 'water') {
+          userPlots[plotIndex].boosted_water = true;
+          currentUser.water_inventory = Math.max(0, currentUser.water_inventory - 1);
+        }
+        if(type === 'fertilizer') {
+          userPlots[plotIndex].boosted_fert = true;
+          currentUser.fertilizer_inventory = Math.max(0, currentUser.fertilizer_inventory - 1);
+        }
+
+        if(data.status === 'ready') {
+          userPlots[plotIndex].status = 'ready';
+        }
+
+        updateUI();
+        showModal(`Growth accelerated by ${type === 'water' ? '20%' : '40%'}!`, "BOOST APPLIED");
+      } else {
+        showModal(data.error, "BOOST FAILED");
+      }
+    } catch(e) { showModal("Failed to apply boost.", "ERROR"); }
   }
 
   async function buySeed(cropType) {
@@ -389,6 +442,26 @@
     } catch(e) { showModal("Failed to buy seed.", "ERROR"); }
   }
 
+  async function buyBoostItem(itemType) {
+    try {
+      const res = await fetch(`${API_URL}/market/buy-boost`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, item_type: itemType })
+      });
+      const data = await res.json();
+      if(data.success) {
+        currentUser.coins = data.user_updates.coins;
+        if(itemType === 'water') currentUser.water_inventory = data.user_updates.water_inventory;
+        if(itemType === 'fertilizer') currentUser.fertilizer_inventory = data.user_updates.fertilizer_inventory;
+        updateUI();
+        showModal(`Successfully purchased ${itemType.toUpperCase()} pack!`, "PURCHASE SUCCESS");
+      } else {
+        showModal(data.error, "PURCHASE FAILED");
+      }
+    } catch(e) { showModal("Failed to buy booster.", "ERROR"); }
+  }
+
   async function harvest(plotIndex) {
     try {
       const res = await fetch(`${API_URL}/farm/harvest`, {
@@ -403,6 +476,8 @@
         userPlots[plotIndex].status = 'empty';
         userPlots[plotIndex].crop_type = null;
         userPlots[plotIndex].harvest_time = null;
+        userPlots[plotIndex].boosted_water = false;
+        userPlots[plotIndex].boosted_fert = false;
         updateUI();
         showModal(`Harvest Success! (+${data.reward} Coins)`, "SUCCESS");
       } else {
@@ -425,25 +500,6 @@
         showModal("New Plot Unlocked Successfully!", "SUCCESS");
       } else {
         showModal(data.error, "UNLOCK FAILED");
-      }
-    } catch(e) {}
-  }
-
-  async function useBoost(type, plotIndex) {
-    try {
-      const res = await fetch(`${API_URL}/farm/boost`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, boost_type: type })
-      });
-      const data = await res.json();
-      if(data.success) {
-        userPlots[plotIndex].harvest_time = data.harvest_time;
-        if(type === 'water') currentUser.water_inventory -= 1;
-        if(type === 'fertilizer') currentUser.fertilizer_inventory -= 1;
-        updateUI();
-      } else {
-        showModal(data.error, "BOOST FAILED");
       }
     } catch(e) {}
   }
