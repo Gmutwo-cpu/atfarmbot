@@ -25,19 +25,22 @@
   .header-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px; backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; }
   .user-info { display: flex; align-items: center; gap: 8px; }
   .avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-green)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; }
-  .username { font-size: 12px; font-weight: 700; }
+  .username { font-size: 11px; font-weight: 700; }
   .balances { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
   .pill { background: rgba(0,0,0,0.6); border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; }
-  .pill span { color: var(--accent-green); }
 
-  /* Views Navigation */
-  .view-screen { flex: 1; display: none; flex-direction: column; gap: 12px; margin: 12px 0; overflow-y: auto; }
-  .view-screen.active { display: flex; }
+  /* Inventory Bar */
+  .inventory-bar { background: rgba(0,0,0,0.5); border: 1px dashed var(--border-color); border-radius: 12px; padding: 8px 12px; display: flex; justify-content: space-around; align-items: center; font-size: 10px; margin-top: 6px; }
+  .inv-item { display: flex; align-items: center; gap: 4px; font-weight: bold; }
 
   /* Grid Farming Plot */
-  .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
-  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; position: relative; }
-  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; }
+  .view-screen { flex: 1; display: none; flex-direction: column; gap: 8px; margin: 8px 0; overflow-y: auto; }
+  .view-screen.active { display: flex; }
+  .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 4px; }
+  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative; padding: 6px; text-align: center; }
+  
+  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 5px 10px; border-radius: 8px; font-size: 9px; font-weight: bold; cursor: pointer; }
+  .btn-boost { background: rgba(255,255,255,0.1); border: 1px solid var(--primary-cyan); color: #fff; padding: 3px 6px; border-radius: 6px; font-size: 8px; cursor: pointer; }
 
   /* Bottom Nav */
   .navbar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; display: flex; justify-content: space-around; padding: 8px 4px; backdrop-filter: blur(10px); }
@@ -49,103 +52,88 @@
 
 <div class="app-container">
   <!-- Top Header -->
-  <div class="header-card">
-    <div class="user-info">
-      <div class="avatar" id="txtAvatar">A</div>
-      <div>
-        <div class="username" id="txtUsername">Loading...</div>
-        <div style="font-size: 8px; color: var(--text-dim);" id="txtUid">ID: -----</div>
+  <div>
+    <div class="header-card">
+      <div class="user-info">
+        <div class="avatar" id="txtAvatar">G</div>
+        <div>
+          <div class="username" id="txtUsername">Gamutwo</div>
+          <div style="font-size: 8px; color: var(--text-dim);" id="txtUid">ID: 8560233709</div>
+        </div>
+      </div>
+      <div class="balances">
+        <div class="pill">COINS: <span id="txtCoins" style="color:var(--accent-green);">100</span></div>
+        <div class="pill">ATF: <span id="txtAtf" style="color: var(--primary-cyan);">0.0000</span></div>
       </div>
     </div>
-    <div class="balances">
-      <div class="pill">COINS: <span id="txtCoins">0</span></div>
-      <div class="pill">ATF: <span id="txtAtf" style="color: var(--primary-cyan);">0.0000</span></div>
+
+    <!-- Inventory Panel Asset Pengguna -->
+    <div class="inventory-bar">
+      <div class="inv-item">💧 Air: <span id="invWater" style="color:var(--primary-cyan);">1</span></div>
+      <div class="inv-item">🧪 Pupuk: <span id="invFert" style="color:#e0aaff;">1</span></div>
+      <div class="inv-item">🍎 Panen: <span id="invApples" style="color:var(--accent-green);">0</span></div>
     </div>
   </div>
 
   <!-- VIEW 1: FARM -->
   <div id="viewFarm" class="view-screen active">
-    <div style="font-size:11px; text-align:center; color: var(--text-dim);">
-      🤖 <b>AI Forex Farming Node</b>: Plant Apples to fuel AI Compute Power.
+    <div style="font-size:10px; text-align:center; color: var(--text-dim);">
+      🤖 <b>AI Forex Farming Node</b> (Siklus Tanam: 3 Jam)
     </div>
+
     <div class="farm-grid" id="gridPlots"></div>
   </div>
 
-  <!-- VIEW 2: MARKET TERINTEGRASI -->
+  <!-- VIEW 2: MARKET -->
   <div id="viewMarket" class="view-screen">
-    
-    <!-- TOKO BIBIT (Core Farm Loop) -->
-    <div class="header-card" style="flex-direction:column; gap:6px;">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">🌱 Toko Bibit & Lahan</span>
+    <div class="header-card" style="flex-direction:column; gap:8px; text-align:center;">
+      <span style="font-size:12px; font-weight:bold; color:var(--primary-cyan);">Supply & Booster Store</span>
+      <span style="font-size:9px; color:var(--text-dim);">Beli Booster untuk Mempercepat Panen AI Compute</span>
       
-      <div style="display:flex; justify-content:space-between; width:100%; align-items:center; background:rgba(0,0,0,0.4); padding:6px; border-radius:8px;">
-        <div>
-          <div style="font-size:10px; font-weight:bold;">Bibit Apel Basic</div>
-          <div style="font-size:8px; color:var(--text-dim);">Panen 10 Menit (+50 Coins)</div>
-        </div>
-        <button class="btn-action" onclick="alert('Tanam langsung dari slot lahan di tab Farm!')">10 Coins</button>
-      </div>
-
-      <div style="display:flex; justify-content:space-between; width:100%; align-items:center; background:rgba(0,0,0,0.4); padding:6px; border-radius:8px;">
-        <div>
-          <div style="font-size:10px; font-weight:bold; color:var(--accent-green);">Bibit Golden Apple (P2W)</div>
-          <div style="font-size:8px; color:var(--text-dim);">Dapat Extra Yield + Booster</div>
-        </div>
-        <button class="btn-action" style="background:linear-gradient(90deg, #00ff87, #00c6ff); color:#000;" onclick="buyGoldenSeed()">0.1 TON</button>
+      <div style="display:flex; gap:8px; width:100%; margin-top:8px;">
+        <button class="btn-action" style="flex:1;" onclick="buyItem('water')">Beli 💧 Air<br>(50 Coins / 0.05 TON)</button>
+        <button class="btn-action" style="flex:1;" onclick="buyItem('fert')">Beli 🧪 Pupuk<br>(100 Coins / 0.1 TON)</button>
       </div>
     </div>
-
-    <!-- PENUKARAN HASIL PANEN KE TOKEN ATF (30% Pool Allocation) -->
-    <div class="header-card" style="flex-direction:column; gap:6px; text-align:center;">
-      <span style="font-size:11px; font-weight:bold; color:var(--accent-green);">⚖️ Tukar Apel ke Token ATF</span>
-      <span style="font-size:8px; color:var(--text-dim);">Dapatkan ATF secara perlahan dari hasil ketelatenan menanam.</span>
-      
-      <div style="margin:4px 0; width:100%;">
-        <input type="number" id="slowSwapAmt" placeholder="Masukkan Koin (Min 5,000)" style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:10px; padding:6px; border-radius:6px; text-align:center;">
-      </div>
-      
-      <button class="btn-action" style="width:100%;" onclick="claimSlowATF()">Klaim ATF Token</button>
-    </div>
-
-    <!-- ADS WATCH / TASK FOR REVENUE (Sumber Uang Dev & Player Reward) -->
-    <div class="header-card" style="flex-direction:column; gap:6px; background:linear-gradient(135deg, rgba(255,215,0,0.1), rgba(0,0,0,0.4));">
-      <span style="font-size:10px; font-weight:bold; color:#ffd700;">📺 Nonton Iklan / Tonton Video</span>
-      <span style="font-size:8px; color:var(--text-dim);">Dapatkan +100 Coins gratis & bantu percepat akumulasi ATF.</span>
-      <button class="btn-action" style="background:#ffd700; color:#000;" onclick="watchAdTask()">Nonton Iklan (+100 Coins)</button>
-    </div>
-
   </div>
 
   <!-- VIEW 3: TASK -->
   <div id="viewTask" class="view-screen">
-    <div class="header-card" style="justify-content:space-between;">
-      <span style="font-size:10px;">Join Official Telegram Channel</span>
-      <button class="btn-action" onclick="alert('Task Reward Claimed!')">+150 Coins</button>
+    <div class="header-card" style="flex-direction:column; gap:8px;">
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📢 PENGUMUMAN & TUGAS</span>
+      <span style="font-size:9px; color:var(--text-dim);">Dapatkan Koin & Booster Gratis Pertama Anda!</span>
+    </div>
+    <div class="header-card" style="justify-content:space-between; margin-top:6px;">
+      <div>
+        <div style="font-size:10px; font-weight:bold;">Join Official Telegram</div>
+        <div style="font-size:8px; color:var(--accent-green);">Reward: +150 Coins</div>
+      </div>
+      <button class="btn-action" onclick="alert('Reward +150 Coins Klaim Sukses!')">Claim</button>
     </div>
   </div>
 
   <!-- VIEW 4: FRIENDS -->
   <div id="viewFriends" class="view-screen">
     <div class="header-card" style="flex-direction:column; gap:6px;">
-      <span style="font-size:11px; font-weight:bold;">Invite Friends & Earn Yield</span>
+      <span style="font-size:11px; font-weight:bold;">Invite Friends</span>
       <input type="text" id="refUrl" readonly style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:9px; padding:6px; border-radius:6px;">
-      <button class="btn-action" style="width:100%;" onclick="copyRef()">Copy Referral Link</button>
+      <button class="btn-action" style="width:100%;" onclick="copyRef()">Copy Link</button>
     </div>
   </div>
 
   <!-- VIEW 5: WALLET -->
   <div id="viewWallet" class="view-screen">
     <div class="header-card" style="flex-direction:column; gap:8px;">
-      <span style="font-size:11px; font-weight:bold;">TON Web3 Withdrawal</span>
-      <input type="text" id="walletAddr" placeholder="Enter TON Wallet Address (EQ...)" style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:10px; padding:6px; border-radius:6px;">
-      <button class="btn-action" style="width:100%; background:linear-gradient(90deg, #00ff87, #60efff); color:#000;" onclick="withdrawATF()">Request Withdrawal (Min 5 ATF)</button>
+      <span style="font-size:11px; font-weight:bold;">TON Web3 Wallet</span>
+      <input type="text" placeholder="Enter TON Wallet Address" style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:10px; padding:6px; border-radius:6px;">
+      <button class="btn-action" style="width:100%; background:linear-gradient(90deg, #00ff87, #60efff); color:#000;">Withdraw ATF</button>
     </div>
   </div>
 
   <!-- Bottom Navbar -->
   <div class="navbar">
     <button class="nav-item active" onclick="switchTab('Farm', this)"><span>🌾</span>FARM</button>
-    <button class="nav-item" onclick="switchTab('Market', this)"><span>📈</span>MARKET</button>
+    <button class="nav-item" onclick="switchTab('Market', this)"><span>📈</span>STORE</button>
     <button class="nav-item" onclick="switchTab('Task', this)"><span>📝</span>TASK</button>
     <button class="nav-item" onclick="switchTab('Friends', this)"><span>👥</span>FRIENDS</button>
     <button class="nav-item" onclick="switchTab('Wallet', this)"><span>💎</span>WALLET</button>
@@ -153,137 +141,144 @@
 </div>
 
 <script>
-  const tg = window.Telegram?.WebApp;
-  if(tg) tg.expand();
+  const BASE_TIME_SEC = 3 * 60 * 60; // 3 Jam (10800 detik)
 
-  const API_URL = "/api";
-  let currentUser = null;
-  let userPlots = [];
+  let userState = {
+    coins: 100,
+    atf: 0.0,
+    water: 1, // Bonus gratis awal
+    fert: 1,  // Bonus gratis awal
+    apples: 0
+  };
 
-  async function initGame() {
-    const tgUser = tg?.initDataUnsafe?.user || { id: 99988877, first_name: "DemoFarmer" };
-    document.getElementById('txtUsername').textContent = tgUser.first_name;
-    document.getElementById('txtAvatar').textContent = tgUser.first_name[0];
-    document.getElementById('txtUid').textContent = "ID: " + tgUser.id;
-    document.getElementById('refUrl').value = `https://t.me/ATFarmbot?start=${tgUser.id}`;
-
-    try {
-      const res = await fetch(`${API_URL}/user/init`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: tgUser.id, username: tgUser.first_name })
-      });
-      const data = await res.json();
-      if(data.success) {
-        currentUser = data.user;
-        userPlots = data.plots;
-        updateUI();
-      }
-    } catch(e) { console.error("Init Error", e); }
-  }
+  let userPlots = [
+    { id: 0, status: 'empty', endTime: 0, costCoins: 0 },
+    { id: 1, status: 'empty', endTime: 0, costCoins: 0 },
+    { id: 2, status: 'locked', costCoins: 500, costCrypto: '0.2 TON' },  // Soft P2W
+    { id: 3, status: 'locked', costCoins: 1500, costCrypto: '0.5 TON' }, // Soft P2W
+    { id: 4, status: 'locked', costCoins: 5000, costCrypto: '1.5 TON' }, // P2W Heavy
+    { id: 5, status: 'locked', costCoins: 12000, costCrypto: '3.0 TON' } // VIP Node
+  ];
 
   function updateUI() {
-    document.getElementById('txtCoins').textContent = currentUser.coins;
-    document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance).toFixed(4);
+    document.getElementById('txtCoins').textContent = userState.coins;
+    document.getElementById('txtAtf').textContent = userState.atf.toFixed(4);
+    document.getElementById('invWater').textContent = userState.water;
+    document.getElementById('invFert').textContent = userState.fert;
+    document.getElementById('invApples').textContent = userState.apples;
     renderPlots();
   }
 
   function renderPlots() {
     const grid = document.getElementById('gridPlots');
     grid.innerHTML = '';
+
+    const now = Math.floor(Date.now() / 1000);
+
     userPlots.forEach(p => {
       const card = document.createElement('div');
       card.className = 'plot-card';
-      if(p.status === 'empty') {
-        card.innerHTML = `<span style="font-size:20px;">🪴</span><button class="btn-action" onclick="plant(${p.plot_index})">Plant (-10 Coins)</button>`;
-      } else if(p.status === 'growing') {
-        card.innerHTML = `<span style="font-size:20px;">⏳</span><span style="font-size:9px; color:var(--primary-cyan);">AI Compute Active</span>`;
-      } else if(p.status === 'ready') {
-        card.innerHTML = `<span style="font-size:20px;">🍎</span><button class="btn-action" style="background:#00ff87; color:#000;" onclick="harvest(${p.plot_index})">Harvest (+50)</button>`;
-      } else {
-        card.innerHTML = `<span style="font-size:20px;">🔒</span><span style="font-size:8px;">Locked</span>`;
+
+      if (p.status === 'locked') {
+        card.innerHTML = `
+          <span style="font-size:18px;">🔒</span>
+          <span style="font-size:8px; color:var(--text-dim);">Slot ${p.id + 1} Terkunci</span>
+          <button class="btn-action" style="font-size:7px; background:linear-gradient(90deg, #ff9900, #ff5500);" onclick="unlockPlot(${p.id})">
+            Buka (${p.costCoins} Coin / ${p.costCrypto})
+          </button>
+        `;
+      } else if (p.status === 'empty') {
+        card.innerHTML = `
+          <span style="font-size:22px;">🪴</span>
+          <button class="btn-action" onclick="plantSeed(${p.id})">Tanam (-10 Coins)</button>
+        `;
+      } else if (p.status === 'growing') {
+        const remaining = p.endTime - now;
+        if (remaining <= 0) {
+          p.status = 'ready';
+          renderPlots();
+          return;
+        }
+
+        const hrs = Math.floor(remaining / 3600);
+        const mins = Math.floor((remaining % 3600) / 60);
+        const secs = remaining % 60;
+        const timeStr = `${hrs}h ${mins}m ${secs}s`;
+
+        card.innerHTML = `
+          <span style="font-size:16px;">⏳</span>
+          <span style="font-size:9px; font-weight:bold; color:var(--primary-cyan);">${timeStr}</span>
+          <div style="display:flex; gap:2px; margin-top:2px;">
+            <button class="btn-boost" onclick="applyBoost(${p.id}, 'water')">💧 -10%</button>
+            <button class="btn-boost" onclick="applyBoost(${p.id}, 'fert')">🧪 -20%</button>
+          </div>
+        `;
+      } else if (p.status === 'ready') {
+        card.innerHTML = `
+          <span style="font-size:22px;">🍎</span>
+          <button class="btn-action" style="background:var(--accent-green); color:#000;" onclick="harvestCrop(${p.id})">Panen (+50)</button>
+        `;
       }
+
       grid.appendChild(card);
     });
   }
 
-  async function plant(plotIndex) {
-    const res = await fetch(`${API_URL}/farm/plant`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
-    });
-    const data = await res.json();
-    if(data.success) initGame();
-    else alert(data.error);
-  }
-
-  async function harvest(plotIndex) {
-    const res = await fetch(`${API_URL}/farm/harvest`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
-    });
-    const data = await res.json();
-    if(data.success) initGame();
-    else alert(data.error);
-  }
-
-  // LOGIKA BARU: Klaim ATF Perlahan di Market
-  async function claimSlowATF() {
-    const amt = parseInt(document.getElementById('slowSwapAmt').value);
-    if (!amt || amt < 5000) return alert("Minimal penukaran adalah 5,000 Coins!");
-
-    const res = await fetch(`${API_URL}/market/convert-slow`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, coin_amount: amt })
-    });
+  function plantSeed(plotId) {
+    if (userState.coins < 10) return alert("Koin tidak cukup! Dapatkan koin di menu TASK.");
+    userState.coins -= 10;
     
-    const data = await res.json();
-    if(data.success) {
-      alert(`Berhasil! Anda mendapatkan ${data.atfEarned} ATF.`);
-      initGame();
-    } else {
-      alert(data.error);
+    const plot = userPlots.find(p => p.id === plotId);
+    plot.status = 'growing';
+    plot.endTime = Math.floor(Date.now() / 1000) + BASE_TIME_SEC; // Set 3 Jam
+    updateUI();
+  }
+
+  function applyBoost(plotId, type) {
+    const plot = userPlots.find(p => p.id === plotId);
+    if (type === 'water') {
+      if (userState.water <= 0) return alert("Air habis! Beli di STORE menggunakan Koin atau TON.");
+      userState.water -= 1;
+      plot.endTime -= Math.floor(BASE_TIME_SEC * 0.10); // Potong 10% (18 Menit)
+    } else if (type === 'fert') {
+      if (userState.fert <= 0) return alert("Pupuk habis! Beli di STORE menggunakan Koin atau TON.");
+      userState.fert -= 1;
+      plot.endTime -= Math.floor(BASE_TIME_SEC * 0.20); // Potong 20% (36 Menit)
     }
+    updateUI();
   }
 
-  // LOGIKA BARU: Nonton Iklan (70% Dev / 30% Player Pool)
-  async function watchAdTask() {
-    alert("Iklan Selesai Ditonton!");
-    
-    const res = await fetch(`${API_URL}/task/claim-ad`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id })
-    });
-    
-    const data = await res.json();
-    if(data.success) {
-      alert(data.message);
-      initGame();
+  function harvestCrop(plotId) {
+    userState.coins += 50;
+    userState.apples += 1;
+    const plot = userPlots.find(p => p.id === plotId);
+    plot.status = 'empty';
+    updateUI();
+  }
+
+  function unlockPlot(plotId) {
+    const plot = userPlots.find(p => p.id === plotId);
+    if (userState.coins >= plot.costCoins) {
+      userState.coins -= plot.costCoins;
+      plot.status = 'empty';
+      alert(`Lahan ${plotId + 1} Berhasil Dibuka!`);
     } else {
-      alert(data.error);
+      alert(`Koin tidak cukup! Buka instan seharga ${plot.costCrypto} via TON Wallet di Telegram.`);
     }
+    updateUI();
   }
 
-  // LOGIKA BARU: Beli Bibit Premium
-  function buyGoldenSeed() {
-    alert("Fitur pembayaran TON Invoice dihubungkan di sini.");
-  }
-
-  async function withdrawATF() {
-    const addr = document.getElementById('walletAddr').value;
-    if(!addr) return alert("Enter TON Wallet address!");
-    const res = await fetch(`${API_URL}/wallet/withdraw`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: currentUser.telegram_id, wallet_address: addr, amount_atf: 5.0 })
-    });
-    const data = await res.json();
-    if(data.success) { alert("Withdrawal Queued!"); initGame(); }
-    else alert(data.error);
+  function buyItem(item) {
+    if (item === 'water') {
+      if (userState.coins < 50) return alert("Koin tidak cukup!");
+      userState.coins -= 50;
+      userState.water += 1;
+    } else if (item === 'fert') {
+      if (userState.coins < 100) return alert("Koin tidak cukup!");
+      userState.coins -= 100;
+      userState.fert += 1;
+    }
+    updateUI();
   }
 
   function switchTab(tabName, btn) {
@@ -293,12 +288,9 @@
     btn.classList.add('active');
   }
 
-  function copyRef() {
-    navigator.clipboard.writeText(document.getElementById('refUrl').value);
-    alert("Referral link copied!");
-  }
-
-  initGame();
+  // Timer loop setiap detik
+  setInterval(renderPlots, 1000);
+  updateUI();
 </script>
 </body>
 </html>
