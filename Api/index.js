@@ -8,7 +8,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-const BASE_GROW_TIME_MS = 13200000;
+const BASE_GROW_TIME_MS = 13200000; // 3 Jam 40 Menit
+const MAX_DAILY_HARVEST = 10; // Maksimal 10x panen / hari (Anti-Bot)
 
 async function logActivity(telegram_id, activity_name, amount) {
   try {
@@ -53,7 +54,7 @@ app.post('/api/farm/plant', async (req, res) => {
 
   try {
     const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
-    if (!user || user.coins < 10) return res.status(400).json({ error: 'Coins tidak cukup' });
+    if (!user || user.coins < 10) return res.status(400).json({ error: 'Coins tidak cukup untuk membeli bibit (10 Coins)' });
 
     const harvestTime = new Date(Date.now() + BASE_GROW_TIME_MS).toISOString();
 
@@ -76,16 +77,16 @@ app.post('/api/farm/boost', async (req, res) => {
     const { data: plot } = await supabase.from('plots').select('*').match({ telegram_id, plot_index }).single();
 
     if (!plot || plot.status !== 'growing' || !plot.harvest_time) {
-      return res.status(400).json({ error: 'Plot tidak valid' });
+      return res.status(400).json({ error: 'Plot tidak valid untuk di-boost' });
     }
 
     let reductionMs = 0;
     if (boost_type === 'water') {
-      if (user.water_inventory <= 0) return res.status(400).json({ error: 'Air habis' });
+      if (user.water_inventory <= 0) return res.status(400).json({ error: 'Water Pack habis' });
       reductionMs = BASE_GROW_TIME_MS * 0.20;
       await supabase.from('users').update({ water_inventory: user.water_inventory - 1 }).eq('telegram_id', telegram_id);
     } else if (boost_type === 'fertilizer') {
-      if (user.fertilizer_inventory <= 0) return res.status(400).json({ error: 'Pupuk habis' });
+      if (user.fertilizer_inventory <= 0) return res.status(400).json({ error: 'Fertilizer Pack habis' });
       reductionMs = BASE_GROW_TIME_MS * 0.40;
       await supabase.from('users').update({ fertilizer_inventory: user.fertilizer_inventory - 1 }).eq('telegram_id', telegram_id);
     }
@@ -102,58 +103,69 @@ app.post('/api/farm/boost', async (req, res) => {
   }
 });
 
-// 4. HARVEST CROP
+// 4. HARVEST CROP (WITH ANTI-BOT STAMINA SYSTEM)
 app.post('/api/farm/harvest', async (req, res) => {
   const { telegram_id, plot_index } = req.body;
 
   try {
     const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
-    await supabase.from('users').update({ coins: user.coins + 50 }).eq('telegram_id', telegram_id);
+    if (!user) return res.status(404).json({ error: 'User tidak ditemukan' });
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isNewDay = user.last_harvest_date !== todayStr;
+    const currentHarvestCount = isNewDay ? 0 : (user.daily_harvest_count || 0);
+
+    if (currentHarvestCount >= MAX_DAILY_HARVEST) {
+      return res.status(400).json({ error: 'Stamina Panen Harian Habis! (Maks 10x/hari). Kembalilah besok.' });
+    }
+
+    await supabase.from('users').update({
+      coins: user.coins + 50,
+      daily_harvest_count: currentHarvestCount + 1,
+      last_harvest_date: todayStr
+    }).eq('telegram_id', telegram_id);
+
     await supabase.from('plots').update({ status: 'empty', harvest_time: null }).match({ telegram_id, plot_index });
 
-    await logActivity(telegram_id, 'Panen Hasil Lahan', '+50 Coins');
-    return res.json({ success: true });
+    await logActivity(telegram_id, 'Panen Apel', '+50 Coins');
+    return res.json({ 
+      success: true, 
+      daily_harvest_count: currentHarvestCount + 1,
+      max_harvest: MAX_DAILY_HARVEST 
+    });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// 5. MYSTERY BOX WITH PROPORTIONAL DROP RATE (COIN SINK)
+// 5. MYSTERY BOX (COIN SINK WITH DROP RATE)
 app.post('/api/market/mystery-box', async (req, res) => {
   const { telegram_id } = req.body;
 
   try {
     const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
-    if (!user || user.coins < 500) return res.status(400).json({ error: 'Coins tidak cukup (500 Coins)' });
+    if (!user || user.coins < 500) return res.status(400).json({ error: 'Coins tidak cukup (Butuh 500 Coins)' });
 
-    // Weight Gacha Drop Rate
     const rand = Math.random() * 100;
     let reward = {};
 
     if (rand < 60) {
-      // 60% Common Title
       reward = { type: 'title', name: '🏷️ Title: "Novice Farmer"' };
     } else if (rand < 80) {
-      // 20% Water Booster
       reward = { type: 'water', name: '💧 1x Water Pack' };
     } else if (rand < 90) {
-      // 10% Fertilizer Booster
       reward = { type: 'fertilizer', name: '🧪 1x Fertilizer Pack' };
     } else if (rand < 98) {
-      // 8% Cashback
       reward = { type: 'coins', name: '💰 Cashback 100 Coins' };
     } else {
-      // 2% Rare Skin
       reward = { type: 'skin', name: '🎨 Rare Cyber-Farm Theme' };
     }
 
     let updates = { coins: user.coins - 500 };
-    if (reward.type === 'water') updates.water_inventory = user.water_inventory + 1;
-    if (reward.type === 'fertilizer') updates.fertilizer_inventory = user.fertilizer_inventory + 1;
+    if (reward.type === 'water') updates.water_inventory = (user.water_inventory || 0) + 1;
+    if (reward.type === 'fertilizer') updates.fertilizer_inventory = (user.fertilizer_inventory || 0) + 1;
     if (reward.type === 'coins') updates.coins = updates.coins + 100;
-    if (reward.type === 'title' || reward.type === 'skin') {
-      updates.equipped_title = reward.name;
-    }
+    if (reward.type === 'title' || reward.type === 'skin') updates.equipped_title = reward.name;
 
     await supabase.from('users').update(updates).eq('telegram_id', telegram_id);
     await logActivity(telegram_id, 'Buka Mystery Box', '-500 Coins');
@@ -170,20 +182,20 @@ app.post('/api/market/convert', async (req, res) => {
 
   try {
     const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
-    if (!user || user.coins < coin_amount) return res.status(400).json({ error: 'Coins tidak cukup' });
+    if (!user || user.coins < coin_amount) return res.status(400).json({ error: 'Coins tidak cukup untuk Swap' });
 
     const todayStr = new Date().toISOString().split('T')[0];
-    if (user.last_swap_date === todayStr && user.daily_swapped_coins >= 10000) {
+    const isNewDay = user.last_swap_date !== todayStr;
+    const currentSwapped = isNewDay ? 0 : (user.daily_swapped_coins || 0);
+
+    if (currentSwapped >= 10000) {
       return res.status(400).json({ error: 'Batas Swap Harian Tercapai (Maks 10,000 Coins / Hari)' });
     }
-
-    const currentSwapped = (user.last_swap_date === todayStr) ? user.daily_swapped_coins : 0;
-    const newSwappedTotal = currentSwapped + coin_amount;
 
     await supabase.from('users').update({
       coins: user.coins - coin_amount,
       atf_balance: parseFloat(user.atf_balance) + 1.0,
-      daily_swapped_coins: newSwappedTotal,
+      daily_swapped_coins: currentSwapped + coin_amount,
       last_swap_date: todayStr
     }).eq('telegram_id', telegram_id);
 
