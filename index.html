@@ -62,7 +62,7 @@
   .item-name { font-size: 10px; font-weight: bold; }
   .item-desc { font-size: 8px; color: var(--text-dim); }
 
-  .navbar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; display: flex; justify-content: space-around; padding: 8px 4px; backdrop-filter: blur(10px); }
+  .navbar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; display: flex; justify-around: space-around; padding: 8px 4px; backdrop-filter: blur(10px); }
   .nav-item { background: transparent; border: none; color: var(--text-dim); font-size: 9px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .nav-item.active { color: var(--primary-cyan); }
 
@@ -264,7 +264,8 @@
         body: JSON.stringify({ telegram_id: tgUser.id, username: tgUser.first_name })
       });
       if(res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = JSON.parse(text);
         if(data.success) {
           currentUser = data.user;
           userPlots = data.plots;
@@ -280,7 +281,7 @@
           renderHistory();
         }
       }
-    } catch(e) { console.warn("Offline Mode Active."); }
+    } catch(e) { console.warn("Offline or Safe Parse Mode Active."); }
 
     startTimerLoop();
   }
@@ -384,7 +385,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, crop_type: cropType })
       });
-      const data = await res.json();
+      const text = await res.text();
+      const data = JSON.parse(text);
       if(data.success && data.harvest_time) {
         userPlots[plotIndex].harvest_time = data.harvest_time;
         updateUI();
@@ -392,7 +394,7 @@
     } catch(e) {}
   }
 
-  // FIXED USEBOOST FUNCTION WITH ACCURATE ERROR PARSING
+  // SAFE PARSE USEBOOST FUNCTION
   async function useBoost(type, plotIndex) {
     try {
       const res = await fetch(`${API_URL}/farm/boost`, {
@@ -401,8 +403,14 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, boost_type: type })
       });
       
-      const data = await res.json();
-      
+      const rawText = await res.text();
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch(parseErr) {
+        throw new Error(`Server returned Non-JSON Response (${res.status}). Check backend routes.`);
+      }
+
       if(res.ok && data.success) {
         userPlots[plotIndex].harvest_time = data.harvest_time;
         if(type === 'water') {
@@ -435,7 +443,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, crop_type: cropType })
       });
-      const data = await res.json();
+      const text = await res.text();
+      const data = JSON.parse(text);
       if(data.success) {
         currentUser.coins = data.user_updates.coins;
         currentUser[`seed_${cropType}`] = data.user_updates[`seed_${cropType}`];
@@ -454,7 +463,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, item_type: itemType })
       });
-      const data = await res.json();
+      const text = await res.text();
+      const data = JSON.parse(text);
       if(data.success) {
         currentUser.coins = data.user_updates.coins;
         if(itemType === 'water') currentUser.water_inventory = data.user_updates.water_inventory;
@@ -474,7 +484,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
-      const data = await res.json();
+      const text = await res.text();
+      const data = JSON.parse(text);
       if(data.success) {
         currentUser.coins += data.reward;
         currentUser.daily_harvest_count = data.daily_harvest_count;
@@ -498,7 +509,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
-      const data = await res.json();
+      const text = await res.text();
+      const data = JSON.parse(text);
       if(data.success) {
         userPlots[plotIndex].status = 'empty';
         updateUI();
@@ -506,23 +518,6 @@
       } else {
         showModal(data.error, "UNLOCK FAILED");
       }
-    } catch(e) {}
-  }
-
-  async function convertCoins() {
-    try {
-      const res = await fetch(`${API_URL}/market/convert`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, coin_amount: 10000 })
-      });
-      const data = await res.json();
-      if(data.success) {
-        currentUser.coins -= 10000;
-        currentUser.atf_balance += 1.0;
-        updateUI();
-        showModal("Swapped 10,000 Coins -> 1.0 ATF Successfully!", "SWAP SUCCESS");
-      } else { showModal(data.error, "SWAP ERROR"); }
     } catch(e) {}
   }
 
