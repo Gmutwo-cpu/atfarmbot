@@ -37,14 +37,20 @@ app.post('/api/user/init', async (req, res) => {
     if (!plots || plots.length === 0) {
       const defaultPlots = [
         { telegram_id, plot_index: 0, status: 'empty' },
-        { telegram_id, plot_index: 1, status: 'locked' }
+        { telegram_id, plot_index: 1, status: 'locked' },
+        { telegram_id, plot_index: 2, status: 'locked' },
+        { telegram_id, plot_index: 3, status: 'locked' }
       ];
       await supabase.from('plots').insert(defaultPlots);
       const { data: newPlots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
       plots = newPlots;
     }
 
-    return res.json({ success: true, user, plots });
+    // Fetch tasks & history
+    const { data: tasks } = await supabase.from('completed_tasks').select('task_code').eq('telegram_id', telegram_id);
+    const { data: history } = await supabase.from('market_history').select('*').eq('telegram_id', telegram_id).order('created_at', { ascending: false }).limit(10);
+
+    return res.json({ success: true, user, plots, completed_tasks: tasks || [], history: history || [] });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -102,18 +108,16 @@ app.post('/api/farm/harvest', async (req, res) => {
   }
 });
 
-// 4. MARKET CONVERT
-app.post('/api/market/convert', async (req, res) => {
+// 4. UNLOCK PLOT
+app.post('/api/farm/unlock', async (req, res) => {
   try {
-    const { telegram_id, coin_amount } = req.body;
-    const { data: user } = await supabase.from('users').select('coins, atf_balance').eq('telegram_id', telegram_id).single();
-    if (!user || user.coins < coin_amount) return res.status(400).json({ error: "Insufficient Coins balance" });
+    const { telegram_id, plot_index } = req.body;
+    const { data: user } = await supabase.from('users').select('coins').eq('telegram_id', telegram_id).single();
+    
+    if (!user || user.coins < 5000) return res.status(400).json({ error: "Insufficient Coins to unlock plot (Required: 5,000 Coins)" });
 
-    const atfGained = coin_amount / 10000;
-    await supabase.from('users').update({
-      coins: user.coins - coin_amount,
-      atf_balance: parseFloat(user.atf_balance) + atfGained
-    }).eq('telegram_id', telegram_id);
+    await supabase.from('users').update({ coins: user.coins - 5000 }).eq('telegram_id', telegram_id);
+    await supabase.from('plots').update({ status: 'empty' }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
 
     return res.json({ success: true });
   } catch (err) {
@@ -121,7 +125,75 @@ app.post('/api/market/convert', async (req, res) => {
   }
 });
 
-// 5. WITHDRAW
+// 5. COMPLETE TASK & CLAIM REWARD
+app.post('/api/task/claim', async (req, res) => {
+  try {
+    const { telegram_id, task_code } = req.body;
+    const { data: existing } = await supabase.from('completed_tasks').select('*').eq('telegram_id', telegram_id).eq('task_code', task_code).single();
+    
+    if (existing) return res.status(400).json({ error: "Task already completed!" });
+
+    const { data: user } = await supabase.from('users').select('coins').eq('telegram_id', telegram_id).single();
+    await supabase.from('users').update({ coins: user.coins + 150 }).eq('telegram_id', telegram_id);
+    await supabase.from('completed_tasks').insert([{ telegram_id, task_code, reward_coins: 150 }]);
+
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 6. MARKET TRANSACTIONS (BUY ITEMS / CONVERT)
+app.post('/api/market/trade', async (req, res) => {
+  try {
+    const { telegram_id, action_type, amount } = req.body; // action_type: 'CONVERT', 'BUY_WATER', 'BUY_FERT'
+    const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    let details = "";
+    if (action_type === 'CONVERT') {
+      const coinCost = parseInt(amount); // e.g. 10000 coins
+      if (user.coins < coinCost) return res.status(400).json({ error: "Insufficient Coins for conversion" });
+      const atfGain = coinCost / 10000;
+      
+      await supabase.from('users').update({
+        coins: user.coins - coinCost,
+        atf_balance: parseFloat(user.atf_balance) + atfGain
+      }).eq('telegram_id', telegram_id);
+      details = `Converted ${coinCost} Coins to ${atfGain} ATF`;
+    } 
+    else if (action_type === 'BUY_WATER') {
+      const cost = 200; // 200 coins per water
+      if (user.coins < cost) return res.status(400).json({ error: "Insufficient Coins (Need 200 Coins)" });
+
+      await supabase.from('users').update({
+        coins: user.coins - cost,
+        water_inventory: user.water_inventory + 1
+      }).eq('telegram_id', telegram_id);
+      details = `Purchased 1 Water Booster for 200 Coins`;
+    } 
+    else if (action_type === 'BUY_FERT') {
+      const cost = 450; // 450 coins per fertilizer
+      if (user.coins < cost) return res.status(400).json({ error: "Insufficient Coins (Need 450 Coins)" });
+
+      await supabase.from('users').update({
+        coins: user.coins - cost,
+        fertilizer_inventory: user.fertilizer_inventory + 1
+      }).eq('telegram_id', telegram_id);
+      details = `Purchased 1 Fertilizer Booster for 450 Coins`;
+    }
+
+    // Record history
+    await supabase.from('market_history').insert([{ telegram_id, action_type, details, amount_changed: amount.toString() }]);
+
+    return res.json({ success: true, details });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 7. WITHDRAW
 app.post('/api/wallet/withdraw', async (req, res) => {
   try {
     const { telegram_id, wallet_address, amount_atf } = req.body;
