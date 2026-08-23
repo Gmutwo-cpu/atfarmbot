@@ -10,13 +10,30 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// 1. INIT USER & SYNC STATE (Safe Fallback for Plots)
+// Helper function to ensure user plots exist
+async function ensureUserPlots(telegram_id) {
+  let { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
+  if (!plots || plots.length === 0) {
+    const defaultPlots = [
+      { telegram_id, plot_index: 0, status: 'empty' },
+      { telegram_id, plot_index: 1, status: 'locked' },
+      { telegram_id, plot_index: 2, status: 'locked' },
+      { telegram_id, plot_index: 3, status: 'locked' }
+    ];
+    await.supabase.from('plots').insert(defaultPlots).catch(() => {});
+    const { data: newPlots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
+    return newPlots || defaultPlots;
+  }
+  return plots;
+}
+
+// 1. INIT USER & SYNC STATE
 app.post('/api/user/init', async (req, res) => {
   try {
     const { telegram_id, username } = req.body;
     if (!telegram_id) return res.status(400).json({ error: "Missing telegram_id" });
 
-    let { data: user, error: userErr } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
+    let { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
 
     if (!user) {
       const { data: newUser, error: insErr } = await supabase.from('users').insert([{
@@ -32,20 +49,7 @@ app.post('/api/user/init', async (req, res) => {
       user = newUser;
     }
 
-    let { data: plots, error: plotErr } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
-    
-    if (!plots || plots.length === 0) {
-      const defaultPlots = [
-        { telegram_id, plot_index: 0, status: 'empty' },
-        { telegram_id, plot_index: 1, status: 'locked' },
-        { telegram_id, plot_index: 2, status: 'locked' },
-        { telegram_id, plot_index: 3, status: 'locked' }
-      ];
-      await supabase.from('plots').insert(defaultPlots);
-      const { data: newPlots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
-      plots = newPlots;
-    }
-
+    const plots = await ensureUserPlots(telegram_id);
     const { data: tasks } = await supabase.from('completed_tasks').select('task_code').eq('telegram_id', telegram_id);
     const { data: history } = await supabase.from('market_history').select('*').eq('telegram_id', telegram_id).order('created_at', { ascending: false }).limit(10);
 
@@ -59,19 +63,25 @@ app.post('/api/user/init', async (req, res) => {
 app.post('/api/farm/plant', async (req, res) => {
   try {
     const { telegram_id, plot_index } = req.body;
-    const { data: user } = await supabase.from('users').select('coins').eq('telegram_id', telegram_id).single();
+    if (!telegram_id || plot_index === undefined) return res.status(400).json({ error: "Invalid parameters" });
 
-    if (!user || user.coins < 10) return res.status(400).json({ error: "Not enough coins for seed!" });
+    const { data: user } = await supabase.from('users').select('coins').eq('telegram_id', telegram_id).single();
+    if (!user || user.coins < 10) return res.status(400).json({ error: "Not enough coins for seed! (Required: 10 Coins)" });
+
+    await ensureUserPlots(telegram_id);
 
     const harvestTime = new Date(Date.now() + 13200000).toISOString();
 
     await supabase.from('users').update({ coins: user.coins - 10 }).eq('telegram_id', telegram_id);
-    await supabase.from('plots').update({ 
+    
+    const { error: updateErr } = await supabase.from('plots').update({ 
       status: 'growing', 
       harvest_time: harvestTime, 
       boosted_water: false, 
       boosted_fert: false 
     }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
+
+    if (updateErr) throw updateErr;
 
     return res.json({ success: true, harvestTime });
   } catch (err) {
