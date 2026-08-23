@@ -5,7 +5,6 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 module.exports = async function handler(req, res) {
-  // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -23,50 +22,61 @@ module.exports = async function handler(req, res) {
   try {
     const { telegram_id, plot_index } = req.body;
     if (!telegram_id || plot_index === undefined) {
-      return res.status(400).json({ error: "Invalid parameters: missing telegram_id or plot_index" });
+      return res.status(400).json({ error: "Missing required parameters" });
     }
 
-    // 1. Fetch User Data
+    // 1. Get user data to check coins
     const { data: user, error: userErr } = await supabase
       .from('users')
-      .select('coins')
+      .select('*')
       .eq('telegram_id', telegram_id)
       .single();
 
     if (userErr || !user) {
-      return res.status(404).json({ error: "User not found in database. Please restart app." });
+      return res.status(404).json({ error: "User not found in database" });
     }
 
-    if (user.coins < 10) {
-      return res.status(400).json({ error: "Not enough coins for seed! (Required: 10 Coins)" });
+    const PLANT_COST = 10; // Biaya koin untuk menanam
+    if (user.coins < PLANT_COST) {
+      return res.status(400).json({ error: "Not enough coins to plant!" });
     }
 
-    // 2. Calculate Harvest Time (3 Hours 40 Minutes = 13,200,000 ms)
-    const harvestTime = new Date(Date.now() + 13200000).toISOString();
+    // 2. Get specific plot
+    const { data: plot, error: plotErr } = await supabase
+      .from('plots')
+      .select('*')
+      .eq('telegram_id', telegram_id)
+      .eq('plot_index', plot_index)
+      .single();
 
-    // 3. Deduct Coins
-    const { error: coinErr } = await supabase
+    if (plotErr || !plot) {
+      return res.status(404).json({ error: "Plot not found" });
+    }
+
+    if (plot.status !== 'empty') {
+      return res.status(400).json({ error: "Plot is not empty" });
+    }
+
+    // 3. Deduct coins and update plot status to 'growing' (Cycle: 3 hours 40 minutes from now)
+    const harvestTime = new Date(Date.now() + (3 * 3600 + 40 * 60) * 1000).toISOString();
+
+    const { error: updateCoinErr } = await supabase
       .from('users')
-      .update({ coins: user.coins - 10 })
+      .update({ coins: user.coins - PLANT_COST })
       .eq('telegram_id', telegram_id);
 
-    if (coinErr) throw coinErr;
-    
-    // 4. Update Plot Status
-    const { error: updateErr } = await supabase
+    if (updateCoinErr) throw updateCoinErr;
+
+    const { error: updatePlotErr } = await supabase
       .from('plots')
-      .update({ 
-        status: 'growing', 
-        harvest_time: harvestTime, 
-        boosted_water: false, 
-        boosted_fert: false 
-      })
+      .update({ status: 'growing', harvest_time: harvestTime })
       .eq('telegram_id', telegram_id)
       .eq('plot_index', plot_index);
 
-    if (updateErr) throw updateErr;
+    if (updatePlotErr) throw updatePlotErr;
 
-    return res.status(200).json({ success: true, harvestTime });
+    return res.status(200).json({ success: true, message: "Crop planted successfully!" });
+
   } catch (err) {
     return res.status(500).json({ error: "Server Error: " + err.message });
   }
