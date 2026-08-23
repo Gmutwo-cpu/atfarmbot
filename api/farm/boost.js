@@ -15,7 +15,6 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    // Ambil data user & plot
     const { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
     const { data: plot } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).eq('plot_index', plot_index).single();
 
@@ -36,30 +35,25 @@ module.exports = async function handler(req, res) {
       if (plot.boosted_water) return res.status(400).json({ error: 'Water booster already applied to this plot!' });
       if (user.water_inventory < 1) return res.status(400).json({ error: 'Insufficient Water inventory!' });
 
-      // Kurangi 20% dari sisa waktu
       let reducedTime = remainingTime * 0.80;
       updateFields.harvest_time = new Date(now + reducedTime).toISOString();
       updateFields.boosted_water = true;
 
-      // Kurangi inventory user
       await supabase.from('users').update({ water_inventory: user.water_inventory - 1 }).eq('telegram_id', telegram_id);
 
     } else if (boost_type === 'fertilizer') {
       if (plot.boosted_fert) return res.status(400).json({ error: 'Fertilizer booster already applied to this plot!' });
       if (user.fertilizer_inventory < 1) return res.status(400).json({ error: 'Insufficient Fertilizer inventory!' });
 
-      // Kurangi 40% dari sisa waktu
       let reducedTime = remainingTime * 0.60;
       updateFields.harvest_time = new Date(now + reducedTime).toISOString();
       updateFields.boosted_fert = true;
 
-      // Kurangi inventory user
       await supabase.from('users').update({ fertilizer_inventory: user.fertilizer_inventory - 1 }).eq('telegram_id', telegram_id);
     } else {
       return res.status(400).json({ error: 'Invalid boost type' });
     }
 
-    // Update plot
     await supabase.from('plots').update(updateFields).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
 
     return res.json({ success: true, message: `${boost_type} booster applied successfully!` });
