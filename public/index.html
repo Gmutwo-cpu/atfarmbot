@@ -8,7 +8,7 @@
 <style>
   :root {
     --bg-color: #080c14;
-    --card-bg: rgba(16, 24, 40, 0.85);
+    --card-bg: rgba(16, 24, 40, 0.9);
     --primary-cyan: #00f2fe;
     --accent-green: #00ff87;
     --text-white: #ffffff;
@@ -21,67 +21,38 @@
 
   .app-container { width: 100%; max-width: 420px; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; background: radial-gradient(circle at top, #0d1b2a 0%, #080c14 100%); position: relative; }
 
-  /* Dashboard Header */
-  .header-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px; backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; }
+  .header-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 10px; backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; }
   .user-info { display: flex; align-items: center; gap: 8px; }
-  .avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-green)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; }
-  .username { font-size: 12px; font-weight: 700; }
+  .avatar { width: 34px; height: 34px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-green)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 14px; }
+  .username { font-size: 11px; font-weight: 700; }
   .balances { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-  .pill { background: rgba(0,0,0,0.6); border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; }
+  .pill { background: rgba(0,0,0,0.6); border: 1px solid var(--border-color); padding: 3px 8px; border-radius: 20px; font-size: 9px; font-weight: bold; }
   .pill span { color: var(--accent-green); }
 
-  /* Views Navigation */
-  .view-screen { flex: 1; display: none; flex-direction: column; gap: 10px; margin: 8px 0; overflow-y: auto; padding-bottom: 75px; }
+  .view-screen { flex: 1; display: none; flex-direction: column; gap: 8px; margin: 6px 0; overflow-y: auto; padding-bottom: 75px; }
   .view-screen.active { display: flex; }
 
-  /* Grid Farming Plot */
-  .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 5px; }
-  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; min-height: 135px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px; position: relative; text-align: center; }
-  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+  /* Announcement Board */
+  .announcement-box { background: linear-gradient(135deg, rgba(0,242,254,0.1), rgba(0,255,135,0.05)); border: 1px dashed var(--primary-cyan); border-radius: 12px; padding: 10px; font-size: 10px; color: var(--text-dim); line-height: 1.4; }
+  .announcement-box b { color: var(--primary-cyan); }
+
+  /* Farm Grid */
+  .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; min-height: 125px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 6px; text-align: center; }
+  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 5px 10px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; }
   .btn-action:active { opacity: 0.8; }
-  
-  /* Booster Buttons */
-  .booster-group { display: flex; gap: 4px; margin-top: 4px; }
-  .btn-boost { background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); padding: 3px 6px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; }
+  .booster-group { display: flex; gap: 4px; margin-top: 2px; }
+  .btn-boost { background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); padding: 2px 5px; border-radius: 4px; font-size: 8px; font-weight: bold; cursor: pointer; }
 
-  /* Bottom Nav */
-  .navbar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background: var(--card-bg);
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 0 4px;
-    backdrop-filter: blur(10px);
-    z-index: 1000;
-    box-sizing: border-box;
-  }
+  /* Market & Task Lists */
+  .card-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .market-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; }
+  .history-item { font-size: 8px; color: var(--text-dim); background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; display: flex; justify-content: space-between; }
 
-  .nav-item {
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    font-size: 8px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    flex: 1;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: color 0.2s ease;
-  }
-
-  .nav-item span { display: block; line-height: 1.1; }
-  .nav-item .nav-icon { font-size: 16px; }
+  /* Bottom Navbar */
+  .navbar { position: absolute; bottom: 0; left: 0; width: 100%; height: 58px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; padding: 0 4px; backdrop-filter: blur(10px); z-index: 1000; }
+  .nav-item { background: transparent; border: none; color: var(--text-dim); font-size: 8px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; text-transform: uppercase; }
+  .nav-item .nav-icon { font-size: 15px; }
   .nav-item.active { color: var(--primary-cyan); }
 </style>
 </head>
@@ -94,7 +65,7 @@
       <div class="avatar" id="txtAvatar">A</div>
       <div>
         <div class="username" id="txtUsername">Loading...</div>
-        <div style="font-size: 8px; color: var(--text-dim);" id="txtUid">ID: -----</div>
+        <div style="font-size: 7px; color: var(--text-dim);" id="txtUid">ID: -----</div>
       </div>
     </div>
     <div class="balances">
@@ -104,73 +75,87 @@
   </div>
 
   <!-- INVENTORY PANEL -->
-  <div class="header-card" style="padding: 8px 12px; font-size: 10px;">
+  <div class="header-card" style="padding: 6px 10px; font-size: 9px;">
     <span>💧 Water: <b id="invWater" style="color:var(--primary-cyan);">0</b></span>
     <span>🧪 Fert: <b id="invFert" style="color:var(--accent-green);">0</b></span>
   </div>
 
-  <!-- VIEW 1: FARM -->
+  <!-- VIEW 1: FARM (ANNOUNCEMENT + PLOTS) -->
   <div id="viewFarm" class="view-screen active">
+    <div class="announcement-box">
+      <b>📢 Announcement Board:</b> ATFarmbot is currently in active development phase. Plant AI Forex nodes, manage your inventory boosters, complete community tasks, and earn real yield rewards!
+    </div>
     <div class="farm-grid" id="gridPlots"></div>
   </div>
 
-  <!-- VIEW 2: MARKET -->
+  <!-- VIEW 2: MARKET (BUY, SELL, CONVERT & HISTORY) -->
   <div id="viewMarket" class="view-screen">
-    <div class="header-card" style="flex-direction:column; gap:8px; text-align:center;">
-      <span style="font-size:12px; font-weight:bold; color:var(--primary-cyan);">AI Forex Trading Conversion</span>
-      <span style="font-size:9px; color:var(--text-dim);">Exchange Apple Coins into ATF Jetton Tokens</span>
-      <button class="btn-action" style="width:100%; margin-top:6px;" onclick="convertCoins()">Convert 10,000 Coins -> 1.0 ATF</button>
+    <div class="card-box">
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📈 AI Forex Market & Store</span>
+      
+      <div class="market-row">
+        <span><b>Water Booster</b> (💧 1x)</span>
+        <button class="btn-action" onclick="tradeMarket('BUY_WATER', 200)">Buy (200 Coins)</button>
+      </div>
+      <div class="market-row">
+        <span><b>Fertilizer Booster</b> (🧪 1x)</span>
+        <button class="btn-action" onclick="tradeMarket('BUY_FERT', 450)">Buy (450 Coins)</button>
+      </div>
+      <div class="market-row">
+        <span><b>Convert 10k Coins</b> -> 1.0 ATF</span>
+        <button class="btn-action" style="background:var(--accent-green); color:#000;" onclick="tradeMarket('CONVERT', 10000)">Convert</button>
+      </div>
+    </div>
+
+    <div class="card-box" style="margin-top:4px;">
+      <span style="font-size:10px; font-weight:bold; color:var(--text-dim);">Transaction History</span>
+      <div id="marketHistoryList" style="display:flex; flex-direction:column; gap:3px; max-height:110px; overflow-y:auto;">
+        <span style="font-size:8px; color:var(--text-dim);">No transactions yet.</span>
+      </div>
     </div>
   </div>
 
-  <!-- VIEW 3: TASK -->
+  <!-- VIEW 3: TASK (ANNOUNCEMENT BOARD TASKS) -->
   <div id="viewTask" class="view-screen">
-    <div class="header-card" style="justify-content:space-between;">
-      <span style="font-size:10px;">Join Official Telegram Channel</span>
-      <button class="btn-action" onclick="alert('Task Reward Claimed!')">+150 Coins</button>
+    <div class="card-box">
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📝 Community Tasks Board</span>
+      <span style="font-size:9px; color:var(--text-dim);">Complete tasks below to earn free Coin rewards instantly.</span>
+      
+      <div class="market-row" style="margin-top:6px;">
+        <div>
+          <b>Join Official Telegram Channel</b><br>
+          <span style="font-size:8px; color:var(--accent-green);">Reward: +150 Coins</span>
+        </div>
+        <button class="btn-action" id="taskBtn-TG_CHANNEL" onclick="claimTask('TG_CHANNEL')">Claim Task</button>
+      </div>
     </div>
   </div>
 
   <!-- VIEW 4: FRIENDS -->
   <div id="viewFriends" class="view-screen">
-    <div class="header-card" style="flex-direction:column; gap:6px;">
+    <div class="card-box" style="text-align:center;">
       <span style="font-size:11px; font-weight:bold;">Invite Friends & Earn Yield</span>
-      <input type="text" id="refUrl" readonly style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:9px; padding:6px; border-radius:6px;">
+      <input type="text" id="refUrl" readonly style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:9px; padding:6px; border-radius:6px; text-align:center;">
       <button class="btn-action" style="width:100%;" onclick="copyRef()">Copy Referral Link</button>
     </div>
   </div>
 
   <!-- VIEW 5: WALLET -->
   <div id="viewWallet" class="view-screen">
-    <div class="header-card" style="flex-direction:column; gap:8px;">
-      <span style="font-size:11px; font-weight:bold;">TON Web3 Withdrawal</span>
-      <input type="text" id="walletAddr" placeholder="Enter TON Wallet Address (EQ...)" style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:10px; padding:6px; border-radius:6px;">
+    <div class="card-box">
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">💎 TON Web3 Withdrawal</span>
+      <input type="text" id="walletAddr" placeholder="Enter TON Wallet Address (EQ...)" style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:9px; padding:6px; border-radius:6px;">
       <button class="btn-action" style="width:100%; background:linear-gradient(90deg, #00ff87, #60efff); color:#000;" onclick="withdrawATF()">Request Withdrawal (Min 5 ATF)</button>
     </div>
   </div>
 
   <!-- Bottom Navbar -->
   <div class="navbar">
-    <button class="nav-item active" onclick="switchTab('Farm', this)">
-      <span class="nav-icon">🌾</span>
-      <span>FARM</span>
-    </button>
-    <button class="nav-item" onclick="switchTab('Market', this)">
-      <span class="nav-icon">📈</span>
-      <span>MARKET</span>
-    </button>
-    <button class="nav-item" onclick="switchTab('Task', this)">
-      <span class="nav-icon">📝</span>
-      <span>TASK</span>
-    </button>
-    <button class="nav-item" onclick="switchTab('Friends', this)">
-      <span class="nav-icon">👥</span>
-      <span>FRIENDS</span>
-    </button>
-    <button class="nav-item" onclick="switchTab('Wallet', this)">
-      <span class="nav-icon">💎</span>
-      <span>WALLET</span>
-    </button>
+    <button class="nav-item active" onclick="switchTab('Farm', this)"><span class="nav-icon">🌾</span><span>FARM</span></button>
+    <button class="nav-item" onclick="switchTab('Market', this)"><span class="nav-icon">📈</span><span>MARKET</span></button>
+    <button class="nav-item" onclick="switchTab('Task', this)"><span class="nav-icon">📝</span><span>TASK</span></button>
+    <button class="nav-item" onclick="switchTab('Friends', this)"><span class="nav-icon">👥</span><span>FRIENDS</span></button>
+    <button class="nav-item" onclick="switchTab('Wallet', this)"><span class="nav-icon">💎</span><span>WALLET</span></button>
   </div>
 </div>
 
@@ -181,6 +166,8 @@
   const API_URL = "/api";
   let currentUser = null;
   let userPlots = [];
+  let completedTasks = [];
+  let marketHistory = [];
   let timerInterval = null;
 
   async function initGame() {
@@ -197,21 +184,15 @@
         body: JSON.stringify({ telegram_id: tgUser.id, username: tgUser.first_name })
       });
       const data = await res.json();
-      if(data.success && data.user && data.plots) {
+      if(data.success) {
         currentUser = data.user;
         userPlots = data.plots;
+        completedTasks = data.completed_tasks || [];
+        marketHistory = data.history || [];
         updateUI();
-      } else {
-        throw new Error("Invalid response format");
       }
-    } catch(e) { 
-      console.warn("Using fallback local data due to network error", e);
-      currentUser = { telegram_id: tgUser.id, coins: 150, atf_balance: 0.0000, water_inventory: 2, fertilizer_inventory: 1 };
-      userPlots = [
-        { plot_index: 0, status: 'empty' },
-        { plot_index: 1, status: 'locked' }
-      ];
-      updateUI();
+    } catch(e) {
+      console.warn("Offline / Fallback mode active", e);
     }
   }
 
@@ -222,6 +203,8 @@
     document.getElementById('invWater').textContent = currentUser.water_inventory || 0;
     document.getElementById('invFert').textContent = currentUser.fertilizer_inventory || 0;
     renderPlots();
+    renderHistory();
+    checkTaskStatus();
   }
 
   function renderPlots() {
@@ -234,8 +217,8 @@
       
       if(p.status === 'empty') {
         card.innerHTML = `
-          <span style="font-size:24px;">🪴</span>
-          <span style="font-size:9px;color:var(--text-dim);">Plot #${p.plot_index}</span>
+          <span style="font-size:22px;">🪴</span>
+          <span style="font-size:8px;color:var(--text-dim);">Plot #${p.plot_index}</span>
           <button class="btn-action" onclick="plant(${p.plot_index})">Plant (-10 Coins)</button>`;
       } 
       else if(p.status === 'growing') {
@@ -246,9 +229,9 @@
           return;
         }
         card.innerHTML = `
-          <span style="font-size:22px;">🍎</span>
-          <span style="font-size:9px; color:var(--primary-cyan);">Growing...</span>
-          <span style="font-size:11px; font-weight:bold; color:var(--text-white);" id="timer-${p.plot_index}">${formatTime(remainingTime)}</span>
+          <span style="font-size:20px;">🍎</span>
+          <span style="font-size:8px; color:var(--primary-cyan);">Growing...</span>
+          <span style="font-size:10px; font-weight:bold;" id="timer-${p.plot_index}">${formatTime(remainingTime)}</span>
           <div class="booster-group">
             <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'water')">💧 -20%</button>
             <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'fertilizer')">🧪 -40%</button>
@@ -256,20 +239,44 @@
       } 
       else if(p.status === 'ready') {
         card.innerHTML = `
-          <span style="font-size:24px;">🍎</span>
-          <span style="font-size:9px; color:var(--accent-green); font-weight:bold;">Ready to Harvest!</span>
-          <button class="btn-action" style="background:var(--accent-green); color:#000; width:100%; margin-top:4px;" onclick="harvest(${p.plot_index})">Harvest (+50 Coins)</button>`;
+          <span style="font-size:22px;">🍎</span>
+          <span style="font-size:8px; color:var(--accent-green); font-weight:bold;">Ready!</span>
+          <button class="btn-action" style="background:var(--accent-green); color:#000; width:100%; margin-top:3px;" onclick="harvest(${p.plot_index})">Harvest (+50)</button>`;
       } 
       else {
         card.innerHTML = `
-          <span style="font-size:24px;">🔒</span>
-          <span style="font-size:9px; color:var(--text-dim);">Locked Plot</span>
-          <button class="btn-action" style="background:#334155; font-size:9px;" onclick="unlockPlot(${p.plot_index})">Unlock (5k Coins)</button>`;
+          <span style="font-size:22px;">🔒</span>
+          <span style="font-size:8px; color:var(--text-dim);">Locked</span>
+          <button class="btn-action" style="background:#334155; font-size:8px;" onclick="unlockPlot(${p.plot_index})">Unlock (5k)</button>`;
       }
       grid.appendChild(card);
     });
 
     startGlobalTimer();
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('marketHistoryList');
+    list.innerHTML = '';
+    if(!marketHistory || marketHistory.length === 0) {
+      list.innerHTML = `<span style="font-size:8px; color:var(--text-dim);">No transactions yet.</span>`;
+      return;
+    }
+    marketHistory.forEach(h => {
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      div.innerHTML = `<span>${h.details}</span><span>${new Date(h.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+      list.appendChild(div);
+    });
+  }
+
+  function checkTaskStatus() {
+    const btn = document.getElementById('taskBtn-TG_CHANNEL');
+    if (completedTasks.some(t => t.task_code === 'TG_CHANNEL')) {
+      btn.textContent = "Completed";
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+    }
   }
 
   function calculateRemainingTime(harvestTimeISO) {
@@ -283,9 +290,7 @@
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
-    if (h > 0) {
-      return `${h}h ${m}m ${s}s`;
-    }
+    if (h > 0) return `${h}h ${m}m ${s}s`;
     return `${m}m ${s < 10 ? '0' : ''}${s}s`;
   }
 
@@ -297,9 +302,7 @@
         if (p.status === 'growing') {
           const rem = calculateRemainingTime(p.harvest_time);
           const timerEl = document.getElementById(`timer-${p.plot_index}`);
-          if (timerEl) {
-            timerEl.textContent = formatTime(rem);
-          }
+          if (timerEl) timerEl.textContent = formatTime(rem);
           if (rem <= 0) {
             p.status = 'ready';
             needsRender = true;
@@ -318,11 +321,8 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
       const data = await res.json();
-      if(data.success) {
-        initGame();
-      } else {
-        alert(data.error || "Failed to plant");
-      }
+      if(data.success) initGame();
+      else alert(data.error || "Failed to plant");
     } catch(err) { alert("Network error during planting"); }
   }
 
@@ -334,12 +334,22 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
       const data = await res.json();
-      if(data.success) {
-        initGame();
-      } else {
-        alert(data.error || "Failed to harvest");
-      }
+      if(data.success) initGame();
+      else alert(data.error || "Failed to harvest");
     } catch(err) { alert("Network error during harvest"); }
+  }
+
+  async function unlockPlot(plotIndex) {
+    try {
+      const res = await fetch(`${API_URL}/farm/unlock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
+      });
+      const data = await res.json();
+      if(data.success) { alert("Plot unlocked successfully!"); initGame(); }
+      else alert(data.error || "Failed to unlock plot");
+    } catch(err) { alert("Network error during unlock"); }
   }
 
   async function useBoost(plotIndex, boostType) {
@@ -350,31 +360,35 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, boost_type: boostType })
       });
       const data = await res.json();
-      if(data.success) {
-        initGame();
-      } else {
-        alert(data.error || "Failed to apply booster");
-      }
-    } catch(err) {
-      alert("Error executing boost request.");
-    }
+      if(data.success) initGame();
+      else alert(data.error || "Failed to apply booster");
+    } catch(err) { alert("Error executing boost request."); }
   }
 
-  async function unlockPlot(plotIndex) {
-    alert("Unlock feature integration ready!");
-  }
-
-  async function convertCoins() {
+  async function tradeMarket(actionType, amount) {
     try {
-      const res = await fetch(`${API_URL}/market/convert`, {
+      const res = await fetch(`${API_URL}/market/trade`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, coin_amount: 10000 })
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, action_type: actionType, amount })
       });
       const data = await res.json();
-      if(data.success) { alert("Converted successfully!"); initGame(); }
+      if(data.success) { alert(data.details); initGame(); }
       else alert(data.error);
-    } catch(err) { alert("Error conversion"); }
+    } catch(err) { alert("Error market transaction"); }
+  }
+
+  async function claimTask(taskCode) {
+    try {
+      const res = await fetch(`${API_URL}/task/claim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, task_code: taskCode })
+      });
+      const data = await res.json();
+      if(data.success) { alert("Task reward claimed (+150 Coins)!"); initGame(); }
+      else alert(data.error);
+    } catch(err) { alert("Error claiming task"); }
   }
 
   async function withdrawATF() {
@@ -387,9 +401,9 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, wallet_address: addr, amount_atf: 5.0 })
       });
       const data = await res.json();
-      if(data.success) { alert("Withdrawal Queued!"); initGame(); }
+      if(data.success) { alert("Withdrawal requested successfully!"); initGame(); }
       else alert(data.error);
-    } catch(err) { alert("Error withdrawal"); }
+    } catch(err) { alert("Error withdrawal request"); }
   }
 
   function switchTab(tabName, btn) {
