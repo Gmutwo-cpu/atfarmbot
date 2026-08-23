@@ -49,6 +49,13 @@
   .market-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; }
   .history-item { font-size: 8px; color: var(--text-dim); background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; display: flex; justify-content: space-between; }
 
+  /* Custom Clean Modal (Replaces domain alerts) */
+  #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+  .modal-content { background: #0d1b2a; border: 1px solid var(--primary-cyan); width: 85%; max-width: 320px; border-radius: 14px; padding: 16px; text-align: center; box-shadow: 0 0 20px rgba(0,242,254,0.3); }
+  .modal-title { font-size: 12px; font-weight: bold; color: var(--primary-cyan); margin-bottom: 6px; }
+  .modal-text { font-size: 10px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.4; }
+  .modal-btn { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 16px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; width: 100%; }
+
   .navbar { position: absolute; bottom: 0; left: 0; width: 100%; height: 55px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; padding: 0 4px; backdrop-filter: blur(10px); z-index: 1000; }
   .nav-item { background: transparent; border: none; color: var(--text-dim); font-size: 8px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; text-transform: uppercase; }
   .nav-item .nav-icon { font-size: 14px; }
@@ -74,7 +81,7 @@
 
   <div id="viewFarm" class="view-screen active">
     <div class="announcement-box">
-      <b>📢 Announcement Board:</b> This bot is currently under active development. Some features may not work properly or might change soon as we improve the system. Thank you for your patience and support!
+      <b>📢 Announcement Board:</b> ATFarmbot is in active development. Plant AI Forex nodes (3h 40m cycle), utilize your boosters wisely, and complete tasks to earn tokens!
     </div>
 
     <div class="inventory-bar">
@@ -150,6 +157,15 @@
   </div>
 </div>
 
+<!-- Custom Notification Modal -->
+<div id="customModal">
+  <div class="modal-content">
+    <div class="modal-title" id="modalTitle">ATFarmbot System</div>
+    <div class="modal-text" id="modalMessage">Notification message here</div>
+    <button class="modal-btn" onclick="closeModal()">OK</button>
+  </div>
+</div>
+
 <script>
   const tg = window.Telegram?.WebApp;
   if(tg) tg.expand();
@@ -165,6 +181,16 @@
   let completedTasks = [];
   let marketHistory = [];
   let timerInterval = null;
+
+  function showModal(title, message) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMessage').textContent = message;
+    document.getElementById('customModal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('customModal').style.display = 'none';
+  }
 
   async function initGame() {
     const tgUser = tg?.initDataUnsafe?.user || { id: 856023370, first_name: "Farmer" };
@@ -318,9 +344,14 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
       const data = await res.json();
-      if(data.success) initGame();
-      else alert(data.error || "Failed to plant");
-    } catch(err) { alert("Network error during planting"); }
+      if(data.success) {
+        initGame();
+      } else {
+        showModal("Planting Failed", data.error || "Unable to plant seed");
+      }
+    } catch(err) { 
+      showModal("Network Error", "Failed to connect to backend server during planting."); 
+    }
   }
 
   async function harvest(plotIndex) {
@@ -332,8 +363,8 @@
       });
       const data = await res.json();
       if(data.success) initGame();
-      else alert(data.error || "Failed to harvest");
-    } catch(err) { alert("Network error during harvest"); }
+      else showModal("Harvest Failed", data.error || "Failed to harvest crop");
+    } catch(err) { showModal("Network Error", "Error connecting during harvest"); }
   }
 
   async function unlockPlot(plotIndex) {
@@ -344,9 +375,9 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
       });
       const data = await res.json();
-      if(data.success) { alert("Plot unlocked successfully!"); initGame(); }
-      else alert(data.error || "Failed to unlock plot");
-    } catch(err) { alert("Network error during unlock"); }
+      if(data.success) { showModal("Success", "Plot unlocked successfully!"); initGame(); }
+      else showModal("Unlock Failed", data.error || "Failed to unlock plot");
+    } catch(err) { showModal("Network Error", "Error connecting during unlock"); }
   }
 
   async function useBoost(plotIndex, boostType) {
@@ -358,8 +389,8 @@
       });
       const data = await res.json();
       if(data.success) initGame();
-      else alert(data.error || "Failed to apply booster");
-    } catch(err) { alert("Error executing boost request."); }
+      else showModal("Booster Failed", data.error || "Failed to apply booster");
+    } catch(err) { showModal("Error", "Error executing boost request."); }
   }
 
   async function tradeMarket(actionType, amount) {
@@ -370,9 +401,9 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, action_type: actionType, amount })
       });
       const data = await res.json();
-      if(data.success) { alert(data.details); initGame(); }
-      else alert(data.error);
-    } catch(err) { alert("Error market transaction"); }
+      if(data.success) { showModal("Market Success", data.details); initGame(); }
+      else showModal("Market Error", data.error);
+    } catch(err) { showModal("Network Error", "Error during market transaction"); }
   }
 
   async function claimTask(taskCode) {
@@ -383,14 +414,14 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, task_code: taskCode })
       });
       const data = await res.json();
-      if(data.success) { alert("Task reward claimed (+150 Coins)!"); initGame(); }
-      else alert(data.error);
-    } catch(err) { alert("Error claiming task"); }
+      if(data.success) { showModal("Reward Claimed", "Task reward claimed (+150 Coins)!"); initGame(); }
+      else showModal("Claim Failed", data.error);
+    } catch(err) { showModal("Network Error", "Error claiming task"); }
   }
 
   async function withdrawATF() {
     const addr = document.getElementById('walletAddr').value;
-    if(!addr) return alert("Enter TON Wallet address!");
+    if(!addr) return showModal("Input Required", "Enter TON Wallet address!");
     try {
       const res = await fetch(`${API_URL}/wallet/withdraw`, {
         method: 'POST',
@@ -398,9 +429,9 @@
         body: JSON.stringify({ telegram_id: currentUser.telegram_id, wallet_address: addr, amount_atf: 5.0 })
       });
       const data = await res.json();
-      if(data.success) { alert("Withdrawal requested successfully!"); initGame(); }
-      else alert(data.error);
-    } catch(err) { alert("Error withdrawal request"); }
+      if(data.success) { showModal("Withdrawal Requested", "Withdrawal requested successfully!"); initGame(); }
+      else showModal("Withdrawal Failed", data.error);
+    } catch(err) { showModal("Network Error", "Error during withdrawal request"); }
   }
 
   function switchTab(tabName, btn) {
@@ -412,7 +443,7 @@
 
   function copyRef() {
     navigator.clipboard.writeText(document.getElementById('refUrl').value);
-    alert("Referral link copied!");
+    showModal("Copied", "Referral link copied to clipboard!");
   }
 
   initGame();
