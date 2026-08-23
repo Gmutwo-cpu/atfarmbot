@@ -10,7 +10,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// Helper function to ensure user plots exist
+// Helper function to ensure user plots exist safely
 async function ensureUserPlots(telegram_id) {
   let { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
   if (!plots || plots.length === 0) {
@@ -20,7 +20,7 @@ async function ensureUserPlots(telegram_id) {
       { telegram_id, plot_index: 2, status: 'locked' },
       { telegram_id, plot_index: 3, status: 'locked' }
     ];
-    await.supabase.from('plots').insert(defaultPlots).catch(() => {});
+    await supabase.from('plots').insert(defaultPlots).catch(() => {});
     const { data: newPlots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
     return newPlots || defaultPlots;
   }
