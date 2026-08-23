@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ATFarmbot - AI Forex Farming</title>
+<title>ATFarmbot - AI Forex Farming Node</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
@@ -19,47 +19,47 @@
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
   body { background: var(--bg-color); color: var(--text-white); display: flex; justify-content: center; height: 100vh; overflow: hidden; }
 
-  .app-container { width: 100%; max-width: 420px; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; background: radial-gradient(circle at top, #0d1b2a 0%, #080c14 100%); position: relative; }
+  .app-container { width: 100%; max-width: 420px; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 10px; background: radial-gradient(circle at top, #0d1b2a 0%, #080c14 100%); position: relative; }
 
-  .header-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 10px; backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; }
+  .header-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px 10px; backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; }
   .user-info { display: flex; align-items: center; gap: 8px; }
-  .avatar { width: 34px; height: 34px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-green)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 14px; }
+  .avatar { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-green)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 13px; }
   .username { font-size: 11px; font-weight: 700; }
   .balances { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-  .pill { background: rgba(0,0,0,0.6); border: 1px solid var(--border-color); padding: 3px 8px; border-radius: 20px; font-size: 9px; font-weight: bold; }
+  .pill { background: rgba(0,0,0,0.6); border: 1px solid var(--border-color); padding: 2px 7px; border-radius: 20px; font-size: 9px; font-weight: bold; }
   .pill span { color: var(--accent-green); }
 
-  .view-screen { flex: 1; display: none; flex-direction: column; gap: 8px; margin: 6px 0; overflow-y: auto; padding-bottom: 75px; }
+  /* Inventory Panel di Halaman Farm */
+  .inventory-bar { display: flex; justify-content: space-around; background: rgba(0, 242, 254, 0.08); border: 1px solid var(--border-color); border-radius: 10px; padding: 6px; font-size: 9px; font-weight: 600; text-align: center; }
+  .inventory-bar span b { color: var(--primary-cyan); }
+
+  .view-screen { flex: 1; display: none; flex-direction: column; gap: 6px; margin: 6px 0; overflow-y: auto; padding-bottom: 65px; }
   .view-screen.active { display: flex; }
 
-  /* Announcement Board */
-  .announcement-box { background: linear-gradient(135deg, rgba(0,242,254,0.1), rgba(0,255,135,0.05)); border: 1px dashed var(--primary-cyan); border-radius: 12px; padding: 10px; font-size: 10px; color: var(--text-dim); line-height: 1.4; }
+  .announcement-box { background: linear-gradient(135deg, rgba(0,242,254,0.1), rgba(0,255,135,0.05)); border: 1px dashed var(--primary-cyan); border-radius: 10px; padding: 8px; font-size: 9px; color: var(--text-dim); line-height: 1.35; }
   .announcement-box b { color: var(--primary-cyan); }
 
-  /* Farm Grid */
-  .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; min-height: 125px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 6px; text-align: center; }
-  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 5px 10px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; }
+  .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px; text-align: center; }
+  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 5px 8px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; }
   .btn-action:active { opacity: 0.8; }
-  .booster-group { display: flex; gap: 4px; margin-top: 2px; }
-  .btn-boost { background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); padding: 2px 5px; border-radius: 4px; font-size: 8px; font-weight: bold; cursor: pointer; }
+  .booster-group { display: flex; gap: 3px; margin-top: 2px; }
+  .btn-boost { background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); padding: 2px 4px; border-radius: 4px; font-size: 8px; font-weight: bold; cursor: pointer; }
 
-  /* Market & Task Lists */
-  .card-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
-  .market-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; }
+  .card-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .market-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; }
   .history-item { font-size: 8px; color: var(--text-dim); background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; display: flex; justify-content: space-between; }
 
-  /* Bottom Navbar */
-  .navbar { position: absolute; bottom: 0; left: 0; width: 100%; height: 58px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; padding: 0 4px; backdrop-filter: blur(10px); z-index: 1000; }
+  .navbar { position: absolute; bottom: 0; left: 0; width: 100%; height: 55px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; padding: 0 4px; backdrop-filter: blur(10px); z-index: 1000; }
   .nav-item { background: transparent; border: none; color: var(--text-dim); font-size: 8px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; text-transform: uppercase; }
-  .nav-item .nav-icon { font-size: 15px; }
+  .nav-item .nav-icon { font-size: 14px; }
   .nav-item.active { color: var(--primary-cyan); }
 </style>
 </head>
 <body>
 
 <div class="app-container">
-  <!-- Top Header -->
+  <!-- Header -->
   <div class="header-card">
     <div class="user-info">
       <div class="avatar" id="txtAvatar">A</div>
@@ -74,21 +74,24 @@
     </div>
   </div>
 
-  <!-- INVENTORY PANEL -->
-  <div class="header-card" style="padding: 6px 10px; font-size: 9px;">
-    <span>💧 Water: <b id="invWater" style="color:var(--primary-cyan);">0</b></span>
-    <span>🧪 Fert: <b id="invFert" style="color:var(--accent-green);">0</b></span>
-  </div>
-
-  <!-- VIEW 1: FARM (ANNOUNCEMENT + PLOTS) -->
+  <!-- VIEW 1: FARM (ANNOUNCEMENT + INVENTORY PANEL + PLOTS) -->
   <div id="viewFarm" class="view-screen active">
     <div class="announcement-box">
-      <b>📢 Announcement Board:</b> ATFarmbot is currently in active development phase. Plant AI Forex nodes, manage your inventory boosters, complete community tasks, and earn real yield rewards!
+      <b>📢 Announcement Board:</b> ATFarmbot is in active development. Plant AI Forex nodes (3h 40m cycle), utilize your boosters wisely, and complete tasks to earn tokens!
     </div>
+
+    <!-- Inventory Panel Real-time di Halaman Farm -->
+    <div class="inventory-bar">
+      <span>💧 Water: <b id="invWater">0</b></span>
+      <span>🧪 Fert: <b id="invFert" style="color:var(--accent-green);">0</b></span>
+      <span>🍎 Yield: <b id="invYield">Active</b></span>
+      <span>🎟️ Pass: <b style="color:#ffaa00;">VIP 0</b></span>
+    </div>
+
     <div class="farm-grid" id="gridPlots"></div>
   </div>
 
-  <!-- VIEW 2: MARKET (BUY, SELL, CONVERT & HISTORY) -->
+  <!-- VIEW 2: MARKET -->
   <div id="viewMarket" class="view-screen">
     <div class="card-box">
       <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📈 AI Forex Market & Store</span>
@@ -109,17 +112,17 @@
 
     <div class="card-box" style="margin-top:4px;">
       <span style="font-size:10px; font-weight:bold; color:var(--text-dim);">Transaction History</span>
-      <div id="marketHistoryList" style="display:flex; flex-direction:column; gap:3px; max-height:110px; overflow-y:auto;">
+      <div id="marketHistoryList" style="display:flex; flex-direction:column; gap:3px; max-height:100px; overflow-y:auto;">
         <span style="font-size:8px; color:var(--text-dim);">No transactions yet.</span>
       </div>
     </div>
   </div>
 
-  <!-- VIEW 3: TASK (ANNOUNCEMENT BOARD TASKS) -->
+  <!-- VIEW 3: TASK BOARD -->
   <div id="viewTask" class="view-screen">
     <div class="card-box">
       <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📝 Community Tasks Board</span>
-      <span style="font-size:9px; color:var(--text-dim);">Complete tasks below to earn free Coin rewards instantly.</span>
+      <span style="font-size:9px; color:var(--text-dim);">Complete the task below to claim free coin rewards instantly.</span>
       
       <div class="market-row" style="margin-top:6px;">
         <div>
@@ -149,7 +152,7 @@
     </div>
   </div>
 
-  <!-- Bottom Navbar -->
+  <!-- Navbar -->
   <div class="navbar">
     <button class="nav-item active" onclick="switchTab('Farm', this)"><span class="nav-icon">🌾</span><span>FARM</span></button>
     <button class="nav-item" onclick="switchTab('Market', this)"><span class="nav-icon">📈</span><span>MARKET</span></button>
@@ -217,7 +220,7 @@
       
       if(p.status === 'empty') {
         card.innerHTML = `
-          <span style="font-size:22px;">🪴</span>
+          <span style="font-size:20px;">🪴</span>
           <span style="font-size:8px;color:var(--text-dim);">Plot #${p.plot_index}</span>
           <button class="btn-action" onclick="plant(${p.plot_index})">Plant (-10 Coins)</button>`;
       } 
@@ -229,9 +232,9 @@
           return;
         }
         card.innerHTML = `
-          <span style="font-size:20px;">🍎</span>
+          <span style="font-size:18px;">🍎</span>
           <span style="font-size:8px; color:var(--primary-cyan);">Growing...</span>
-          <span style="font-size:10px; font-weight:bold;" id="timer-${p.plot_index}">${formatTime(remainingTime)}</span>
+          <span style="font-size:9px; font-weight:bold;" id="timer-${p.plot_index}">${formatTime(remainingTime)}</span>
           <div class="booster-group">
             <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'water')">💧 -20%</button>
             <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'fertilizer')">🧪 -40%</button>
@@ -239,13 +242,13 @@
       } 
       else if(p.status === 'ready') {
         card.innerHTML = `
-          <span style="font-size:22px;">🍎</span>
+          <span style="font-size:20px;">🍎</span>
           <span style="font-size:8px; color:var(--accent-green); font-weight:bold;">Ready!</span>
           <button class="btn-action" style="background:var(--accent-green); color:#000; width:100%; margin-top:3px;" onclick="harvest(${p.plot_index})">Harvest (+50)</button>`;
       } 
       else {
         card.innerHTML = `
-          <span style="font-size:22px;">🔒</span>
+          <span style="font-size:20px;">🔒</span>
           <span style="font-size:8px; color:var(--text-dim);">Locked</span>
           <button class="btn-action" style="background:#334155; font-size:8px;" onclick="unlockPlot(${p.plot_index})">Unlock (5k)</button>`;
       }
