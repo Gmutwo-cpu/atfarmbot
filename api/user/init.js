@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
       .eq('telegram_id', telegram_id)
       .single();
 
-    // 2. If user does not exist, insert new user (Trigger will automatically create plots)
+    // 2. If user does not exist, insert new user (Database Trigger will automatically create plots)
     if (!user) {
       const { data: newUser, error: insertErr } = await supabase
         .from('users')
@@ -45,7 +45,7 @@ module.exports = async function handler(req, res) {
       user = newUser;
     }
 
-    // 3. Fetch user plots
+    // 3. Fetch user plots (Do NOT manually insert plots here to prevent duplicate key conflicts)
     const { data: plots, error: plotsErr } = await supabase
       .from('plots')
       .select('*')
@@ -56,16 +56,23 @@ module.exports = async function handler(req, res) {
 
     // 4. Fetch activity history
     const { data: history } = await supabase
-      .from('activity_logs')
+      .from('market_history')
       .select('*')
       .eq('telegram_id', telegram_id)
       .order('created_at', { ascending: false })
       .limit(10);
 
+    // 5. Fetch completed tasks
+    const { data: completedTasks } = await supabase
+      .from('completed_tasks')
+      .select('*')
+      .eq('telegram_id', telegram_id);
+
     return res.status(200).json({
       success: true,
       user,
-      plots,
+      plots: plots || [],
+      completed_tasks: completedTasks || [],
       history: history || []
     });
 
