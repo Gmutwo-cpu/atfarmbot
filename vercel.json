@@ -1,14 +1,6 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/user/init", "destination": "/api/user/init.js" },
-    { "source": "/api/farm/plant", "destination": "/api/farm/plant.js" },
-    { "source": "/api/farm/harvest", "destination": "/api/farm/harvest.js" },
-    { "source": "/api/farm/unlock", "destination": "/api/farm/unlock.js" },
-    { "source": "/api/farm/boost", "destination": "/api/farm/boost.js" },
-    { "source": "/api/task/claim", "destination": "/api/task/claim.js" },
-    { "source": "/api/market/trade", "destination": "/api/market/trade.js" },
-    { "source": "/api/wallet/withdraw", "destination": "/api/wallet/withdraw.js" },
-    { "source": "/(.*)", "destination": "/public/index.html" }
+    { "source": "/api/(.*)", "destination": "/api/$1" }
   ]
 }
