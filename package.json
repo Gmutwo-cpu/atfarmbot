@@ -1,6 +1,6 @@
 {
   "name": "atfarmbot",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "ATFarmbot AI Forex Farming Telegram Mini App",
   "main": "index.js",
   "scripts": {
