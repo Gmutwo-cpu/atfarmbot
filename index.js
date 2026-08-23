@@ -10,7 +10,6 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// Helper function to ensure user plots exist safely
 async function ensureUserPlots(telegram_id) {
   let { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
   if (!plots || plots.length === 0) {
@@ -27,7 +26,7 @@ async function ensureUserPlots(telegram_id) {
   return plots;
 }
 
-// 1. INIT USER & SYNC STATE
+// 1. INIT USER
 app.post('/api/user/init', async (req, res) => {
   try {
     const { telegram_id, username } = req.body;
@@ -59,37 +58,7 @@ app.post('/api/user/init', async (req, res) => {
   }
 });
 
-// 2. PLANT SEED (Duration: 3 Hours 40 Minutes = 13,200,000 ms)
-app.post('/api/farm/plant', async (req, res) => {
-  try {
-    const { telegram_id, plot_index } = req.body;
-    if (!telegram_id || plot_index === undefined) return res.status(400).json({ error: "Invalid parameters" });
-
-    const { data: user } = await supabase.from('users').select('coins').eq('telegram_id', telegram_id).single();
-    if (!user || user.coins < 10) return res.status(400).json({ error: "Not enough coins for seed! (Required: 10 Coins)" });
-
-    await ensureUserPlots(telegram_id);
-
-    const harvestTime = new Date(Date.now() + 13200000).toISOString();
-
-    await supabase.from('users').update({ coins: user.coins - 10 }).eq('telegram_id', telegram_id);
-    
-    const { error: updateErr } = await supabase.from('plots').update({ 
-      status: 'growing', 
-      harvest_time: harvestTime, 
-      boosted_water: false, 
-      boosted_fert: false 
-    }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
-
-    if (updateErr) throw updateErr;
-
-    return res.json({ success: true, harvestTime });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// 3. HARVEST CROP
+// 2. HARVEST CROP
 app.post('/api/farm/harvest', async (req, res) => {
   try {
     const { telegram_id, plot_index } = req.body;
@@ -117,7 +86,7 @@ app.post('/api/farm/harvest', async (req, res) => {
   }
 });
 
-// 4. UNLOCK PLOT
+// 3. UNLOCK PLOT
 app.post('/api/farm/unlock', async (req, res) => {
   try {
     const { telegram_id, plot_index } = req.body;
@@ -134,7 +103,7 @@ app.post('/api/farm/unlock', async (req, res) => {
   }
 });
 
-// 5. COMPLETE TASK
+// 4. COMPLETE TASK
 app.post('/api/task/claim', async (req, res) => {
   try {
     const { telegram_id, task_code } = req.body;
@@ -152,7 +121,7 @@ app.post('/api/task/claim', async (req, res) => {
   }
 });
 
-// 6. MARKET TRANSACTIONS
+// 5. MARKET TRANSACTIONS
 app.post('/api/market/trade', async (req, res) => {
   try {
     const { telegram_id, action_type, amount } = req.body; 
@@ -201,7 +170,7 @@ app.post('/api/market/trade', async (req, res) => {
   }
 });
 
-// 7. WITHDRAW
+// 6. WITHDRAW
 app.post('/api/wallet/withdraw', async (req, res) => {
   try {
     const { telegram_id, wallet_address, amount_atf } = req.body;
