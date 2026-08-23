@@ -47,7 +47,6 @@
 
   .card-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
   .market-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; }
-  .history-item { font-size: 8px; color: var(--text-dim); background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px; display: flex; justify-content: space-between; }
 
   /* Custom Clean Modal */
   #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
@@ -81,7 +80,7 @@
 
   <div id="viewFarm" class="view-screen active">
     <div class="announcement-box">
-      <b>📢 Announcement Board:</b> ATFarmbot is live. Plant AI Forex nodes (3h 40m cycle), utilize boosters, and complete tasks to earn tokens!
+      <b>📢 System Notice:</b> Clean architecture deployed. Plant AI Forex nodes, use boosters, and harvest rewards!
     </div>
 
     <div class="inventory-bar">
@@ -96,55 +95,32 @@
 
   <div id="viewMarket" class="view-screen">
     <div class="card-box">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📈 AI Forex Market & Store</span>
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📈 AI Forex Market</span>
       <div class="market-row">
-        <span><b>Water Booster</b> (💧 1x)</span>
-        <button class="btn-action" onclick="tradeMarket('BUY_WATER', 200)">Buy (200 Coins)</button>
-      </div>
-      <div class="market-row">
-        <span><b>Fertilizer Booster</b> (🧪 1x)</span>
-        <button class="btn-action" onclick="tradeMarket('BUY_FERT', 450)">Buy (450 Coins)</button>
-      </div>
-      <div class="market-row">
-        <span><b>Convert 10k Coins</b> -> 1.0 ATF</span>
-        <button class="btn-action" style="background:var(--accent-green); color:#000;" onclick="tradeMarket('CONVERT', 10000)">Convert</button>
-      </div>
-    </div>
-    <div class="card-box" style="margin-top:4px;">
-      <span style="font-size:10px; font-weight:bold; color:var(--text-dim);">Transaction History</span>
-      <div id="marketHistoryList" style="display:flex; flex-direction:column; gap:3px; max-height:100px; overflow-y:auto;">
-        <span style="font-size:8px; color:var(--text-dim);">No transactions yet.</span>
+        <span><b>Water Booster</b> (💧)</span>
+        <span style="font-size:9px; color:var(--text-dim);">Coming Soon</span>
       </div>
     </div>
   </div>
 
   <div id="viewTask" class="view-screen">
     <div class="card-box">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📝 Community Tasks Board</span>
-      <span style="font-size:9px; color:var(--text-dim);">Complete the task below to claim free coin rewards instantly.</span>
-      <div class="market-row" style="margin-top:6px;">
-        <div>
-          <b>Join Official Telegram Channel</b><br>
-          <span style="font-size:8px; color:var(--accent-green);">Reward: +150 Coins</span>
-        </div>
-        <button class="btn-action" id="taskBtn-TG_CHANNEL" onclick="claimTask('TG_CHANNEL')">Claim Task</button>
-      </div>
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📝 Tasks</span>
+      <span style="font-size:9px; color:var(--text-dim);">Task board will be available soon.</span>
     </div>
   </div>
 
   <div id="viewFriends" class="view-screen">
     <div class="card-box" style="text-align:center;">
-      <span style="font-size:11px; font-weight:bold;">Invite Friends & Earn Yield</span>
+      <span style="font-size:11px; font-weight:bold;">Invite Friends</span>
       <input type="text" id="refUrl" readonly style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:9px; padding:6px; border-radius:6px; text-align:center;">
-      <button class="btn-action" style="width:100%;" onclick="copyRef()">Copy Referral Link</button>
     </div>
   </div>
 
   <div id="viewWallet" class="view-screen">
     <div class="card-box">
       <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">💎 TON Web3 Withdrawal</span>
-      <input type="text" id="walletAddr" placeholder="Enter TON Wallet Address (EQ...)" style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:9px; padding:6px; border-radius:6px;">
-      <button class="btn-action" style="width:100%; background:linear-gradient(90deg, #00ff87, #60efff); color:#000;" onclick="withdrawATF()">Request Withdrawal (Min 5 ATF)</button>
+      <span style="font-size:9px; color:var(--text-dim);">Wallet integration ready.</span>
     </div>
   </div>
 
@@ -160,8 +136,8 @@
 <!-- Custom Notification Modal -->
 <div id="customModal">
   <div class="modal-content">
-    <div class="modal-title" id="modalTitle">ATFarmbot System</div>
-    <div class="modal-text" id="modalMessage">Notification message here</div>
+    <div class="modal-title" id="modalTitle">System Notification</div>
+    <div class="modal-text" id="modalMessage">Message here</div>
     <button class="modal-btn" onclick="closeModal()">OK</button>
   </div>
 </div>
@@ -173,8 +149,6 @@
   const API_URL = "/api";
   let currentUser = null;
   let userPlots = [];
-  let completedTasks = [];
-  let marketHistory = [];
   let timerInterval = null;
 
   function showModal(title, message) {
@@ -188,7 +162,6 @@
   }
 
   async function initGame() {
-    // Ambil data user dari Telegram WebApp, gunakan fallback aman jika diuji di browser biasa
     const tgUser = tg?.initDataUnsafe?.user || { id: 123456789, first_name: "WebTestUser" };
     
     document.getElementById('txtUsername').textContent = tgUser.first_name;
@@ -207,15 +180,12 @@
       if(res.ok && data.success) {
         currentUser = data.user;
         userPlots = data.plots || [];
-        completedTasks = data.completed_tasks || [];
-        marketHistory = data.history || [];
         updateUI();
       } else {
-        showModal("Init Error", data.error || "Failed to initialize user session.");
+        showModal("Init Error", data.error || "Failed to initialize session.");
       }
     } catch(e) {
-      console.warn("Network error during init", e);
-      showModal("Connection Error", "Could not connect to backend server. Please check your deployment.");
+      showModal("Connection Error", "Could not connect to backend server.");
     }
   }
 
@@ -226,8 +196,6 @@
     document.getElementById('invWater').textContent = currentUser.water_inventory || 0;
     document.getElementById('invFert').textContent = currentUser.fertilizer_inventory || 0;
     renderPlots();
-    renderHistory();
-    checkTaskStatus();
   }
 
   function renderPlots() {
@@ -256,8 +224,8 @@
           <span style="font-size:8px; color:var(--primary-cyan);">Growing...</span>
           <span style="font-size:9px; font-weight:bold;" id="timer-${p.plot_index}">${formatTime(remainingTime)}</span>
           <div class="booster-group">
-            <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'water')">💧 -20%</button>
-            <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'fertilizer')">🧪 -40%</button>
+            <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'water')">💧</button>
+            <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'fertilizer')">🧪</button>
           </div>`;
       } 
       else if(p.status === 'ready') {
@@ -270,36 +238,12 @@
         card.innerHTML = `
           <span style="font-size:20px;">🔒</span>
           <span style="font-size:8px; color:var(--text-dim);">Locked</span>
-          <button class="btn-action" style="background:#334155; font-size:8px;" onclick="unlockPlot(${p.plot_index})">Unlock (5k)</button>`;
+          <span style="font-size:8px; color:var(--text-dim);">5k Coins</span>`;
       }
       grid.appendChild(card);
     });
 
     startGlobalTimer();
-  }
-
-  function renderHistory() {
-    const list = document.getElementById('marketHistoryList');
-    list.innerHTML = '';
-    if(!marketHistory || marketHistory.length === 0) {
-      list.innerHTML = `<span style="font-size:8px; color:var(--text-dim);">No transactions yet.</span>`;
-      return;
-    }
-    marketHistory.forEach(h => {
-      const div = document.createElement('div');
-      div.className = 'history-item';
-      div.innerHTML = `<span>${h.details}</span><span>${new Date(h.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
-      list.appendChild(div);
-    });
-  }
-
-  function checkTaskStatus() {
-    const btn = document.getElementById('taskBtn-TG_CHANNEL');
-    if (btn && completedTasks.some(t => t.task_code === 'TG_CHANNEL')) {
-      btn.textContent = "Completed";
-      btn.disabled = true;
-      btn.style.opacity = "0.5";
-    }
   }
 
   function calculateRemainingTime(harvestTimeISO) {
@@ -337,7 +281,7 @@
   }
 
   async function plant(plotIndex) {
-    if (!currentUser) return showModal("Error", "User session not loaded yet.");
+    if (!currentUser) return;
     try {
       const res = await fetch(`${API_URL}/farm/plant`, {
         method: 'POST',
@@ -348,10 +292,10 @@
       if(res.ok && data.success) {
         initGame();
       } else {
-        showModal("Planting Failed", data.error || "Server rejected planting request");
+        showModal("Planting Failed", data.error || "Server rejected request");
       }
     } catch(err) { 
-      showModal("Network Error", err.message || "Failed to connect to backend server during planting."); 
+      showModal("Network Error", err.message); 
     }
   }
 
@@ -365,21 +309,7 @@
       });
       const data = await res.json();
       if(res.ok && data.success) initGame();
-      else showModal("Harvest Failed", data.error || "Failed to harvest crop");
-    } catch(err) { showModal("Network Error", err.message); }
-  }
-
-  async function unlockPlot(plotIndex) {
-    if (!currentUser) return;
-    try {
-      const res = await fetch(`${API_URL}/farm/unlock`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
-      });
-      const data = await res.json();
-      if(res.ok && data.success) { showModal("Success", "Plot unlocked successfully!"); initGame(); }
-      else showModal("Unlock Failed", data.error || "Failed to unlock plot");
+      else showModal("Harvest Failed", data.error);
     } catch(err) { showModal("Network Error", err.message); }
   }
 
@@ -393,52 +323,8 @@
       });
       const data = await res.json();
       if(res.ok && data.success) initGame();
-      else showModal("Booster Failed", data.error || "Failed to apply booster");
+      else showModal("Booster Failed", data.error);
     } catch(err) { showModal("Error", err.message); }
-  }
-
-  async function tradeMarket(actionType, amount) {
-    if (!currentUser) return;
-    try {
-      const res = await fetch(`${API_URL}/market/trade`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, action_type: actionType, amount })
-      });
-      const data = await res.json();
-      if(res.ok && data.success) { showModal("Market Success", data.details); initGame(); }
-      else showModal("Market Error", data.error);
-    } catch(err) { showModal("Network Error", err.message); }
-  }
-
-  async function claimTask(taskCode) {
-    if (!currentUser) return;
-    try {
-      const res = await fetch(`${API_URL}/task/claim`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, task_code: taskCode })
-      });
-      const data = await res.json();
-      if(res.ok && data.success) { showModal("Reward Claimed", "Task reward claimed (+150 Coins)!"); initGame(); }
-      else showModal("Claim Failed", data.error);
-    } catch(err) { showModal("Network Error", err.message); }
-  }
-
-  async function withdrawATF() {
-    if (!currentUser) return;
-    const addr = document.getElementById('walletAddr').value;
-    if(!addr) return showModal("Input Required", "Enter TON Wallet address!");
-    try {
-      const res = await fetch(`${API_URL}/wallet/withdraw`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, wallet_address: addr, amount_atf: 5.0 })
-      });
-      const data = await res.json();
-      if(res.ok && data.success) { showModal("Withdrawal Requested", "Withdrawal requested successfully!"); initGame(); }
-      else showModal("Withdrawal Failed", data.error);
-    } catch(err) { showModal("Network Error", err.message); }
   }
 
   function switchTab(tabName, btn) {
@@ -446,11 +332,6 @@
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.getElementById(`view${tabName}`).classList.add('active');
     btn.classList.add('active');
-  }
-
-  function copyRef() {
-    navigator.clipboard.writeText(document.getElementById('refUrl').value);
-    showModal("Copied", "Referral link copied to clipboard!");
   }
 
   initGame();
