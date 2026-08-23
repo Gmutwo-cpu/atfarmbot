@@ -20,23 +20,12 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { telegram_id, item_type } = req.body;
-    if (!telegram_id || !item_type) {
+    const { telegram_id, action_type, item_type } = req.body;
+    if (!telegram_id || !action_type) {
       return res.status(400).json({ error: "Missing required parameters" });
     }
 
-    // 1. Define item prices in internal coins
-    const prices = {
-      'water': 20,       // Harga 1 unit Water = 20 Koin
-      'fertilizer': 50   // Harga 1 unit Fertilizer = 50 Koin
-    };
-
-    const cost = prices[item_type];
-    if (!cost) {
-      return res.status(400).json({ error: "Invalid item type" });
-    }
-
-    // 2. Get user current data
+    // Get current user data
     const { data: user, error: userErr } = await supabase
       .from('users')
       .select('*')
@@ -47,19 +36,57 @@ module.exports = async function handler(req, res) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (user.coins < cost) {
-      return res.status(400).json({ error: "Not enough coins to buy this item!" });
+    let updateData = {};
+    let message = "";
+
+    // 1. BUY ITEMS OR SEEDS
+    if (action_type === 'BUY') {
+      const prices = {
+        'water': 20,
+        'fertilizer': 50,
+        'seed': 10,
+        'vip_pass': 1000 // VIP dicapai via koin game (Anti Pay-to-Win)
+      };
+
+      const cost = prices[item_type];
+      if (!cost) return res.status(400).json({ error: "Invalid item type" });
+
+      if (user.coins < cost) {
+        return res.status(400).json({ error: "Not enough coins to buy this item!" });
+      }
+
+      updateData.coins = user.coins - cost;
+
+      if (item_type === 'water') {
+        updateData.water_inventory = (user.water_inventory || 0) + 1;
+      } else if (item_type === 'fertilizer') {
+        updateData.fertilizer_inventory = (user.fertilizer_inventory || 0) + 1;
+      } else if (item_type === 'seed') {
+        updateData.seed_inventory = (user.seed_inventory || 0) + 1;
+      } else if (item_type === 'vip_pass') {
+        updateData.is_vip = true;
+      }
+
+      message = `Successfully purchased 1x ${item_type}!`;
+    } 
+    // 2. SELL HARVESTED FRUits FOR COINS
+    else if (action_type === 'SELL_FRUIT') {
+      const fruitCount = user.fruit_inventory || 0;
+      if (fruitCount <= 0) {
+        return res.status(400).json({ error: "No fruits available to sell!" });
+      }
+
+      const coinReward = fruitCount * 45; // 1 Fruit = 45 Coins
+      updateData.fruit_inventory = 0;
+      updateData.coins = user.coins + coinReward;
+
+      message = `Successfully sold fruits for ${coinReward} coins!`;
+    } 
+    else {
+      return res.status(400).json({ error: "Invalid action type" });
     }
 
-    // 3. Prepare inventory update based on item type
-    let updateData = { coins: user.coins - cost };
-    if (item_type === 'water') {
-      updateData.water_inventory = (user.water_inventory || 0) + 1;
-    } else if (item_type === 'fertilizer') {
-      updateData.fertilizer_inventory = (user.fertilizer_inventory || 0) + 1;
-    }
-
-    // 4. Update user coins and inventory atomically
+    // Update Database Atomically
     const { error: updateErr } = await supabase
       .from('users')
       .update(updateData)
@@ -67,19 +94,14 @@ module.exports = async function handler(req, res) {
 
     if (updateErr) throw updateErr;
 
-    // 5. Record market history
-    await supabase
-      .from('market_history')
-      .insert([{ 
-        telegram_id, 
-        action_type: 'BUY_ITEM', 
-        details: `Bought 1x ${item_type} for ${cost} coins` 
-      }]);
+    // Record History
+    await supabase.from('market_history').insert([{
+      telegram_id,
+      action_type,
+      details: message
+    }]);
 
-    return res.status(200).json({ 
-      success: true, 
-      message: `Successfully purchased 1x ${item_type}!` 
-    });
+    return res.status(200).json({ success: true, message });
 
   } catch (err) {
     return res.status(500).json({ error: "Server Error: " + err.message });
