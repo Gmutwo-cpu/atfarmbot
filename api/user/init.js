@@ -5,7 +5,6 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 module.exports = async function handler(req, res) {
-  // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -33,7 +32,7 @@ module.exports = async function handler(req, res) {
       .eq('telegram_id', telegram_id)
       .single();
 
-    // 2. If user does not exist, insert new user (Database Trigger will automatically create plots)
+    // 2. If user does not exist, insert new user (Trigger will automatically create plots)
     if (!user) {
       const { data: newUser, error: insertErr } = await supabase
         .from('users')
@@ -45,7 +44,7 @@ module.exports = async function handler(req, res) {
       user = newUser;
     }
 
-    // 3. Fetch user plots (Do NOT manually insert plots here to prevent duplicate key conflicts)
+    // 3. Fetch user plots
     const { data: plots, error: plotsErr } = await supabase
       .from('plots')
       .select('*')
@@ -54,7 +53,7 @@ module.exports = async function handler(req, res) {
 
     if (plotsErr) throw plotsErr;
 
-    // 4. Fetch activity history
+    // 4. Fetch market history
     const { data: history } = await supabase
       .from('market_history')
       .select('*')
