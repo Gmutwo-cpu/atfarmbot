@@ -171,13 +171,8 @@
   if(tg) tg.expand();
 
   const API_URL = "/api";
-  let currentUser = { coins: 150, atf_balance: 0, water_inventory: 2, fertilizer_inventory: 1, telegram_id: 856023370 };
-  let userPlots = [
-    { plot_index: 0, status: 'empty' },
-    { plot_index: 1, status: 'locked' },
-    { plot_index: 2, status: 'locked' },
-    { plot_index: 3, status: 'locked' }
-  ];
+  let currentUser = null;
+  let userPlots = [];
   let completedTasks = [];
   let marketHistory = [];
   let timerInterval = null;
@@ -193,12 +188,13 @@
   }
 
   async function initGame() {
-    const tgUser = tg?.initDataUnsafe?.user || { id: 856023370, first_name: "Farmer" };
+    // Ambil data user dari Telegram WebApp, gunakan fallback aman jika diuji di browser biasa
+    const tgUser = tg?.initDataUnsafe?.user || { id: 123456789, first_name: "WebTestUser" };
+    
     document.getElementById('txtUsername').textContent = tgUser.first_name;
-    document.getElementById('txtAvatar').textContent = tgUser.first_name[0];
+    document.getElementById('txtAvatar').textContent = tgUser.first_name[0] || "F";
     document.getElementById('txtUid').textContent = "ID: " + tgUser.id;
     document.getElementById('refUrl').value = `https://t.me/atfarmbot?start=${tgUser.id}`;
-    currentUser.telegram_id = tgUser.id;
 
     try {
       const res = await fetch(`${API_URL}/user/init`, {
@@ -207,16 +203,20 @@
         body: JSON.stringify({ telegram_id: tgUser.id, username: tgUser.first_name })
       });
       const data = await res.json();
-      if(data.success) {
+      
+      if(res.ok && data.success) {
         currentUser = data.user;
-        userPlots = data.plots;
+        userPlots = data.plots || [];
         completedTasks = data.completed_tasks || [];
         marketHistory = data.history || [];
+        updateUI();
+      } else {
+        showModal("Init Error", data.error || "Failed to initialize user session.");
       }
     } catch(e) {
-      console.warn("Using fallback local plot state", e);
+      console.warn("Network error during init", e);
+      showModal("Connection Error", "Could not connect to backend server. Please check your deployment.");
     }
-    updateUI();
   }
 
   function updateUI() {
@@ -337,6 +337,7 @@
   }
 
   async function plant(plotIndex) {
+    if (!currentUser) return showModal("Error", "User session not loaded yet.");
     try {
       const res = await fetch(`${API_URL}/farm/plant`, {
         method: 'POST',
@@ -355,6 +356,7 @@
   }
 
   async function harvest(plotIndex) {
+    if (!currentUser) return;
     try {
       const res = await fetch(`${API_URL}/farm/harvest`, {
         method: 'POST',
@@ -368,6 +370,7 @@
   }
 
   async function unlockPlot(plotIndex) {
+    if (!currentUser) return;
     try {
       const res = await fetch(`${API_URL}/farm/unlock`, {
         method: 'POST',
@@ -381,6 +384,7 @@
   }
 
   async function useBoost(plotIndex, boostType) {
+    if (!currentUser) return;
     try {
       const res = await fetch(`${API_URL}/farm/boost`, {
         method: 'POST',
@@ -394,6 +398,7 @@
   }
 
   async function tradeMarket(actionType, amount) {
+    if (!currentUser) return;
     try {
       const res = await fetch(`${API_URL}/market/trade`, {
         method: 'POST',
@@ -407,6 +412,7 @@
   }
 
   async function claimTask(taskCode) {
+    if (!currentUser) return;
     try {
       const res = await fetch(`${API_URL}/task/claim`, {
         method: 'POST',
@@ -420,6 +426,7 @@
   }
 
   async function withdrawATF() {
+    if (!currentUser) return;
     const addr = document.getElementById('walletAddr').value;
     if(!addr) return showModal("Input Required", "Enter TON Wallet address!");
     try {
