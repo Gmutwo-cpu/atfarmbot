@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
   try {
     const { telegram_id, username } = req.body;
     if (!telegram_id) {
-      return res.status(400).json({ error: "Missing telegram_id parameter" });
+      return res.status(400).json({ error: "Missing telegram_id" });
     }
 
     // 1. Check if user exists
@@ -32,42 +32,48 @@ module.exports = async function handler(req, res) {
       .eq('telegram_id', telegram_id)
       .single();
 
-    // 2. If user does not exist, insert new user with Starter Pack (50 coins, 1 water)
+    // 2. If user doesn't exist, create with Starter Pack (50 Coins, 1 Water)
     if (!user) {
-      const { data: newUser, error: insertErr } = await supabase
+      const newUserObj = {
+        telegram_id,
+        username: username || 'Farmer',
+        coins: 50,          // Starter Pack Coins
+        water_inventory: 1, // Starter Pack Water
+        fertilizer_inventory: 0,
+        seed_inventory: 1,  // Starter Seed
+        fruit_inventory: 0,
+        atf_balance: 0.0000,
+        is_vip: false
+      };
+
+      const { data: insertedUser, error: insertErr } = await supabase
         .from('users')
-        .insert([{ 
-          telegram_id, 
-          username: username || 'Farmer',
-          coins: 50,          // Starter Pack: 50 Coins
-          water_inventory: 1  // Starter Pack: 1 Water
-        }])
+        .insert([newUserObj])
         .select()
         .single();
 
       if (insertErr) throw insertErr;
-      user = newUser;
+      user = insertedUser;
+
+      // Initialize default plots for new user (4 plots: Plot 1 unlocked, others locked)
+      const initialPlots = [
+        { telegram_id, plot_index: 1, status: 'empty', harvest_time: null },
+        { telegram_id, plot_index: 2, status: 'locked', harvest_time: null },
+        { telegram_id, plot_index: 3, status: 'locked', harvest_time: null },
+        { telegram_id, plot_index: 4, status: 'locked', harvest_time: null }
+      ];
+      await supabase.from('plots').insert(initialPlots);
     }
 
     // 3. Fetch user plots
-    const { data: plots, error: plotsErr } = await supabase
+    const { data: plots } = await supabase
       .from('plots')
       .select('*')
       .eq('telegram_id', telegram_id)
       .order('plot_index', { ascending: true });
 
-    if (plotsErr) throw plotsErr;
-
-    // 4. Fetch market history
-    const { data: history } = await supabase
-      .from('market_history')
-      .select('*')
-      .eq('telegram_id', telegram_id)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    // 5. Fetch completed tasks
-    const { data: completedTasks } = await supabase
+    // 4. Fetch completed tasks
+    const { data: completed_tasks } = await supabase
       .from('completed_tasks')
       .select('*')
       .eq('telegram_id', telegram_id);
@@ -76,8 +82,7 @@ module.exports = async function handler(req, res) {
       success: true,
       user,
       plots: plots || [],
-      completed_tasks: completedTasks || [],
-      history: history || []
+      completed_tasks: completed_tasks || []
     });
 
   } catch (err) {
