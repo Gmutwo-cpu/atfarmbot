@@ -32,11 +32,16 @@ module.exports = async function handler(req, res) {
       .eq('telegram_id', telegram_id)
       .single();
 
-    // 2. If user does not exist, insert new user (Trigger will automatically create plots)
+    // 2. If user does not exist, insert new user with Starter Pack (50 coins, 1 water)
     if (!user) {
       const { data: newUser, error: insertErr } = await supabase
         .from('users')
-        .insert([{ telegram_id, username: username || 'Farmer' }])
+        .insert([{ 
+          telegram_id, 
+          username: username || 'Farmer',
+          coins: 50,          // Starter Pack: 50 Coins
+          water_inventory: 1  // Starter Pack: 1 Water
+        }])
         .select()
         .single();
 
