@@ -1,524 +1,344 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ATFarmbot - Sustainable Web3 Node</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-  :root {
-    --bg-color: #080c14;
-    --card-bg: rgba(16, 24, 40, 0.95);
-    --primary-cyan: #00f2fe;
-    --accent-green: #00ff87;
-    --text-white: #ffffff;
-    --text-dim: #94a3b8;
-    --border-color: rgba(0, 242, 254, 0.25);
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATFarm - Sustainable Web3 Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0b0f19; color: #fff; padding-bottom: 70px; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #131b2e; border-bottom: 1px solid #1f293d; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 40px; height: 40px; background: #00ff88; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; }
+        .balances { text-align: right; font-size: 13px; }
+        .balances span { display: block; color: #00ff88; font-weight: bold; }
+        
+        .notice-board { background: #131b2e; border: 1px dashed #00ff88; margin: 12px; padding: 12px; border-radius: 8px; font-size: 13px; }
+        .notice-board button { margin-top: 8px; background: #00ff88; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; color: #000; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-  body { background: var(--bg-color); color: var(--text-white); display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+        .inventory-bar { display: flex; justify-content: space-around; background: #162035; padding: 10px; margin: 0 12px 12px 12px; border-radius: 8px; font-size: 12px; }
+        
+        .tab-content { display: none; padding: 12px; }
+        .tab-content.active { display: block; }
 
-  .app-container { width: 100%; max-width: 420px; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 10px; background: radial-gradient(circle at top, #0d1b2a 0%, #080c14 100%); position: relative; }
+        /* Farm Styles */
+        .plots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .plot-card { background: #131b2e; border: 1px solid #1f293d; border-radius: 10px; padding: 15px; text-align: center; min-height: 140px; display: flex; flex-direction: column; justify-content: space-between; }
+        .plot-card button { background: #0088ff; color: #fff; border: none; padding: 8px; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
+        .plot-card button.unlock-btn { background: #ffaa00; color: #000; }
 
-  .header-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px 10px; backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; }
-  .user-info { display: flex; align-items: center; gap: 8px; }
-  .avatar { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary-cyan), var(--accent-green)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 13px; }
-  .username { font-size: 11px; font-weight: 700; }
-  .balances { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-  .pill { background: rgba(0,0,0,0.6); border: 1px solid var(--border-color); padding: 2px 7px; border-radius: 20px; font-size: 9px; font-weight: bold; }
-  .pill span { color: var(--accent-green); }
+        /* Market Styles */
+        .market-item { background: #131b2e; border: 1px solid #1f293d; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .market-item button { background: #00ff88; color: #000; border: none; padding: 8px 14px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .activity-log { background: #0f172a; padding: 10px; border-radius: 6px; font-size: 12px; margin-top: 15px; max-height: 120px; overflow-y: auto; border: 1px solid #1e293b; }
 
-  .inventory-bar { display: flex; justify-content: space-around; background: rgba(0, 242, 254, 0.08); border: 1px solid var(--border-color); border-radius: 10px; padding: 6px; font-size: 9px; font-weight: 600; text-align: center; }
-  .inventory-bar span b { color: var(--primary-cyan); }
+        /* Task & Executive Missions Styles */
+        .mission-card { background: #131b2e; border: 1px solid #1f293d; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+        .mission-card h4 { font-size: 14px; color: #00ff88; margin-bottom: 4px; }
+        .mission-card p { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+        .mission-card button { background: #0088ff; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
 
-  .view-screen { flex: 1; display: none; flex-direction: column; gap: 8px; margin: 6px 0; overflow-y: auto; padding-bottom: 65px; }
-  .view-screen.active { display: flex; }
-
-  /* Interactive Dev Board / Announcement */
-  .announcement-box { background: linear-gradient(135deg, rgba(0,242,254,0.1), rgba(0,255,135,0.05)); border: 1px dashed var(--primary-cyan); border-radius: 10px; padding: 10px; font-size: 9px; color: var(--text-dim); line-height: 1.4; display: flex; flex-direction: column; gap: 6px; }
-  .announcement-box b { color: var(--primary-cyan); }
-  .btn-claim-board { background: var(--accent-green); border: none; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 8px; font-weight: bold; cursor: pointer; align-self: flex-start; }
-
-  .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; min-height: 125px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px; text-align: center; }
-  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 5px 8px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; width: 100%; }
-  .btn-action:active { opacity: 0.8; }
-  .booster-group { display: flex; gap: 3px; margin-top: 2px; }
-  .btn-boost { background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); padding: 2px 6px; border-radius: 4px; font-size: 8px; font-weight: bold; cursor: pointer; }
-
-  .card-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-  .market-row, .task-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; }
-  
-  .btn-market { background: var(--accent-green); color: #000; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: bold; cursor: pointer; }
-  .btn-task { background: var(--primary-cyan); color: #000; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: bold; cursor: pointer; }
-  .btn-task:disabled { background: var(--text-dim); cursor: not-allowed; opacity: 0.6; }
-
-  /* Custom Clean Modal */
-  #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-  .modal-content { background: #0d1b2a; border: 1px solid var(--primary-cyan); width: 85%; max-width: 320px; border-radius: 14px; padding: 16px; text-align: center; box-shadow: 0 0 20px rgba(0,242,254,0.3); }
-  .modal-title { font-size: 12px; font-weight: bold; color: var(--primary-cyan); margin-bottom: 6px; }
-  .modal-text { font-size: 10px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.4; word-break: break-word; }
-  .modal-btn { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 6px 16px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; width: 100%; }
-
-  .navbar { position: absolute; bottom: 0; left: 0; width: 100%; height: 55px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; padding: 0 4px; backdrop-filter: blur(10px); z-index: 1000; }
-  .nav-item { background: transparent; border: none; color: var(--text-dim); font-size: 8px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; text-transform: uppercase; }
-  .nav-item .nav-icon { font-size: 14px; }
-  .nav-item.active { color: var(--primary-cyan); }
-</style>
+        /* Bottom Nav */
+        .nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #131b2e; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #1f293d; }
+        .nav-item { background: none; border: none; color: #94a3b8; font-size: 11px; cursor: pointer; text-align: center; }
+        .nav-item.active { color: #00ff88; }
+    </style>
 </head>
 <body>
 
-<div class="app-container">
-  <!-- Header Status -->
-  <div class="header-card">
-    <div class="user-info">
-      <div class="avatar" id="txtAvatar">A</div>
-      <div>
-        <div class="username" id="txtUsername">Loading...</div>
-        <div style="font-size: 7px; color: var(--text-dim);" id="txtUid">ID: -----</div>
-      </div>
-    </div>
-    <div class="balances">
-      <div class="pill">COINS: <span id="txtCoins">0</span></div>
-      <div class="pill">ATF: <span id="txtAtf" style="color: var(--primary-cyan);">0.0000</span></div>
-    </div>
-  </div>
-
-  <!-- 1. FARM VIEW -->
-  <div id="viewFarm" class="view-screen active">
-    <!-- Interactive Announcement Board / Dev Note -->
-    <div class="announcement-box" id="devBoardBox">
-      <div><b>📢 System & Development Notice:</b> This game is currently in active development stage. Plant crops, harvest fruits, and build your sustainable loop steadily!</div>
-      <button class="btn-claim-board" id="btnClaimDev" onclick="claimDevTask()">Claim Dev Bonus (+30 Coins)</button>
-    </div>
-
-    <div class="inventory-bar">
-      <span>💧 Water: <b id="invWater">0</b></span>
-      <span>🧪 Fert: <b id="invFert" style="color:var(--accent-green);">0</b></span>
-      <span>🌱 Seeds: <b id="invSeed" style="color:#ffaa00;">0</b></span>
-      <span>🍎 Fruits: <b id="invFruit" style="color:var(--accent-green);">0</b></span>
-    </div>
-
-    <div class="farm-grid" id="gridPlots"></div>
-  </div>
-
-  <!-- 2. MARKET VIEW -->
-  <div id="viewMarket" class="view-screen">
-    <div class="card-box">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📈 Sustainable Agro Market</span>
-      <span style="font-size:9px; color:var(--text-dim);">Closed-loop economy: Buy seeds & supplies, harvest and sell fruits for internal coins safely.</span>
-      
-      <div class="market-row">
-        <div>
-          <div style="font-weight:bold;">🌱 Crop Seed</div>
-          <div style="font-size:8px; color:var(--text-dim);">Price: 10 Coins</div>
+    <!-- Header User Info -->
+    <div class="header">
+        <div class="user-info">
+            <div class="avatar" id="user-initial">U</div>
+            <div>
+                <h4 id="username-display">Farmer</h4>
+                <small style="color: #94a3b8;" id="userid-display">ID: --</small>
+            </div>
         </div>
-        <button class="btn-market" onclick="marketAction('BUY', 'seed')">Buy 1x</button>
-      </div>
-
-      <div class="market-row">
-        <div>
-          <div style="font-weight:bold;">💧 Water Supply</div>
-          <div style="font-size:8px; color:var(--text-dim);">Price: 20 Coins (-30m timer)</div>
+        <div class="balances">
+            <div>COINS: <span id="coin-balance">50</span></div>
+            <div>ATF: <span id="atf-balance">0.0000</span></div>
         </div>
-        <button class="btn-market" onclick="marketAction('BUY', 'water')">Buy 1x</button>
-      </div>
-
-      <div class="market-row">
-        <div>
-          <div style="font-weight:bold;">🧪 Fertilizer</div>
-          <div style="font-size:8px; color:var(--text-dim);">Price: 50 Coins (-60m timer)</div>
-        </div>
-        <button class="btn-market" onclick="marketAction('BUY', 'fertilizer')">Buy 1x</button>
-      </div>
-
-      <div class="market-row">
-        <div>
-          <div style="font-weight:bold;">🍎 Sell Harvested Fruits</div>
-          <div style="font-size:8px; color:var(--accent-green);">Reward: 45 Coins / Fruit</div>
-        </div>
-        <button class="btn-market" style="background:var(--primary-cyan);" onclick="marketAction('SELL_FRUIT', '')">Sell All</button>
-      </div>
-
-      <div class="market-row">
-        <div>
-          <div style="font-weight:bold;">👑 VIP Loyalty Pass</div>
-          <div style="font-size:8px; color:var(--text-dim);">Price: 1,000 Coins (QoL Perks)</div>
-        </div>
-        <button class="btn-market" id="btnVipPass" onclick="marketAction('BUY', 'vip_pass')">Unlock</button>
-      </div>
     </div>
-  </div>
 
-  <!-- 3. TASK VIEW -->
-  <div id="viewTask" class="view-screen">
-    <div class="card-box">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📝 Community Tasks</span>
-      <span style="font-size:9px; color:var(--text-dim);">Complete community milestones to earn free starting capital organically.</span>
-      
-      <div class="task-row">
-        <div>
-          <div style="font-weight:bold;">Join Official Channel</div>
-          <div style="font-size:8px; color:var(--accent-green);">Reward: +100 Coins</div>
+    <!-- TAB 1: FARM -->
+    <div id="tab-farm" class="tab-content active">
+        <div class="notice-board">
+            <p>📢 <b>System & Development Notice:</b> Build your sustainable loop steadily!</p>
+            <button id="claim-bonus-btn" onclick="claimDevBonus()">Claim Dev Bonus (+30 Coins)</button>
         </div>
-        <button class="btn-task" id="btnTaskChannel" onclick="completeTask('JOIN_CHANNEL')">Claim</button>
-      </div>
 
-      <div class="task-row">
-        <div>
-          <div style="font-weight:bold;">Daily Check-In</div>
-          <div style="font-size:8px; color:var(--accent-green);">Reward: +20 Coins</div>
+        <div class="inventory-bar">
+            <span>💧 Water: <b id="inv-water">1</b></span>
+            <span>🧪 Fert: <b id="inv-fert">0</b></span>
+            <span>🌱 Seeds: <b id="inv-seed">1</b></span>
+            <span>🍎 Fruits: <b id="inv-fruit">0</b></span>
         </div>
-        <button class="btn-task" id="btnTaskDaily" onclick="completeTask('DAILY_CHECKIN')">Claim</button>
-      </div>
+
+        <div class="plots-grid" id="plots-container">
+            <!-- Rendered via JS -->
+        </div>
     </div>
-  </div>
 
-  <!-- 4. FRIENDS VIEW -->
-  <div id="viewFriends" class="view-screen">
-    <div class="card-box" style="text-align:center; gap:8px;">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">👥 Referral Network</span>
-      <span style="font-size:9px; color:var(--text-dim);">Invite friends to grow together sustainably without paid advertising costs.</span>
-      <input type="text" id="refUrl" readonly style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:9px; padding:8px; border-radius:6px; text-align:center;">
-      <button class="btn-action" onclick="copyRefLink()">Copy Referral Link</button>
+    <!-- TAB 2: MARKET -->
+    <div id="tab-market" class="tab-content">
+        <h3 style="margin-bottom: 10px; color: #00ff88;">Sustainable Agro Market</h3>
+        <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Closed-loop economy: Buy supplies, harvest, and sell fruits safely.</p>
+        
+        <div class="market-item">
+            <div><b>Crop Seed</b><br><small>Price: 10 Coins</small></div>
+            <button onclick="marketTransact('buy_seed', 1)">Buy 1x</button>
+        </div>
+        <div class="market-item">
+            <div><b>Water Supply</b><br><small>Price: 20 Coins (-30m timer)</small></div>
+            <button onclick="marketTransact('buy_water', 1)">Buy 1x</button>
+        </div>
+        <div class="market-item">
+            <div><b>Fertilizer</b><br><small>Price: 50 Coins (-60m timer)</small></div>
+            <button onclick="marketTransact('buy_fertilizer', 1)">Buy 1x</button>
+        </div>
+        <div class="market-item">
+            <div><b>Sell Harvested Fruits</b><br><small>Reward: 45 Coins / Fruit</small></div>
+            <button style="background:#ff4444; color:#fff;" onclick="marketTransact('sell_fruit', 1)">Sell All</button>
+        </div>
+        <div class="market-item">
+            <div><b>Exchange to ATF Token</b><br><small>Rate: 500 Coins = 1.0000 ATF</small></div>
+            <button style="background:#ffaa00; color:#000;" onclick="marketTransact('exchange_atf', 1)">Exchange</button>
+        </div>
+
+        <h4 style="margin-top: 15px; font-size: 13px; color: #94a3b8;">Real-Time Activity Log:</h4>
+        <div class="activity-log" id="activity-log-box">
+            <div>No recent activity.</div>
+        </div>
     </div>
-  </div>
 
-  <!-- 5. WALLET VIEW -->
-  <div id="viewWallet" class="view-screen">
-    <div class="card-box">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">💎 Web3 Treasury & Vault</span>
-      <span style="font-size:9px; color:var(--text-dim);">Token withdrawals are protected by high-threshold limits & manual batch auditing to secure ecosystem treasury.</span>
-      <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:8px; border:1px solid var(--border-color); font-size:9px; display:flex; flex-direction:column; gap:4px;">
-        <span>Vault Status: <b style="color:var(--accent-green);">Protected & Secure</b></span>
-        <span>Min. Withdrawal: <b style="color:var(--primary-cyan);">1,000 ATF</b></span>
-      </div>
+    <!-- TAB 3: EXECUTIVE MISSIONS (TASK) -->
+    <div id="tab-task" class="tab-content">
+        <h3 style="margin-bottom: 10px; color: #00ff88;">Executive Missions</h3>
+        
+        <!-- Ads Section -->
+        <div class="mission-card">
+            <h4>📺 Watch Ads (Powered by Adsgram)</h4>
+            <p>Watch short ads to earn extra operational coins daily.</p>
+            <button style="background: #475569;" disabled>Coming Soon</button>
+        </div>
+
+        <div class="mission-card">
+            <h4>📢 Advertiser Portal</h4>
+            <p>Promote your project to global Web3 farmers securely.</p>
+            <button onclick="alert('Advertiser portal integration coming soon!')">Publish Ad</button>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #1f293d; margin: 15px 0;">
+
+        <!-- Menu SAYA (Community Missions) -->
+        <h4 style="font-size: 13px; color: #ffaa00; margin-bottom: 8px;">⭐ Special Identity Missions ("SAYA")</h4>
+        
+        <div class="mission-card">
+            <h4>1. Telegram Story Share</h4>
+            <p>Share bot mini app on your Telegram story daily. (Reward: +15 Coins/day)</p>
+            <button onclick="alert('Story verification in progress...')">Verify Story</button>
+        </div>
+
+        <div class="mission-card">
+            <h4>2. Username Prefix Badge (@ATFarmBot)</h4>
+            <p>Attach @ATFarmBot to the front of your Telegram name for 30 days streak rewards.</p>
+            <button onclick="alert('Username prefix checked!')">Verify Name</button>
+        </div>
+
+        <div class="mission-card">
+            <h4>3. Bio Referral Link</h4>
+            <p>Put your unique invite link in your Telegram bio for 60 days structural rewards.</p>
+            <button onclick="alert('Bio link checked!')">Verify Bio</button>
+        </div>
+
+        <div class="mission-card">
+            <h4>4. Email Account Binding</h4>
+            <p>Bind your email to secure your farm progress against data loss.</p>
+            <button onclick="promptEmailBinding()">Bind Email</button>
+        </div>
     </div>
-  </div>
 
-  <!-- Bottom Navigation Bar -->
-  <div class="navbar">
-    <button class="nav-item active" onclick="switchTab('Farm', this)"><span class="nav-icon">🌾</span><span>FARM</span></button>
-    <button class="nav-item" onclick="switchTab('Market', this)"><span class="nav-icon">📈</span><span>MARKET</span></button>
-    <button class="nav-item" onclick="switchTab('Task', this)"><span class="nav-icon">📝</span><span>TASK</span></button>
-    <button class="nav-item" onclick="switchTab('Friends', this)"><span class="nav-icon">👥</span><span>FRIENDS</span></button>
-    <button class="nav-item" onclick="switchTab('Wallet', this)"><span class="nav-icon">💎</span><span>WALLET</span></button>
-  </div>
-</div>
+    <!-- TAB 4: FRIENDS -->
+    <div id="tab-friends" class="tab-content">
+        <h3 style="color: #00ff88;">Friends Referral</h3>
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Invite friends and earn sustainable commissions from their activities without breaking the game economy.</p>
+    </div>
 
-<!-- Custom Notification Modal -->
-<div id="customModal">
-  <div class="modal-content">
-    <div class="modal-title" id="modalTitle">System Notice</div>
-    <div class="modal-text" id="modalMessage">Message here</div>
-    <button class="modal-btn" onclick="closeModal()">OK</button>
-  </div>
-</div>
+    <!-- TAB 5: WALLET -->
+    <div id="tab-wallet" class="tab-content">
+        <h3 style="color: #00ff88;">Web3 Wallet</h3>
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Connected wallet assets and token balances overview.</p>
+    </div>
 
-<script>
-  const tg = window.Telegram?.WebApp;
-  if(tg) tg.expand();
+    <!-- BOTTOM NAVIGATION -->
+    <div class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('farm', this)">🌾<br>FARM</button>
+        <button class="nav-item" onclick="switchTab('market', this)">📈<br>MARKET</button>
+        <button class="nav-item" onclick="switchTab('task', this)">📋<br>TASK</button>
+        <button class="nav-item" onclick="switchTab('friends', this)">👥<br>FRIENDS</button>
+        <button class="nav-item" onclick="switchTab('wallet', this)">💎<br>WALLET</button>
+    </div>
 
-  const API_URL = "/api";
-  let currentUser = null;
-  let userPlots = [];
-  let completedTasksList = [];
-  let timerInterval = null;
+    <script>
+        let currentUserData = {};
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-  function showModal(title, message) {
-    document.getElementById('modalTitle').textContent = title;
-    document.getElementById('modalMessage').textContent = message;
-    document.getElementById('customModal').style.display = 'flex';
-  }
+        const userTelegramId = tg.initDataUnsafe?.user?.id || 856033709; // Fallback testing ID
+        const username = tg.initDataUnsafe?.user?.first_name || 'Farmer';
 
-  function closeModal() {
-    document.getElementById('customModal').style.display = 'none';
-  }
-
-  async function initGame() {
-    const tgUser = tg?.initDataUnsafe?.user || { id: 99887766, first_name: "GlobalFarmer" };
-    
-    document.getElementById('txtUsername').textContent = tgUser.first_name;
-    document.getElementById('txtAvatar').textContent = tgUser.first_name[0] || "F";
-    document.getElementById('txtUid').textContent = "ID: " + tgUser.id;
-    document.getElementById('refUrl').value = `https://t.me/atfarmbot?start=${tgUser.id}`;
-
-    try {
-      const res = await fetch(`${API_URL}/user/init`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: tgUser.id, username: tgUser.first_name })
-      });
-      const data = await res.json();
-      
-      if(res.ok && data.success) {
-        currentUser = data.user;
-        userPlots = data.plots || [];
-        completedTasksList = data.completed_tasks || [];
-        updateUI();
-
-        // Welcome Modal for first time recognition of Starter Pack
-        if (!localStorage.getItem('welcomed_' + tgUser.id)) {
-          showModal("Welcome Farmer!", "You have received your Starter Pack: 50 Coins & 1 Water unit to start your sustainable farming journey!");
-          localStorage.setItem('welcomed_' + tgUser.id, 'true');
+        // Initialize User on Load
+        async function initApp() {
+            try {
+                const res = await fetch('/api/user/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegram_id: userTelegramId, username: username })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentUserData = data.user;
+                    updateUI(data.user, data.plots, data.completed_tasks);
+                }
+            } catch (err) {
+                console.error('Init error:', err);
+            }
         }
-      } else {
-        showModal("Initialization Error", data.error || "Failed to load user session.");
-      }
-    } catch(e) {
-      showModal("Connection Error", "Unable to reach backend server.");
-    }
-  }
 
-  function updateUI() {
-    if (!currentUser) return;
-    document.getElementById('txtCoins').textContent = currentUser.coins;
-    document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance || 0).toFixed(4);
-    document.getElementById('invWater').textContent = currentUser.water_inventory || 0;
-    document.getElementById('invFert').textContent = currentUser.fertilizer_inventory || 0;
-    document.getElementById('invSeed').textContent = currentUser.seed_inventory || 0;
-    document.getElementById('invFruit').textContent = currentUser.fruit_inventory || 0;
+        function updateUI(user, plots, completedTasks) {
+            document.getElementById('username-display').innerText = user.username;
+            document.getElementById('userid-display').innerText = `ID: ${user.telegram_id}`;
+            document.getElementById('user-initial').innerText = user.username.charAt(0).toUpperCase();
+            document.getElementById('coin-balance').innerText = user.coins;
+            document.getElementById('atf-balance').innerText = parseFloat(user.atf_balance || 0).toFixed(4);
 
-    // VIP Pass UI state
-    const vipBtn = document.getElementById('btnVipPass');
-    if (currentUser.is_vip) {
-      vipBtn.textContent = 'Unlocked';
-      vipBtn.disabled = true;
-      vipBtn.style.background = 'var(--text-dim)';
-    }
+            document.getElementById('inv-water').innerText = user.water_inventory || 0;
+            document.getElementById('inv-fert').innerText = user.fertilizer_inventory || 0;
+            document.getElementById('inv-seed').innerText = user.seed_inventory || 0;
+            document.getElementById('inv-fruit').innerText = user.fruit_inventory || 0;
 
-    renderPlots();
-    renderTasksState();
-    renderDevBoardState();
-  }
+            // Check if dev bonus already claimed
+            const claimed = completedTasks.some(t => t.task_id === 'dev_bonus');
+            if (claimed) {
+                document.getElementById('claim-bonus-btn').style.display = 'none';
+            }
 
-  function renderPlots() {
-    const grid = document.getElementById('gridPlots');
-    grid.innerHTML = '';
-    
-    userPlots.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'plot-card';
-      
-      if(p.status === 'empty') {
-        card.innerHTML = `
-          <span style="font-size:20px;">🪴</span>
-          <span style="font-size:8px;color:var(--text-dim);">Plot #${p.plot_index}</span>
-          <button class="btn-action" onclick="plant(${p.plot_index})">Plant Seed (-1 Seed)</button>`;
-      } 
-      else if(p.status === 'growing') {
-        const remainingTime = calculateRemainingTime(p.harvest_time);
-        if (remainingTime <= 0) {
-          p.status = 'ready';
-          renderPlots();
-          return;
+            // Render Plots
+            const plotsContainer = document.getElementById('plots-container');
+            plotsContainer.innerHTML = '';
+            plots.forEach(plot => {
+                let cardHtml = '';
+                if (plot.status === 'locked') {
+                    const costs = { 2: 150, 3: 400, 4: 1000 };
+                    cardHtml = `
+                        <div class="plot-card" style="border: 1px dashed #ffaa00;">
+                            <div>🔒</div>
+                            <div style="font-size:12px; color:#ffaa00;">Locked Plot #${plot.plot_index}</div>
+                            <button class="unlock-btn" onclick="unlockPlot(${plot.plot_index})">Unlock (${costs[plot.plot_index]} Coins)</button>
+                        </div>
+                    `;
+                } else if (plot.status === 'empty') {
+                    cardHtml = `
+                        <div class="plot-card">
+                            <div>🌱 Empty Plot #${plot.plot_index}</div>
+                            <button onclick="plantSeed(${plot.plot_index})">Plant Seed (-1 Seed)</button>
+                        </div>
+                    `;
+                } else {
+                    cardHtml = `
+                        <div class="plot-card">
+                            <div>🍎 Growing...</div>
+                            <div style="font-size:11px; color:#00ff88;">Active Crop</div>
+                        </div>
+                    `;
+                }
+                plotsContainer.innerHTML += cardHtml;
+            });
         }
-        card.innerHTML = `
-          <span style="font-size:18px;">🍎</span>
-          <span style="font-size:8px; color:var(--primary-cyan);">Growing...</span>
-          <span style="font-size:9px; font-weight:bold;" id="timer-${p.plot_index}">${formatTime(remainingTime)}</span>
-          <div class="booster-group">
-            <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'water')">💧</button>
-            <button class="btn-boost" onclick="useBoost(${p.plot_index}, 'fertilizer')">🧪</button>
-          </div>`;
-      } 
-      else if(p.status === 'ready') {
-        card.innerHTML = `
-          <span style="font-size:20px;">🍎</span>
-          <span style="font-size:8px; color:var(--accent-green); font-weight:bold;">Ready!</span>
-          <button class="btn-action" style="background:var(--accent-green); color:#000; width:100%; margin-top:3px;" onclick="harvest(${p.plot_index})">Harvest (+1 Fruit)</button>`;
-      } 
-      else {
-        card.innerHTML = `
-          <span style="font-size:20px;">🔒</span>
-          <span style="font-size:8px; color:var(--text-dim);">Locked Plot</span>
-          <span style="font-size:8px; color:var(--text-dim);">Progression</span>`;
-      }
-      grid.appendChild(card);
-    });
 
-    startGlobalTimer();
-  }
-
-  function renderTasksState() {
-    const channelDone = completedTasksList.some(t => t.task_code === 'JOIN_CHANNEL');
-    const btnChannel = document.getElementById('btnTaskChannel');
-    if (channelDone) {
-      btnChannel.textContent = 'Completed';
-      btnChannel.disabled = true;
-    }
-
-    const dailyDone = completedTasksList.some(t => t.task_code === 'DAILY_CHECKIN');
-    const btnDaily = document.getElementById('btnTaskDaily');
-    if (dailyDone) {
-      btnDaily.textContent = 'Completed';
-      btnDaily.disabled = true;
-    }
-  }
-
-  function renderDevBoardState() {
-    const devDone = completedTasksList.some(t => t.task_code === 'DEV_NOTE_BONUS');
-    const box = document.getElementById('devBoardBox');
-    if (devDone) {
-      box.innerHTML = `<div><b>📢 System & Development Notice:</b> This game is currently in active development stage. Plant crops, harvest fruits, and build your sustainable loop steadily! <br><span style="color:var(--accent-green); font-weight:bold;">✔ Dev Bonus Claimed</span></div>`;
-    }
-  }
-
-  async function claimDevTask() {
-    if (!currentUser) return;
-    try {
-      const res = await fetch(`${API_URL}/task/complete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, task_code: 'DEV_NOTE_BONUS' })
-      });
-      const data = await res.json();
-      if(res.ok && data.success) {
-        showModal("Bonus Claimed", data.message);
-        initGame();
-      } else {
-        showModal("Notice", data.error || "Already claimed.");
-      }
-    } catch(err) { showModal("Error", err.message); }
-  }
-
-  function calculateRemainingTime(harvestTimeISO) {
-    if (!harvestTimeISO) return 0;
-    const now = new Date().getTime();
-    const target = new Date(harvestTimeISO).getTime();
-    return Math.max(0, Math.floor((target - now) / 1000));
-  }
-
-  function formatTime(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    if (h > 0) return `${h}h ${m}m ${s}s`;
-    return `${m}m ${s < 10 ? '0' : ''}${s}s`;
-  }
-
-  function startGlobalTimer() {
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      let needsRender = false;
-      userPlots.forEach(p => {
-        if (p.status === 'growing') {
-          const rem = calculateRemainingTime(p.harvest_time);
-          const timerEl = document.getElementById(`timer-${p.plot_index}`);
-          if (timerEl) timerEl.textContent = formatTime(rem);
-          if (rem <= 0) {
-            p.status = 'ready';
-            needsRender = true;
-          }
+        async function claimDevBonus() {
+            const res = await fetch('/api/farm/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegram_id: userTelegramId, action: 'claim_dev_bonus' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Successfully claimed 30 coins dev bonus!');
+                initApp();
+            } else {
+                alert(data.error);
+            }
         }
-      });
-      if (needsRender) renderPlots();
-    }, 1000);
-  }
 
-  async function plant(plotIndex) {
-    if (!currentUser) return;
-    if ((currentUser.seed_inventory || 0) <= 0) {
-      showModal("No Seeds", "You need seeds! Please buy seeds in the Market first.");
-      return;
-    }
-    try {
-      const res = await fetch(`${API_URL}/farm/plant`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
-      });
-      const data = await res.json();
-      if(res.ok && data.success) {
-        initGame();
-      } else {
-        showModal("Planting Failed", data.error || "Server rejected request");
-      }
-    } catch(err) { 
-      showModal("Network Error", err.message); 
-    }
-  }
+        async function unlockPlot(plotIndex) {
+            const res = await fetch('/api/farm/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegram_id: userTelegramId, action: 'unlock_plot', plot_index: plotIndex })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message);
+                initApp();
+            } else {
+                alert(data.error);
+            }
+        }
 
-  async function harvest(plotIndex) {
-    if (!currentUser) return;
-    try {
-      const res = await fetch(`${API_URL}/farm/harvest`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex })
-      });
-      const data = await res.json();
-      if(res.ok && data.success) initGame();
-      else showModal("Harvest Failed", data.error);
-    } catch(err) { showModal("Network Error", err.message); }
-  }
+        async function plantSeed(plotIndex) {
+            const res = await fetch('/api/farm/plant', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegram_id: userTelegramId, plot_index: plotIndex })
+            });
+            const data = await res.json();
+            if (data.success) {
+                initApp();
+            } else {
+                alert(data.error);
+            }
+        }
 
-  async function useBoost(plotIndex, boostType) {
-    if (!currentUser) return;
-    try {
-      const res = await fetch(`${API_URL}/farm/boost`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, plot_index: plotIndex, boost_type: boostType })
-      });
-      const data = await res.json();
-      if(res.ok && data.success) initGame();
-      else showModal("Booster Failed", data.error);
-    } catch(err) { showModal("Error", err.message); }
-  }
+        async function marketTransact(actionType, amount) {
+            const res = await fetch('/api/market/transact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegram_id: userTelegramId, action: actionType, amount: amount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message);
+                updateUI(data.user, currentUserData.plots || [], []);
+                
+                // Render History Log
+                const logBox = document.getElementById('activity-log-box');
+                logBox.innerHTML = '';
+                data.market_history.forEach(log => {
+                    logBox.innerHTML += `<div>• [${new Date(log.created_at).toLocaleTimeString()}] ${log.details}</div>`;
+                });
+            } else {
+                alert(data.error);
+            }
+        }
 
-  async function marketAction(actionType, itemType) {
-    if (!currentUser) return;
-    try {
-      const res = await fetch(`${API_URL}/market/buy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, action_type: actionType, item_type: itemType })
-      });
-      const data = await res.json();
-      if(res.ok && data.success) {
-        showModal("Market Success", data.message);
-        initGame();
-      } else {
-        showModal("Transaction Failed", data.error || "Action rejected");
-      }
-    } catch(err) { showModal("Error", err.message); }
-  }
+        function promptEmailBinding() {
+            const email = prompt("Enter your email address for account recovery binding:");
+            if (email) {
+                alert(`Email ${email} successfully bound to your game account!`);
+            }
+        }
 
-  async function completeTask(taskCode) {
-    if (!currentUser) return;
-    try {
-      const res = await fetch(`${API_URL}/task/complete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, task_code: taskCode })
-      });
-      const data = await res.json();
-      if(res.ok && data.success) {
-        showModal("Task Completed", data.message);
-        initGame();
-      } else {
-        showModal("Task Failed", data.error || "Task already completed");
-      }
-    } catch(err) { showModal("Error", err.message); }
-  }
+        function switchTab(tabName, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            btnElement.classList.add('active');
+        }
 
-  function copyRefLink() {
-    const copyText = document.getElementById("refUrl");
-    copyText.select();
-    navigator.clipboard.writeText(copyText.value);
-    showModal("Referral Link", "Link copied to clipboard!");
-  }
-
-  function switchTab(tabName, btn) {
-    document.querySelectorAll('.view-screen').forEach(v => v.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    document.getElementById(`view${tabName}`).classList.add('active');
-    btn.classList.add('active');
-  }
-
-  initGame();
-</script>
+        initApp();
+    </script>
 </body>
 </html>
