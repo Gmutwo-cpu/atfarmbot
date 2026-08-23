@@ -33,9 +33,9 @@ module.exports = async function handler(req, res) {
 
     if (boost_type === 'water') {
       if (plot.boosted_water) return res.status(400).json({ error: 'Water booster already applied to this plot!' });
-      if (user.water_inventory < 1) return res.status(400).json({ error: 'Insufficient Water inventory!' });
+      if (user.water_inventory < 1) return res.status(400).json({ error: 'Insufficient Water inventory! Please buy more in Market.' });
 
-      let reducedTime = remainingTime * 0.80;
+      let reducedTime = remainingTime * 0.80; // Mengurangi 20% dari sisa waktu
       updateFields.harvest_time = new Date(now + reducedTime).toISOString();
       updateFields.boosted_water = true;
 
@@ -43,9 +43,9 @@ module.exports = async function handler(req, res) {
 
     } else if (boost_type === 'fertilizer') {
       if (plot.boosted_fert) return res.status(400).json({ error: 'Fertilizer booster already applied to this plot!' });
-      if (user.fertilizer_inventory < 1) return res.status(400).json({ error: 'Insufficient Fertilizer inventory!' });
+      if (user.fertilizer_inventory < 1) return res.status(400).json({ error: 'Insufficient Fertilizer inventory! Please buy more in Market.' });
 
-      let reducedTime = remainingTime * 0.60;
+      let reducedTime = remainingTime * 0.60; // Mengurangi 40% dari sisa waktu
       updateFields.harvest_time = new Date(now + reducedTime).toISOString();
       updateFields.boosted_fert = true;
 
