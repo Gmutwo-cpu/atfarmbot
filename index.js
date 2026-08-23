@@ -10,16 +10,16 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// 1. INIT USER & SYNC STATE
+// 1. INIT USER & SYNC STATE (Safe Fallback for Plots)
 app.post('/api/user/init', async (req, res) => {
   try {
     const { telegram_id, username } = req.body;
     if (!telegram_id) return res.status(400).json({ error: "Missing telegram_id" });
 
-    let { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
+    let { data: user, error: userErr } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
 
     if (!user) {
-      const { data: newUser, error } = await supabase.from('users').insert([{
+      const { data: newUser, error: insErr } = await supabase.from('users').insert([{
         telegram_id,
         username: username || 'Farmer',
         coins: 150,
@@ -28,11 +28,11 @@ app.post('/api/user/init', async (req, res) => {
         fertilizer_inventory: 1
       }]).select().single();
       
-      if (error) throw error;
+      if (insErr) throw insErr;
       user = newUser;
     }
 
-    let { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
+    let { data: plots, error: plotErr } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index', { ascending: true });
     
     if (!plots || plots.length === 0) {
       const defaultPlots = [
@@ -49,7 +49,7 @@ app.post('/api/user/init', async (req, res) => {
     const { data: tasks } = await supabase.from('completed_tasks').select('task_code').eq('telegram_id', telegram_id);
     const { data: history } = await supabase.from('market_history').select('*').eq('telegram_id', telegram_id).order('created_at', { ascending: false }).limit(10);
 
-    return res.json({ success: true, user, plots, completed_tasks: tasks || [], history: history || [] });
+    return res.json({ success: true, user, plots: plots || [], completed_tasks: tasks || [], history: history || [] });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -107,7 +107,7 @@ app.post('/api/farm/harvest', async (req, res) => {
   }
 });
 
-// 4. UNLOCK PLOT (Soft Pay-to-Win)
+// 4. UNLOCK PLOT
 app.post('/api/farm/unlock', async (req, res) => {
   try {
     const { telegram_id, plot_index } = req.body;
@@ -124,7 +124,7 @@ app.post('/api/farm/unlock', async (req, res) => {
   }
 });
 
-// 5. COMPLETE TASK & CLAIM REWARD
+// 5. COMPLETE TASK
 app.post('/api/task/claim', async (req, res) => {
   try {
     const { telegram_id, task_code } = req.body;
@@ -142,7 +142,7 @@ app.post('/api/task/claim', async (req, res) => {
   }
 });
 
-// 6. MARKET TRANSACTIONS (BUY ITEMS / CONVERT)
+// 6. MARKET TRANSACTIONS
 app.post('/api/market/trade', async (req, res) => {
   try {
     const { telegram_id, action_type, amount } = req.body; 
