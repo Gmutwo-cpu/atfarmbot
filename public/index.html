@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ATFarmbot - Sustainable GameFi Node</title>
+<title>ATFarmbot - Sustainable Web3 Node</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
@@ -35,8 +35,10 @@
   .view-screen { flex: 1; display: none; flex-direction: column; gap: 8px; margin: 6px 0; overflow-y: auto; padding-bottom: 65px; }
   .view-screen.active { display: flex; }
 
-  .announcement-box { background: linear-gradient(135deg, rgba(0,242,254,0.1), rgba(0,255,135,0.05)); border: 1px dashed var(--primary-cyan); border-radius: 10px; padding: 8px; font-size: 9px; color: var(--text-dim); line-height: 1.35; }
+  /* Interactive Dev Board / Announcement */
+  .announcement-box { background: linear-gradient(135deg, rgba(0,242,254,0.1), rgba(0,255,135,0.05)); border: 1px dashed var(--primary-cyan); border-radius: 10px; padding: 10px; font-size: 9px; color: var(--text-dim); line-height: 1.4; display: flex; flex-direction: column; gap: 6px; }
   .announcement-box b { color: var(--primary-cyan); }
+  .btn-claim-board { background: var(--accent-green); border: none; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 8px; font-weight: bold; cursor: pointer; align-self: flex-start; }
 
   .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
   .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; min-height: 125px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px; text-align: center; }
@@ -85,49 +87,75 @@
 
   <!-- 1. FARM VIEW -->
   <div id="viewFarm" class="view-screen active">
-    <div class="announcement-box">
-      <b>🌱 Sustainable Farm:</b> Gunakan modal awal untuk menanam, panen koin, dan putar kembali ke market tanpa risiko kebangkrutan.
+    <!-- Interactive Announcement Board / Dev Note -->
+    <div class="announcement-box" id="devBoardBox">
+      <div><b>📢 System & Development Notice:</b> This game is currently in active development stage. Plant crops, harvest fruits, and build your sustainable loop steadily!</div>
+      <button class="btn-claim-board" id="btnClaimDev" onclick="claimDevTask()">Claim Dev Bonus (+30 Coins)</button>
     </div>
 
     <div class="inventory-bar">
       <span>💧 Water: <b id="invWater">0</b></span>
       <span>🧪 Fert: <b id="invFert" style="color:var(--accent-green);">0</b></span>
-      <span>🍎 Cycle: <b style="color:var(--primary-cyan);">3h 40m</b></span>
-      <span>🎟️ VIP: <b style="color:#ffaa00;">0</b></span>
+      <span>🌱 Seeds: <b id="invSeed" style="color:#ffaa00;">0</b></span>
+      <span>🍎 Fruits: <b id="invFruit" style="color:var(--accent-green);">0</b></span>
     </div>
 
     <div class="farm-grid" id="gridPlots"></div>
   </div>
 
-  <!-- 2. MARKET VIEW (Closed-Loop Economy) -->
+  <!-- 2. MARKET VIEW -->
   <div id="viewMarket" class="view-screen">
     <div class="card-box">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📈 Closed-Loop Market</span>
-      <span style="font-size:9px; color:var(--text-dim);">Tukar koin internal untuk membeli perlengkapan bertani. Aman dari inflasi eksternal.</span>
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📈 Sustainable Agro Market</span>
+      <span style="font-size:9px; color:var(--text-dim);">Closed-loop economy: Buy seeds & supplies, harvest and sell fruits for internal coins safely.</span>
       
       <div class="market-row">
         <div>
-          <div style="font-weight:bold;">💧 Water Supply</div>
-          <div style="font-size:8px; color:var(--text-dim);">Harga: 20 Coins (-30m timer)</div>
+          <div style="font-weight:bold;">🌱 Crop Seed</div>
+          <div style="font-size:8px; color:var(--text-dim);">Price: 10 Coins</div>
         </div>
-        <button class="btn-market" onclick="buyItem('water')">Buy 1x</button>
+        <button class="btn-market" onclick="marketAction('BUY', 'seed')">Buy 1x</button>
+      </div>
+
+      <div class="market-row">
+        <div>
+          <div style="font-weight:bold;">💧 Water Supply</div>
+          <div style="font-size:8px; color:var(--text-dim);">Price: 20 Coins (-30m timer)</div>
+        </div>
+        <button class="btn-market" onclick="marketAction('BUY', 'water')">Buy 1x</button>
       </div>
 
       <div class="market-row">
         <div>
           <div style="font-weight:bold;">🧪 Fertilizer</div>
-          <div style="font-size:8px; color:var(--text-dim);">Harga: 50 Coins (-60m timer)</div>
+          <div style="font-size:8px; color:var(--text-dim);">Price: 50 Coins (-60m timer)</div>
         </div>
-        <button class="btn-market" onclick="buyItem('fertilizer')">Buy 1x</button>
+        <button class="btn-market" onclick="marketAction('BUY', 'fertilizer')">Buy 1x</button>
+      </div>
+
+      <div class="market-row">
+        <div>
+          <div style="font-weight:bold;">🍎 Sell Harvested Fruits</div>
+          <div style="font-size:8px; color:var(--accent-green);">Reward: 45 Coins / Fruit</div>
+        </div>
+        <button class="btn-market" style="background:var(--primary-cyan);" onclick="marketAction('SELL_FRUIT', '')">Sell All</button>
+      </div>
+
+      <div class="market-row">
+        <div>
+          <div style="font-weight:bold;">👑 VIP Loyalty Pass</div>
+          <div style="font-size:8px; color:var(--text-dim);">Price: 1,000 Coins (QoL Perks)</div>
+        </div>
+        <button class="btn-market" id="btnVipPass" onclick="marketAction('BUY', 'vip_pass')">Unlock</button>
       </div>
     </div>
   </div>
 
-  <!-- 3. TASK VIEW (Viral Growth Engine) -->
+  <!-- 3. TASK VIEW -->
   <div id="viewTask" class="view-screen">
     <div class="card-box">
       <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📝 Community Tasks</span>
-      <span style="font-size:9px; color:var(--text-dim);">Selesaikan misi untuk mendapatkan modal koin gratis tanpa biaya iklan.</span>
+      <span style="font-size:9px; color:var(--text-dim);">Complete community milestones to earn free starting capital organically.</span>
       
       <div class="task-row">
         <div>
@@ -147,23 +175,23 @@
     </div>
   </div>
 
-  <!-- 4. FRIENDS VIEW (Organic Referral) -->
+  <!-- 4. FRIENDS VIEW -->
   <div id="viewFriends" class="view-screen">
     <div class="card-box" style="text-align:center; gap:8px;">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">👥 Invite Friends</span>
-      <span style="font-size:9px; color:var(--text-dim);">Ajak teman bergabung dan bangun ekosistem bersama tanpa modal promosi.</span>
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">👥 Referral Network</span>
+      <span style="font-size:9px; color:var(--text-dim);">Invite friends to grow together sustainably without paid advertising costs.</span>
       <input type="text" id="refUrl" readonly style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:9px; padding:8px; border-radius:6px; text-align:center;">
       <button class="btn-action" onclick="copyRefLink()">Copy Referral Link</button>
     </div>
   </div>
 
-  <!-- 5. WALLET VIEW (High Threshold Safety) -->
+  <!-- 5. WALLET VIEW -->
   <div id="viewWallet" class="view-screen">
     <div class="card-box">
       <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">💎 Web3 Treasury & Vault</span>
-      <span style="font-size:9px; color:var(--text-dim);">Penarikan token ATF dilindungi oleh sistem ambang batas tinggi dan batch manual untuk mencegah pengurasan kas pengembang.</span>
+      <span style="font-size:9px; color:var(--text-dim);">Token withdrawals are protected by high-threshold limits & manual batch auditing to secure ecosystem treasury.</span>
       <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:8px; border:1px solid var(--border-color); font-size:9px; display:flex; flex-direction:column; gap:4px;">
-        <span>Status Vault: <b style="color:var(--accent-green);">Protected & Secure</b></span>
+        <span>Vault Status: <b style="color:var(--accent-green);">Protected & Secure</b></span>
         <span>Min. Withdrawal: <b style="color:var(--primary-cyan);">1,000 ATF</b></span>
       </div>
     </div>
@@ -209,7 +237,7 @@
   }
 
   async function initGame() {
-    const tgUser = tg?.initDataUnsafe?.user || { id: 123456789, first_name: "FarmerTest" };
+    const tgUser = tg?.initDataUnsafe?.user || { id: 99887766, first_name: "GlobalFarmer" };
     
     document.getElementById('txtUsername').textContent = tgUser.first_name;
     document.getElementById('txtAvatar').textContent = tgUser.first_name[0] || "F";
@@ -229,6 +257,12 @@
         userPlots = data.plots || [];
         completedTasksList = data.completed_tasks || [];
         updateUI();
+
+        // Welcome Modal for first time recognition of Starter Pack
+        if (!localStorage.getItem('welcomed_' + tgUser.id)) {
+          showModal("Welcome Farmer!", "You have received your Starter Pack: 50 Coins & 1 Water unit to start your sustainable farming journey!");
+          localStorage.setItem('welcomed_' + tgUser.id, 'true');
+        }
       } else {
         showModal("Initialization Error", data.error || "Failed to load user session.");
       }
@@ -243,8 +277,20 @@
     document.getElementById('txtAtf').textContent = parseFloat(currentUser.atf_balance || 0).toFixed(4);
     document.getElementById('invWater').textContent = currentUser.water_inventory || 0;
     document.getElementById('invFert').textContent = currentUser.fertilizer_inventory || 0;
+    document.getElementById('invSeed').textContent = currentUser.seed_inventory || 0;
+    document.getElementById('invFruit').textContent = currentUser.fruit_inventory || 0;
+
+    // VIP Pass UI state
+    const vipBtn = document.getElementById('btnVipPass');
+    if (currentUser.is_vip) {
+      vipBtn.textContent = 'Unlocked';
+      vipBtn.disabled = true;
+      vipBtn.style.background = 'var(--text-dim)';
+    }
+
     renderPlots();
     renderTasksState();
+    renderDevBoardState();
   }
 
   function renderPlots() {
@@ -259,7 +305,7 @@
         card.innerHTML = `
           <span style="font-size:20px;">🪴</span>
           <span style="font-size:8px;color:var(--text-dim);">Plot #${p.plot_index}</span>
-          <button class="btn-action" onclick="plant(${p.plot_index})">Plant (-10 Coins)</button>`;
+          <button class="btn-action" onclick="plant(${p.plot_index})">Plant Seed (-1 Seed)</button>`;
       } 
       else if(p.status === 'growing') {
         const remainingTime = calculateRemainingTime(p.harvest_time);
@@ -281,13 +327,13 @@
         card.innerHTML = `
           <span style="font-size:20px;">🍎</span>
           <span style="font-size:8px; color:var(--accent-green); font-weight:bold;">Ready!</span>
-          <button class="btn-action" style="background:var(--accent-green); color:#000; width:100%; margin-top:3px;" onclick="harvest(${p.plot_index})">Harvest (+50)</button>`;
+          <button class="btn-action" style="background:var(--accent-green); color:#000; width:100%; margin-top:3px;" onclick="harvest(${p.plot_index})">Harvest (+1 Fruit)</button>`;
       } 
       else {
         card.innerHTML = `
           <span style="font-size:20px;">🔒</span>
-          <span style="font-size:8px; color:var(--text-dim);">Locked</span>
-          <span style="font-size:8px; color:var(--text-dim);">5k Coins</span>`;
+          <span style="font-size:8px; color:var(--text-dim);">Locked Plot</span>
+          <span style="font-size:8px; color:var(--text-dim);">Progression</span>`;
       }
       grid.appendChild(card);
     });
@@ -301,9 +347,6 @@
     if (channelDone) {
       btnChannel.textContent = 'Completed';
       btnChannel.disabled = true;
-    } else {
-      btnChannel.textContent = 'Claim';
-      btnChannel.disabled = false;
     }
 
     const dailyDone = completedTasksList.some(t => t.task_code === 'DAILY_CHECKIN');
@@ -311,10 +354,33 @@
     if (dailyDone) {
       btnDaily.textContent = 'Completed';
       btnDaily.disabled = true;
-    } else {
-      btnDaily.textContent = 'Claim';
-      btnDaily.disabled = false;
     }
+  }
+
+  function renderDevBoardState() {
+    const devDone = completedTasksList.some(t => t.task_code === 'DEV_NOTE_BONUS');
+    const box = document.getElementById('devBoardBox');
+    if (devDone) {
+      box.innerHTML = `<div><b>📢 System & Development Notice:</b> This game is currently in active development stage. Plant crops, harvest fruits, and build your sustainable loop steadily! <br><span style="color:var(--accent-green); font-weight:bold;">✔ Dev Bonus Claimed</span></div>`;
+    }
+  }
+
+  async function claimDevTask() {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`${API_URL}/task/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, task_code: 'DEV_NOTE_BONUS' })
+      });
+      const data = await res.json();
+      if(res.ok && data.success) {
+        showModal("Bonus Claimed", data.message);
+        initGame();
+      } else {
+        showModal("Notice", data.error || "Already claimed.");
+      }
+    } catch(err) { showModal("Error", err.message); }
   }
 
   function calculateRemainingTime(harvestTimeISO) {
@@ -353,6 +419,10 @@
 
   async function plant(plotIndex) {
     if (!currentUser) return;
+    if ((currentUser.seed_inventory || 0) <= 0) {
+      showModal("No Seeds", "You need seeds! Please buy seeds in the Market first.");
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/farm/plant`, {
         method: 'POST',
@@ -398,20 +468,20 @@
     } catch(err) { showModal("Error", err.message); }
   }
 
-  async function buyItem(itemType) {
+  async function marketAction(actionType, itemType) {
     if (!currentUser) return;
     try {
       const res = await fetch(`${API_URL}/market/buy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id: currentUser.telegram_id, item_type: itemType })
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, action_type: actionType, item_type: itemType })
       });
       const data = await res.json();
       if(res.ok && data.success) {
         showModal("Market Success", data.message);
         initGame();
       } else {
-        showModal("Purchase Failed", data.error || "Not enough coins");
+        showModal("Transaction Failed", data.error || "Action rejected");
       }
     } catch(err) { showModal("Error", err.message); }
   }
