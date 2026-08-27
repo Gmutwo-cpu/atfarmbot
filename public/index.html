@@ -6,362 +6,449 @@
     <title>ATFarmBot Mini App</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent-green: #10b981;
-            --accent-green-disabled: #475569;
+            --bg-color: #070b14;
+            --card-bg: #0f172a;
+            --accent-green: #00ff88;
+            --accent-green-disabled: #334155;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border-color: #334155;
+            --border-color: rgba(255, 255, 255, 0.06);
         }
 
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            padding-bottom: 70px;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 75px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 42px; height: 42px; background: linear-gradient(135deg, #00ff88, #00b4d8); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #070b14; font-size: 18px; }
+        .balances { text-align: right; font-size: 12px; color: var(--text-muted); }
+        .balances span { display: block; color: var(--accent-green); font-weight: 700; font-size: 14px; text-shadow: 0 0 10px rgba(0,255,136,0.3); }
+        
+        .notice-board { background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8)); border: 1px solid rgba(0, 255, 136, 0.3); margin: 14px; padding: 14px; border-radius: 14px; font-size: 13px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .notice-board button { margin-top: 10px; background: linear-gradient(135deg, #00ff88, #00cc6a); border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; color: #070b14; font-size: 12px; width: 100%; transition: all 0.3s; }
+        .notice-board button:disabled { background: var(--accent-green-disabled) !important; color: var(--text-muted) !important; cursor: not-allowed; box-shadow: none; }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px;
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-        }
+        .inventory-bar { display: flex; justify-content: space-around; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); border: 1px solid var(--border-color); padding: 12px; margin: 0 14px 14px 14px; border-radius: 12px; font-size: 12px; color: var(--text-muted); }
+        .inventory-bar span b { color: var(--text-main); }
+        
+        .tab-content { display: none; padding: 0 14px; }
+        .tab-content.active { display: block; }
 
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .plots-container { display: flex; flex-direction: column; gap: 12px; }
+        .plot-card { background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(5px); }
+        .plot-info h4 { font-size: 14px; margin-bottom: 4px; color: var(--text-main); }
+        .plot-info p { font-size: 11px; color: var(--text-muted); }
+        
+        .plot-actions { display: flex; gap: 6px; flex-direction: column; align-items: flex-end; }
+        .plot-btn { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #070b14; border: none; padding: 7px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 11px; }
+        .plot-btn.unlock { background: linear-gradient(135deg, #ffaa00, #ff8800); }
+        .plot-btn.secondary { background: #334155; color: #f8fafc; font-size: 10px; padding: 4px 8px; }
 
-        .avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 18px;
-        }
+        .market-item, .mission-card { background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .market-item button, .mission-card button { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #070b14; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 11px; }
+        
+        .mission-card { flex-direction: column; align-items: flex-start; }
+        .mission-header { display: flex; justify-content: space-width; width: 100%; justify-content: space-between; margin-bottom: 4px; }
+        .mission-header h4 { font-size: 13px; color: var(--accent-green); }
+        .mission-header span { color: #ffaa00; font-size: 12px; font-weight: 700; }
+        .mission-card p { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
 
-        .user-info h3 {
-            margin: 0;
-            font-size: 15px;
-        }
+        #custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(7, 11, 20, 0.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-box { background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 16px; width: 100%; max-width: 320px; padding: 20px; text-align: center; }
+        .modal-box h3 { color: var(--accent-green); font-size: 16px; margin-bottom: 8px; }
+        .modal-box p { color: #cbd5e1; font-size: 13px; margin-bottom: 18px; line-height: 1.4; }
+        .modal-box button { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #070b14; border: none; padding: 9px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; }
 
-        .user-info p {
-            margin: 2px 0 0;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .balances {
-            text-align: right;
-        }
-
-        .balance-item {
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .balance-item span {
-            color: var(--accent-green);
-        }
-
-        .notice-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            margin: 16px;
-            padding: 14px;
-        }
-
-        .notice-title {
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: var(--text-main);
-        }
-
-        .btn-claim {
-            background-color: var(--accent-green);
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-claim:disabled {
-            background-color: var(--accent-green-disabled);
-            cursor: not-allowed;
-        }
-
-        .stats-bar {
-            display: flex;
-            justify-content: space-around;
-            background: var(--card-bg);
-            margin: 0 16px 16px 16px;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            font-size: 12px;
-        }
-
-        /* Plot / Lahan Section Fix */
-        .plots-container {
-            padding: 0 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .plot-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .plot-info h4 {
-            margin: 0 0 4px 0;
-            font-size: 14px;
-        }
-
-        .plot-info p {
-            margin: 0;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .btn-plot {
-            background: var(--accent-green);
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .btn-plot.locked {
-            background: var(--border-color);
-            color: var(--text-muted);
-        }
-
-        /* Bottom Nav */
-        .nav-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--card-bg);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-        }
-
-        .nav-item {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 11px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .nav-item.active {
-            color: var(--accent-green);
-        }
+        .nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid var(--border-color); z-index: 99; }
+        .nav-item { background: none; border: none; color: #64748b; font-size: 10px; cursor: pointer; text-align: center; font-weight: 600; }
+        .nav-item.active { color: var(--accent-green); text-shadow: 0 0 10px rgba(0,255,136,0.3); }
+        .bot-footer { text-align: center; font-size: 10px; color: #64748b; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-    <!-- Header Profile -->
+    <div id="custom-modal">
+        <div class="modal-box">
+            <h3 id="modal-title">Notification</h3>
+            <p id="modal-message">Message content goes here.</p>
+            <button onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
     <div class="header">
-        <div class="user-profile">
-            <div class="avatar" id="user-initials">GE</div>
-            <div class="user-info">
-                <h3 id="username-display">Gamutwo @moneytree_game_bot</h3>
-                <p id="userid-display">ID: 8560233709</p>
+        <div class="user-info">
+            <div class="avatar">GE</div>
+            <div>
+                <h4 style="font-size: 14px; font-weight: 700;">Gamutwo</h4>
+                <small style="color: #64748b; font-size: 11px;">ID: 8560233709</small>
             </div>
         </div>
         <div class="balances">
-            <div class="balance-item">COINS: <span id="coins-val">10</span></div>
-            <div class="balance-item">ATF: <span id="atf-val">0.0000</span></div>
+            <div>COINS: <span id="coin-balance">25</span></div>
+            <div>ATF: <span id="atf-balance">0.0000</span></div>
         </div>
     </div>
 
-    <!-- Notice & Claim Bonus -->
-    <div class="notice-card">
-        <div class="notice-title">📢 System Notice: Build your sustainable loop steadily!</div>
-        <button class="btn-claim" id="claim-btn" onclick="claimBonus()">Claim Bonus (+15 Coins)</button>
-    </div>
-
-    <!-- Status Bar -->
-    <div class="stats-bar">
-        <div>💧 Water: <span id="stat-water">0</span></div>
-        <div>🧪 Fert: <span id="stat-fert">0</span></div>
-        <div>🌱 Seeds: <span id="stat-seeds">1</span></div>
-        <div>🍎 Fruits: <span id="stat-fruits">0</span></div>
-    </div>
-
-    <!-- Lahan / Plots Container (Fixing disappearance issue) -->
-    <div class="plots-container" id="plots-container">
-        <div class="plot-card" id="plot-1">
-            <div class="plot-info">
-                <h4>Plot #1 (Active)</h4>
-                <p id="plot-1-status">Status: Empty (Ready to Plant)</p>
-            </div>
-            <button class="btn-plot" id="btn-plant-1" onclick="plantSeed(1)">Plant Seed</button>
+    <!-- TAB 1: FARM -->
+    <div id="tab-farm" class="tab-content active">
+        <div class="notice-board">
+            <p>📢 System Notice: Build your sustainable loop steadily!</p>
+            <button id="claim-bonus-btn" onclick="claimDevBonus()">Claim Bonus (+15 Coins)</button>
         </div>
 
-        <div class="plot-card" id="plot-2">
-            <div class="plot-info">
-                <h4>Locked Plot #2</h4>
-                <p>Unlock requirement: 250 Coins</p>
-            </div>
-            <button class="btn-plot locked" onclick="unlockPlot(2, 250)">Unlock (250 Coins)</button>
+        <div class="inventory-bar">
+            <span>💧 Water: <b id="inv-water">1</b></span>
+            <span>🧪 Fert: <b id="inv-fert">0</b></span>
+            <span>🌱 Seeds: <b id="inv-seed">1</b></span>
+            <span>🍎 Fruits: <b id="inv-fruit">0</b></span>
         </div>
 
-        <div class="plot-card" id="plot-3">
-            <div class="plot-info">
-                <h4>Locked Plot #3</h4>
-                <p>Unlock requirement: 450 Coins</p>
-            </div>
-            <button class="btn-plot locked" onclick="unlockPlot(3, 450)">Unlock (450 Coins)</button>
+        <div class="plots-container" id="plots-container">
+            <!-- Dinamis Render Plot -->
         </div>
+        <div class="bot-footer">@ATFarmBot</div>
     </div>
 
-    <!-- Bottom Navigation -->
+    <!-- TAB 2: MARKET -->
+    <div id="tab-market" class="tab-content">
+        <h3 style="margin: 14px 0 4px 0; color: var(--accent-green); font-size: 16px;">Sustainable Agro Market</h3>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 14px;">Closed-loop economy: Buy supplies, harvest, and sell fruits safely.</p>
+        
+        <div class="market-item">
+            <div><b>Crop Seed</b><br><small style="color:#64748b;">Price: 10 Coins</small></div>
+            <button onclick="buyItem('seed', 10)">Buy 1x</button>
+        </div>
+        <div class="market-item">
+            <div><b>Water Supply</b><br><small style="color:#64748b;">Price: 20 Coins</small></div>
+            <button onclick="buyItem('water', 20)">Buy 1x</button>
+        </div>
+        <div class="market-item">
+            <div><b>Fertilizer</b><br><small style="color:#64748b;">Price: 50 Coins</small></div>
+            <button onclick="buyItem('fert', 50)">Buy 1x</button>
+        </div>
+        <div class="market-item">
+            <div><b>Sell Harvested Fruits</b><br><small style="color:#64748b;">Reward: 45 Coins / Fruit</small></div>
+            <button style="background:linear-gradient(135deg, #ff4444, #cc0000); color:#fff;" onclick="sellFruits()">Sell All</button>
+        </div>
+        <div class="bot-footer">@ATFarmBot</div>
+    </div>
+
+    <!-- TAB 3: TASK -->
+    <div id="tab-task" class="tab-content">
+        <h3 style="margin: 14px 0 12px 0; color: var(--accent-green); font-size: 16px;">Executive Missions</h3>
+        
+        <div class="mission-card">
+            <div class="mission-header"><h4>Watch Ads</h4><span>Reward: +5 Coins</span></div>
+            <p>Watch short ads to earn extra operational coins daily.</p>
+            <button onclick="completeTask('Ads', 5)">Watch Ad</button>
+        </div>
+
+        <div class="mission-card">
+            <div class="mission-header"><h4>Promote your project</h4><span>Reward: +20 Coins</span></div>
+            <p>Promote your project to global Web3 farmers securely.</p>
+            <button onclick="completeTask('Promo', 20)">Publish Ad</button>
+        </div>
+
+        <h4 style="margin: 16px 0 10px 0; font-size: 12px; color: #ffaa00; font-weight: 700;">⭐ Special Identity Missions</h4>
+        
+        <div class="mission-card">
+            <div class="mission-header"><h4>1. Telegram Story Share</h4><span>Reward: +15 Coins</span></div>
+            <p>Share bot mini app on your Telegram story daily.</p>
+            <button onclick="completeTask('Story', 15)">Verify Story</button>
+        </div>
+
+        <div class="mission-card">
+            <div class="mission-header"><h4>2. Username Prefix Badge (@ATFarmBot)</h4><span>Reward: +30 Coins</span></div>
+            <p>Attach @ATFarmBot to the front of your Telegram name for daily streak rewards.</p>
+            <button onclick="completeTask('Username', 30)">Verify Name</button>
+        </div>
+
+        <div class="mission-card">
+            <div class="mission-header"><h4>3. Bio Referral Link</h4><span>Reward: +50 Coins</span></div>
+            <p>Put your unique invite link in your Telegram bio for structural rewards.</p>
+            <button onclick="completeTask('Bio', 50)">Verify Bio</button>
+        </div>
+
+        <div class="mission-card">
+            <div class="mission-header"><h4>4. Email Account Binding</h4><span>Reward: +100 Coins</span></div>
+            <p>Bind your email to secure your farm progress against data loss.</p>
+            <button onclick="bindEmail()">Bind Email</button>
+        </div>
+        <div class="bot-footer">@ATFarmBot</div>
+    </div>
+
+    <!-- TAB 4: FRIENDS -->
+    <div id="tab-friends" class="tab-content">
+        <h3 style="margin: 14px 0 6px 0; color: var(--accent-green); font-size: 16px;">Friends Referral</h3>
+        <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">Invite friends and earn sustainable commissions from their activities.</p>
+        <div class="market-item">
+            <div><b>Invite Link</b><br><small style="color:var(--accent-green);">t.me/moneytree_game_bot?start=ref856</small></div>
+            <button onclick="showModal('Invite', 'Referral link copied to clipboard!')">Copy Link</button>
+        </div>
+        <div class="bot-footer">@ATFarmBot</div>
+    </div>
+
+    <!-- TAB 5: WALLET -->
+    <div id="tab-wallet" class="tab-content">
+        <h3 style="margin: 14px 0 6px 0; color: var(--accent-green); font-size: 16px;">Web3 Wallet</h3>
+        <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">Connected wallet assets and token balances overview.</p>
+        <div class="market-item">
+            <div><b>TON Wallet</b><br><small style="color:#64748b;">Not Connected</small></div>
+            <button onclick="showModal('Wallet', 'TON Wallet integration ready for mainnet launch!')">Connect</button>
+        </div>
+        <div class="bot-footer">@ATFarmBot</div>
+    </div>
+
     <div class="nav-bar">
-        <button class="nav-item active">🌾 FARM</button>
-        <button class="nav-item">📈 MARKET</button>
-        <button class="nav-item">📋 TASK</button>
-        <button class="nav-item">👥 FRIENDS</button>
-        <button class="nav-item">💎 WALLET</button>
+        <button class="nav-item active" onclick="switchTab('farm', this)">🌾<br>FARM</button>
+        <button class="nav-item" onclick="switchTab('market', this)">📈<br>MARKET</button>
+        <button class="nav-item" onclick="switchTab('task', this)">📋<br>TASK</button>
+        <button class="nav-item" onclick="switchTab('friends', this)">👥<br>FRIENDS</button>
+        <button class="nav-item" onclick="switchTab('wallet', this)">💎<br>WALLET</button>
     </div>
 
     <script>
-        // State Management
-        let gameState = {
-            coins: parseInt(localStorage.getItem('atf_coins')) || 10,
-            atf: 0.0000,
+        // Persistent Game Data Initialization
+        let game = {
+            coins: parseInt(localStorage.getItem('atf_coins')) || 25,
+            atf: parseFloat(localStorage.getItem('atf_atf')) || 0.0000,
             seeds: parseInt(localStorage.getItem('atf_seeds')) || 1,
-            water: 0,
-            fert: 0,
-            fruits: 0,
-            plotStatus: 'empty' // 'empty', 'growing', 'ready'
+            water: parseInt(localStorage.getItem('atf_water')) || 1,
+            fert: parseInt(localStorage.getItem('atf_fert')) || 0,
+            fruits: parseInt(localStorage.getItem('atf_fruits')) || 0,
+            plots: JSON.parse(localStorage.getItem('atf_plots')) || [
+                { id: 1, status: 'empty', plantedAt: null, duration: 60 }, // 60 detik siklus contoh
+                { id: 2, status: 'locked', cost: 250 },
+                { id: 3, status: 'locked', cost: 450 }
+            ]
         };
 
-        function updateUI() {
-            document.getElementById('coins-val').innerText = gameState.coins;
-            document.getElementById('stat-seeds').innerText = gameState.seeds;
-            document.getElementById('stat-water').innerText = gameState.water;
-            document.getElementById('stat-fert').innerText = gameState.fert;
-            document.getElementById('stat-fruits').innerText = gameState.fruits;
-
-            // Simpan ke localStorage
-            localStorage.setItem('atf_coins', gameState.coins);
-            localStorage.setItem('atf_seeds', gameState.seeds);
-
-            // Cek status Claim Bonus harian
-            checkDailyClaimStatus();
+        function saveGame() {
+            localStorage.setItem('atf_coins', game.coins);
+            localStorage.setItem('atf_atf', game.atf);
+            localStorage.setItem('atf_seeds', game.seeds);
+            localStorage.setItem('atf_water', game.water);
+            localStorage.setItem('atf_fert', game.fert);
+            localStorage.setItem('atf_fruits', game.fruits);
+            localStorage.setItem('atf_plots', JSON.stringify(game.plots));
         }
 
-        function checkDailyClaimStatus() {
-            const lastClaimDate = localStorage.getItem('atf_last_claim');
-            const today = new Date().toISOString().slice(0, 10);
-            const claimBtn = document.getElementById('claim-btn');
+        function showModal(title, msg) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = msg;
+            document.getElementById('custom-modal').style.display = 'flex';
+        }
 
-            if (lastClaimDate === today) {
+        function closeModal() {
+            document.getElementById('custom-modal').style.display = 'none';
+        }
+
+        function updateUI() {
+            document.getElementById('coin-balance').innerText = game.coins;
+            document.getElementById('atf-balance').innerText = game.atf.toFixed(4);
+            document.getElementById('inv-water').innerText = game.water;
+            document.getElementById('inv-fert').innerText = game.fert;
+            document.getElementById('inv-seed').innerText = game.seeds;
+            document.getElementById('inv-fruit').innerText = game.fruits;
+
+            // Check Daily Bonus Status
+            const today = new Date().toISOString().slice(0, 10);
+            const claimBtn = document.getElementById('claim-bonus-btn');
+            if (localStorage.getItem('atf_last_claim') === today) {
                 claimBtn.innerText = "Claimed (Come back tomorrow)";
                 claimBtn.disabled = true;
             } else {
                 claimBtn.innerText = "Claim Bonus (+15 Coins)";
                 claimBtn.disabled = false;
             }
+
+            renderPlots();
+            saveGame();
         }
 
-        function claimBonus() {
+        function renderPlots() {
+            const container = document.getElementById('plots-container');
+            container.innerHTML = '';
+
+            game.plots.forEach(plot => {
+                let html = '';
+                if (plot.status === 'locked') {
+                    html = `
+                        <div class="plot-card">
+                            <div class="plot-info">
+                                <h4>Locked Plot #${plot.id}</h4>
+                                <p>Unlock requirement: ${plot.cost} Coins</p>
+                            </div>
+                            <button class="plot-btn unlock" onclick="unlockPlot(${plot.id})">Unlock (${plot.cost} Coins)</button>
+                        </div>
+                    `;
+                } else if (plot.status === 'empty') {
+                    html = `
+                        <div class="plot-card">
+                            <div class="plot-info">
+                                <h4>Plot #${plot.id} (Active)</h4>
+                                <p>Status: Empty (Ready to Plant)</p>
+                            </div>
+                            <button class="plot-btn" onclick="plantSeed(${plot.id})">Plant Seed</button>
+                        </div>
+                    `;
+                } else if (plot.status === 'growing') {
+                    const now = Date.now();
+                    const timeLeft = Math.max(0, Math.floor((plot.plantedAt + (plot.duration * 1000) - now) / 1000));
+
+                    if (timeLeft === 0) {
+                        html = `
+                            <div class="plot-card" style="border: 1px solid rgba(0,255,136,0.4);">
+                                <div class="plot-info">
+                                    <h4>Plot #${plot.id} (Active)</h4>
+                                    <p style="color:var(--accent-green); font-weight:700;">Ready to Harvest!</p>
+                                </div>
+                                <button class="plot-btn" onclick="harvestPlot(${plot.id})">Harvest (+1 Fruit)</button>
+                            </div>
+                        `;
+                    } else {
+                        html = `
+                            <div class="plot-card">
+                                <div class="plot-info">
+                                    <h4>Plot #${plot.id} (Active)</h4>
+                                    <p>Growing... Time left: <b>${timeLeft}s</b></p>
+                                </div>
+                                <div class="plot-actions">
+                                    <span style="font-size:10px; color:#38bdf8;">Growing</span>
+                                    <div style="display:flex; gap:4px; margin-top:4px;">
+                                        <button class="plot-btn secondary" onclick="useWater(${plot.id})">💧 Water (-20s)</button>
+                                        <button class="plot-btn secondary" onclick="useFert(${plot.id})">🧪 Fert (-50s)</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                container.innerHTML += html;
+            });
+        }
+
+        function claimDevBonus() {
             const today = new Date().toISOString().slice(0, 10);
-            const lastClaimDate = localStorage.getItem('atf_last_claim');
+            if (localStorage.getItem('atf_last_claim') === today) return;
 
-            if (lastClaimDate === today) {
-                alert("You have already claimed your bonus today!");
-                return;
-            }
-
-            // Tambahkan 15 koin
-            gameState.coins += 15;
+            game.coins += 15;
             localStorage.setItem('atf_last_claim', today);
-            
             updateUI();
-            alert("Success! +15 Coins added to your account.");
+            showModal('Success', 'Successfully claimed +15 Coins bonus!');
         }
 
-        function plantSeed(plotId) {
-            if (gameState.seeds <= 0) {
-                alert("You don't have any seeds! Please buy seeds from MARKET.");
+        function unlockPlot(id) {
+            const plot = game.plots.find(p => p.id === id);
+            if (game.coins < plot.cost) {
+                showModal('Notice', `Not enough coins! You need ${plot.cost} Coins.`);
                 return;
             }
-
-            if (gameState.plotStatus !== 'empty') {
-                alert("Plot is already occupied or growing!");
-                return;
-            }
-
-            // Kurangi bibit & ubah status lahan (tanpa menghilangkan container lahan)
-            gameState.seeds -= 1;
-            gameState.plotStatus = 'growing';
-            
-            document.getElementById('plot-1-status').innerText = "Status: Growing (Needs Water & Time)";
-            const plantBtn = document.getElementById('btn-plant-1');
-            plantBtn.innerText = "Growing...";
-            plantBtn.disabled = true;
-
+            game.coins -= plot.cost;
+            plot.status = 'empty';
             updateUI();
-            alert("Seed planted successfully! Keep an eye on water and fertilizers.");
+            showModal('Success', `Plot #${id} unlocked successfully!`);
         }
 
-        function unlockPlot(plotNum, cost) {
-            if (gameState.coins < cost) {
-                alert(`Not enough coins! You need ${cost} Coins to unlock Plot #${plotNum}.`);
+        function plantSeed(id) {
+            if (game.seeds <= 0) {
+                showModal('Notice', "No seeds available! Please buy seeds in MARKET.");
                 return;
             }
-
-            gameState.coins -= cost;
+            game.seeds -= 1;
+            const plot = game.plots.find(p => p.id === id);
+            plot.status = 'growing';
+            plot.plantedAt = Date.now();
             updateUI();
-            alert(`Plot #${plotNum} unlocked successfully!`);
-            // Ubah tombol unlock menjadi aktif
-            event.target.innerText = "Unlocked";
-            event.target.disabled = true;
-            event.target.style.backgroundColor = "var(--accent-green)";
+            showModal('Success', "Seed planted successfully!");
         }
 
-        // Inisialisasi awal saat halaman dimuat
+        function harvestPlot(id) {
+            const plot = game.plots.find(p => p.id === id);
+            plot.status = 'empty';
+            plot.plantedAt = null;
+            game.fruits += 1;
+            updateUI();
+            showModal('Success', "Successfully harvested 1 Fruit!");
+        }
+
+        function useWater(id) {
+            if (game.water <= 0) {
+                showModal('Notice', "No water supply! Buy water in MARKET.");
+                return;
+            }
+            game.water -= 1;
+            const plot = game.plots.find(p => p.id === id);
+            plot.plantedAt -= 20000; // Pangkas 20 detik
+            updateUI();
+        }
+
+        function useFert(id) {
+            if (game.fert <= 0) {
+                showModal('Notice', "No fertilizer! Buy fertilizer in MARKET.");
+                return;
+            }
+            game.fert -= 1;
+            const plot = game.plots.find(p => p.id === id);
+            plot.plantedAt -= 50000; // Pangkas 50 detik
+            updateUI();
+        }
+
+        function buyItem(type, cost) {
+            if (game.coins < cost) {
+                showModal('Market Error', "Not enough coins!");
+                return;
+            }
+            game.coins -= cost;
+            if (type === 'seed') game.seeds += 1;
+            if (type === 'water') game.water += 1;
+            if (type === 'fert') game.fert += 1;
+            updateUI();
+            showModal('Market Success', `Successfully purchased 1x ${type.toUpperCase()}!`);
+        }
+
+        function sellFruits() {
+            if (game.fruits <= 0) {
+                showModal('Market Error', "No harvested fruits to sell!");
+                return;
+            }
+            const earned = game.fruits * 45;
+            game.coins += earned;
+            game.fruits = 0;
+            updateUI();
+            showModal('Market Success', `Sold all fruits for ${earned} Coins!`);
+        }
+
+        function completeTask(taskName, reward) {
+            game.coins += reward;
+            updateUI();
+            showModal('Mission Complete', `Successfully completed ${taskName}! +${reward} Coins added.`);
+        }
+
+        function bindEmail() {
+            const email = prompt("Enter your email address for account recovery:");
+            if (email) {
+                game.coins += 100;
+                updateUI();
+                showModal('Email Bound', `Email successfully bound! +100 Coins reward added.`);
+            }
+        }
+
+        function switchTab(tabName, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        // Realtime Countdown Loop & Init
         window.onload = function() {
             updateUI();
+            setInterval(() => {
+                if(document.getElementById('tab-farm').classList.contains('active')) {
+                    renderPlots();
+                }
+            }, 1000);
         };
     </script>
 </body>
