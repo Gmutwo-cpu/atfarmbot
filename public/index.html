@@ -10,7 +10,8 @@
         body { background-color: #070b14; color: #f8fafc; padding-bottom: 75px; }
         .header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.05); position: sticky; top: 0; z-index: 100; }
         .user-info { display: flex; align-items: center; gap: 12px; }
-        .avatar { width: 42px; height: 42px; background: linear-gradient(135deg, #00ff88, #00b4d8); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #070b14; }
+        .avatar { width: 42px; height: 42px; background: linear-gradient(135deg, #00ff88, #00b4d8); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #070b14; overflow: hidden; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
         .balances { text-align: right; font-size: 12px; color: #94a3b8; }
         .balances span { display: block; color: #00ff88; font-weight: 700; font-size: 14px; }
         .notice-board { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0, 255, 136, 0.3); margin: 14px; padding: 14px; border-radius: 14px; font-size: 13px; }
@@ -21,11 +22,10 @@
         .tab-content { display: none; padding: 0 14px; }
         .tab-content.active { display: block; }
         .plots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .plot-card { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 14px; padding: 16px; text-align: center; min-height: 180px; display: flex; flex-direction: column; justify-content: space-between; }
-        .plot-card button { background: linear-gradient(135deg, #0088ff, #0055ff); color: #fff; border: none; padding: 8px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 11px; margin-top: 4px; }
+        .plot-card { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 14px; padding: 16px; text-align: center; min-height: 165px; display: flex; flex-direction: column; justify-content: space-between; }
+        .plot-card button { background: linear-gradient(135deg, #0088ff, #0055ff); color: #fff; border: none; padding: 9px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 12px; }
         .plot-card button.unlock-btn { background: linear-gradient(135deg, #ffaa00, #ff8800); color: #070b14; }
         .plot-card button.harvest-btn { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #070b14; }
-        .plot-card button.boost-btn { background: linear-gradient(135deg, #a855f7, #7c3aed); color: #fff; }
         .market-item { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .market-item button { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #070b14; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; }
         .activity-log { background: rgba(7, 11, 20, 0.8); padding: 12px; border-radius: 10px; font-size: 11px; margin-top: 15px; max-height: 130px; overflow-y: auto; color: #94a3b8; }
@@ -64,8 +64,8 @@
     <!-- TAB 1: FARM -->
     <div id="tab-farm" class="tab-content active">
         <div class="notice-board">
-            <p>📢 <b>System Notice:</b> Plant, grow, and harvest sustainable crops!</p>
-            <button id="claim-bonus-btn" onclick="claimDevBonus()">Claim Daily Bonus (+15 Coins)</button>
+            <p>📢 <b>System Notice:</b> Build your sustainable loop steadily!</p>
+            <button id="claim-bonus-btn" onclick="claimDevBonus()">Claim Bonus (+15 Coins)</button>
         </div>
 
         <div class="inventory-bar">
@@ -90,7 +90,7 @@
             <button onclick="marketTransact('buy_water')">Buy 1x</button>
         </div>
         <div class="market-item">
-            <div><b>Fertilizer (Boost)</b><br><small style="color:#64748b;">Price: 50 Coins</small></div>
+            <div><b>Fertilizer</b><br><small style="color:#64748b;">Price: 50 Coins</small></div>
             <button onclick="marketTransact('buy_fertilizer')">Buy 1x</button>
         </div>
         <div class="market-item">
@@ -109,9 +109,9 @@
     <!-- TAB 3: TASK -->
     <div id="tab-task" class="tab-content">
         <h3 style="margin: 14px 0 12px 0; color: #00ff88; font-size: 16px;">Executive Missions</h3>
-        <div class="market-item" id="task-card-email">
-            <div><b>Email Account Binding</b><br><small style="color:#64748b;">Reward: +50 Coins</small></div>
-            <button id="btn-task-email" onclick="completeTask('bind_email', 50)">Claim Task</button>
+        <div class="market-item">
+            <div><b>Email Account Binding</b><br><small style="color:#64748b;">Secure your progress</small></div>
+            <button onclick="promptEmailBinding()">Bind Email</button>
         </div>
     </div>
 
@@ -133,8 +133,6 @@
         const userTelegramId = telegramUser.id || 856033709;
         const username = telegramUser.first_name || 'Farmer';
 
-        let completedTaskList = [];
-
         function showModal(title, msg) {
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-message').innerText = msg;
@@ -150,11 +148,7 @@
                     body: JSON.stringify({ telegram_id: userTelegramId, username })
                 });
                 const data = await res.json();
-                if (data.success) {
-                    completedTaskList = data.completed_tasks || [];
-                    updateUI(data.user, data.plots);
-                    updateTaskUI();
-                }
+                if (data.success) updateUI(data.user, data.plots);
             } catch (err) { console.error('Init error:', err); }
         }
 
@@ -175,7 +169,7 @@
                 claimBtn.innerText = 'Claimed (Come back tomorrow)';
                 claimBtn.disabled = true;
             } else {
-                claimBtn.innerText = 'Claim Daily Bonus (+15 Coins)';
+                claimBtn.innerText = 'Claim Bonus (+15 Coins)';
                 claimBtn.disabled = false;
             }
 
@@ -191,14 +185,14 @@
                         <div class="plot-card" style="border: 1px dashed rgba(255,170,0,0.4);">
                             <div>🔒</div>
                             <div style="font-size:11px; color:#ffaa00;">Locked Plot #${plot.plot_index}</div>
-                            <button class="unlock-btn" onclick="unlockPlot(${plot.plot_index})">Unlock (${cost} Coins)</button>
+                            <button class="unlock-btn" onclick="actionFarm('unlock_plot', ${plot.plot_index})">Unlock (${cost} Coins)</button>
                         </div>`;
                 } else if (plot.status === 'empty') {
                     cardHtml = `
                         <div class="plot-card">
                             <div>🌱 Plot #${plot.plot_index}</div>
                             <div style="font-size:11px; color:#64748b;">Ready to Plant</div>
-                            <button onclick="plantSeed(${plot.plot_index})">Plant Seed (-1)</button>
+                            <button onclick="actionFarm('plant', ${plot.plot_index})">Plant Seed (-1)</button>
                         </div>`;
                 } else if (plot.status === 'growing') {
                     const isReady = new Date() >= new Date(plot.harvest_time);
@@ -207,14 +201,14 @@
                             <div class="plot-card" style="border: 1px solid rgba(0,255,136,0.4);">
                                 <div>🍎</div>
                                 <div style="font-size:12px; font-weight:700; color:#00ff88;">Ready!</div>
-                                <button class="harvest-btn" onclick="harvestCrop(${plot.plot_index})">Harvest (+1)</button>
+                                <button class="harvest-btn" onclick="actionFarm('harvest', ${plot.plot_index})">Harvest (+1)</button>
                             </div>`;
                     } else {
                         cardHtml = `
                             <div class="plot-card">
                                 <div>🌱</div>
                                 <div style="font-size:12px; color:#38bdf8;">Growing...</div>
-                                <button class="boost-btn" onclick="boostCrop(${plot.plot_index})">Boost (Fertilizer)</button>
+                                <div style="font-size:10px; color:#94a3b8;">Mature soon</div>
                             </div>`;
                     }
                 }
@@ -222,73 +216,22 @@
             });
         }
 
-        // --- PEMANGGILAN ENDPOINT TERPISAH ---
-
-        async function unlockPlot(plotIndex) {
-            // Menggunakan api/farm/action atau endpoint khusus unlock jika ada
+        async function actionFarm(actionType, plotIndex = null) {
             const res = await fetch('/api/farm/action', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegram_id: userTelegramId, action: 'unlock_plot', plot_index: plotIndex })
+                body: JSON.stringify({ telegram_id: userTelegramId, action: actionType, plot_index: plotIndex })
             });
             const data = await res.json();
             if (data.success) {
                 showModal('Success', data.message);
                 updateUI(data.user, data.plots);
-            } else { showModal('Notice', data.error); }
+            } else {
+                showModal('Notice', data.error);
+            }
         }
 
-        async function plantSeed(plotIndex) {
-            const res = await fetch('/api/farm/plants', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegram_id: userTelegramId, plot_index: plotIndex })
-            });
-            const data = await res.json();
-            if (data.success) {
-                showModal('Success', data.message);
-                updateUI(data.user, data.plots);
-            } else { showModal('Notice', data.error); }
-        }
-
-        async function harvestCrop(plotIndex) {
-            const res = await fetch('/api/farm/harvest', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegram_id: userTelegramId, plot_index: plotIndex })
-            });
-            const data = await res.json();
-            if (data.success) {
-                showModal('Success', data.message);
-                updateUI(data.user, data.plots);
-            } else { showModal('Notice', data.error); }
-        }
-
-        async function boostCrop(plotIndex) {
-            const res = await fetch('/api/boost', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegram_id: userTelegramId, plot_index: plotIndex })
-            });
-            const data = await res.json();
-            if (data.success) {
-                showModal('Boosted!', data.message);
-                updateUI(data.user, data.plots);
-            } else { showModal('Notice', data.error); }
-        }
-
-        async function claimDevBonus() {
-            const res = await fetch('/api/farm/action', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegram_id: userTelegramId, action: 'claim_dev_bonus' })
-            });
-            const data = await res.json();
-            if (data.success) {
-                showModal('Bonus Claimed', data.message);
-                updateUI(data.user, data.plots);
-            } else { showModal('Notice', data.error); }
-        }
+        async function claimDevBonus() { actionFarm('claim_dev_bonus'); }
 
         async function marketTransact(actionType) {
             const res = await fetch('/api/market/transact', {
@@ -307,32 +250,14 @@
                         logBox.innerHTML += `<div>• [${new Date(log.created_at).toLocaleTimeString()}] ${log.details}</div>`;
                     });
                 }
-            } else { showModal('Market Error', data.error); }
-        }
-
-        async function completeTask(taskCode, rewardCoins) {
-            const res = await fetch('/api/complete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegram_id: userTelegramId, task_code: taskCode, reward_coins: rewardCoins })
-            });
-            const data = await res.json();
-            if (data.success) {
-                completedTaskList = data.completed_tasks || [];
-                updateTaskUI();
-                showModal('Task Completed', data.message);
-                updateUI(data.user, []);
-            } else { showModal('Notice', data.error); }
-        }
-
-        function updateTaskUI() {
-            const isDone = completedTaskList.some(t => t.task_code === 'bind_email');
-            const btn = document.getElementById('btn-task-email');
-            if (isDone) {
-                btn.innerText = 'Completed ✔';
-                btn.disabled = true;
-                btn.style.background = '#334155';
+            } else {
+                showModal('Market Error', data.error);
             }
+        }
+
+        function promptEmailBinding() {
+            const email = prompt("Enter your email address for account recovery:");
+            if (email) showModal('Email Bound', `Email ${email} successfully bound!`);
         }
 
         function switchTab(tabName, btnElement) {
