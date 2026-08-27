@@ -30,12 +30,13 @@ module.exports = async function handler(req, res) {
         .select()
         .single();
 
-      return res.status(200).json({ success: true, user: updatedUser, message: 'Successfully claimed 15 coins bonus!' });
+      const { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index');
+      return res.status(200).json({ success: true, user: updatedUser, plots, message: 'Successfully claimed 15 coins bonus!' });
     }
 
-    // 2. Unlock Plot
+    // 2. Unlock Plot (Plot 2 = 250 Coins, Plot 3 = 450 Coins)
     if (action === 'unlock_plot') {
-      const costs = { 2: 150, 3: 400, 4: 1000 };
+      const costs = { 2: 250, 3: 450, 4: 1000 };
       const cost = costs[plot_index];
       if (!cost) return res.status(400).json({ error: 'Invalid plot index' });
 
@@ -58,7 +59,7 @@ module.exports = async function handler(req, res) {
     // 3. Plant Seed
     if (action === 'plant') {
       if ((user.seed_inventory || 0) <= 0) {
-        return res.status(400).json({ error: 'No seeds available! Buy seeds in the Market.' });
+        return res.status(400).json({ error: 'No seeds available! Buy seeds in the Market first.' });
       }
 
       const { data: plot } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).eq('plot_index', plot_index).single();
@@ -66,7 +67,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Plot is not available for planting.' });
       }
 
-      const harvestTime = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 menit siklus panen
+      const harvestTime = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 menit siklus panen
 
       await supabase.from('users').update({ seed_inventory: user.seed_inventory - 1 }).eq('telegram_id', telegram_id);
       await supabase.from('plots').update({ status: 'growing', harvest_at: harvestTime }).eq('telegram_id', telegram_id).eq('plot_index', plot_index);
