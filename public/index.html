@@ -11,12 +11,14 @@
         
         .header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); position: sticky; top: 0; z-index: 100; }
         .user-info { display: flex; align-items: center; gap: 12px; }
-        .avatar { width: 42px; height: 42px; background: linear-gradient(135deg, #00ff88, #00b4d8); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #070b14; font-size: 18px; box-shadow: 0 0 15px rgba(0,255,136,0.2); }
+        .avatar { width: 42px; height: 42px; background: linear-gradient(135deg, #00ff88, #00b4d8); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #070b14; font-size: 18px; overflow: hidden; box-shadow: 0 0 15px rgba(0,255,136,0.2); }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
         .balances { text-align: right; font-size: 12px; color: #94a3b8; }
         .balances span { display: block; color: #00ff88; font-weight: 700; font-size: 14px; text-shadow: 0 0 10px rgba(0,255,136,0.3); }
         
         .notice-board { background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8)); border: 1px solid rgba(0, 255, 136, 0.3); margin: 14px; padding: 14px; border-radius: 14px; font-size: 13px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
         .notice-board button { margin-top: 10px; background: linear-gradient(135deg, #00ff88, #00cc6a); border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; color: #070b14; font-size: 12px; transition: all 0.3s; }
+        .notice-board button:disabled { background: #334155 !important; color: #94a3b8 !important; cursor: not-allowed; box-shadow: none; }
         .notice-board button:active { transform: scale(0.96); }
 
         .inventory-bar { display: flex; justify-content: space-around; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.03); padding: 12px; margin: 0 14px 14px 14px; border-radius: 12px; font-size: 12px; color: #94a3b8; }
@@ -36,7 +38,8 @@
         .activity-log { background: rgba(7, 11, 20, 0.8); padding: 12px; border-radius: 10px; font-size: 11px; margin-top: 15px; max-height: 130px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.04); color: #94a3b8; }
 
         .mission-card { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-        .mission-card h4 { font-size: 13px; color: #00ff88; margin-bottom: 4px; font-weight: 600; }
+        .mission-card h4 { font-size: 13px; color: #00ff88; margin-bottom: 4px; font-weight: 600; display: flex; justify-content: space-between; }
+        .mission-card h4 span { color: #ffaa00; font-size: 12px; }
         .mission-card p { font-size: 11px; color: #94a3b8; margin-bottom: 10px; line-height: 1.4; }
         .mission-card button { background: linear-gradient(135deg, #0088ff, #0055ff); color: #fff; border: none; padding: 7px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; }
 
@@ -64,7 +67,7 @@
 
     <div class="header">
         <div class="user-info">
-            <div class="avatar" id="user-initial">U</div>
+            <div class="avatar" id="user-avatar-box">U</div>
             <div>
                 <h4 id="username-display" style="font-size: 14px; font-weight: 700;">Farmer</h4>
                 <small style="color: #64748b; font-size: 11px;" id="userid-display">ID: --</small>
@@ -79,7 +82,7 @@
     <!-- TAB 1: FARM -->
     <div id="tab-farm" class="tab-content active">
         <div class="notice-board">
-            <p>📢 <b>System & Development Notice:</b> Build your sustainable loop steadily!</p>
+            <p>📢 <b>System Notice:</b> Build your sustainable loop steadily!</p>
             <button id="claim-bonus-btn" onclick="claimDevBonus()">Claim Bonus (+15 Coins)</button>
         </div>
 
@@ -146,25 +149,25 @@
         <h4 style="font-size: 12px; color: #ffaa00; margin-bottom: 10px; font-weight: 700;">⭐ Special Identity Missions</h4>
         
         <div class="mission-card">
-            <h4>1. Telegram Story Share</h4>
-            <p>Share bot mini app on your Telegram story daily. (Reward: +15 Coins/day)</p>
+            <h4>1. Telegram Story Share <span>Reward: +15 Coins</span></h4>
+            <p>Share bot mini app on your Telegram story daily.</p>
             <button onclick="showModal('Story Mission', 'Story verification service connecting...')">Verify Story</button>
         </div>
 
         <div class="mission-card">
-            <h4>2. Username Prefix Badge (@ATFarmBot)</h4>
+            <h4>2. Username Prefix Badge (@ATFarmBot) <span>Reward: +30 Coins/day</span></h4>
             <p>Attach @ATFarmBot to the front of your Telegram name for 30 days streak rewards.</p>
             <button onclick="showModal('Username Mission', 'Username prefix verification active!')">Verify Name</button>
         </div>
 
         <div class="mission-card">
-            <h4>3. Bio Referral Link</h4>
+            <h4>3. Bio Referral Link <span>Reward: +50 Coins/day</span></h4>
             <p>Put your unique invite link in your Telegram bio for 60 days structural rewards.</p>
             <button onclick="showModal('Bio Mission', 'Bio link verification active!')">Verify Bio</button>
         </div>
 
         <div class="mission-card">
-            <h4>4. Email Account Binding</h4>
+            <h4>4. Email Account Binding <span>Reward: +100 Coins</span></h4>
             <p>Bind your email to secure your farm progress against data loss.</p>
             <button onclick="promptEmailBinding()">Bind Email</button>
         </div>
@@ -192,8 +195,10 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        const userTelegramId = tg.initDataUnsafe?.user?.id || 856033709;
-        const username = tg.initDataUnsafe?.user?.first_name || 'Farmer';
+        const telegramUser = tg.initDataUnsafe?.user || {};
+        const userTelegramId = telegramUser.id || 856033709;
+        const username = telegramUser.first_name || 'Farmer';
+        const userPhotoUrl = telegramUser.photo_url || null;
 
         function showModal(title, message) {
             document.getElementById('modal-title').innerText = title;
@@ -224,7 +229,15 @@
         function updateUI(user, plots) {
             document.getElementById('username-display').innerText = user.username;
             document.getElementById('userid-display').innerText = `ID: ${user.telegram_id}`;
-            document.getElementById('user-initial').innerText = user.username.charAt(0).toUpperCase();
+            
+            // Render Avatar (Gambar Profil Telegram jika ada, jika tidak pakai Inisial)
+            const avatarBox = document.getElementById('user-avatar-box');
+            if (userPhotoUrl) {
+                avatarBox.innerHTML = `<img src="${userPhotoUrl}" alt="Avatar">`;
+            } else {
+                avatarBox.innerText = user.username.charAt(0).toUpperCase();
+            }
+
             document.getElementById('coin-balance').innerText = user.coins;
             document.getElementById('atf-balance').innerText = parseFloat(user.atf_balance || 0).toFixed(4);
 
@@ -235,10 +248,13 @@
 
             // Cek apakah bonus harian sudah diklaim hari ini
             const todayStr = new Date().toISOString().split('T')[0];
+            const claimBtn = document.getElementById('claim-bonus-btn');
             if (user.last_claim_date === todayStr) {
-                document.getElementById('claim-bonus-btn').style.display = 'none';
+                claimBtn.innerText = 'Claimed (Come back tomorrow)';
+                claimBtn.disabled = true;
             } else {
-                document.getElementById('claim-bonus-btn').style.display = 'inline-block';
+                claimBtn.innerText = 'Claim Bonus (+15 Coins)';
+                claimBtn.disabled = false;
             }
 
             const plotsContainer = document.getElementById('plots-container');
@@ -247,8 +263,9 @@
             plots.forEach(plot => {
                 let cardHtml = '';
                 if (plot.status === 'locked') {
-                    const costs = { 2: 150, 3: 400, 4: 1000 };
-                    const cost = costs[plot.plot_index] || 150;
+                    // Harga Plot #1 (index 2) = 250, Plot #2 (index 3) = 450, Plot #3 (index 4) = 1000
+                    const costs = { 2: 250, 3: 450, 4: 1000 };
+                    const cost = costs[plot.plot_index] || 250;
                     cardHtml = `
                         <div class="plot-card" style="border: 1px dashed rgba(255,170,0,0.4);">
                             <div>🔒</div>
@@ -300,7 +317,7 @@
             const data = await res.json();
             if (data.success) {
                 showModal('Bonus Claimed', 'Successfully claimed 15 coins bonus!');
-                initApp();
+                updateUI(data.user, data.plots);
             } else {
                 showModal('Notice', data.error);
             }
@@ -315,7 +332,7 @@
             const data = await res.json();
             if (data.success) {
                 showModal('Success', data.message);
-                initApp();
+                updateUI(data.user, data.plots);
             } else {
                 showModal('Error', data.error);
             }
@@ -330,7 +347,7 @@
             const data = await res.json();
             if (data.success) {
                 showModal('Planted', data.message);
-                initApp();
+                updateUI(data.user, data.plots);
             } else {
                 showModal('Notice', data.error);
             }
@@ -345,7 +362,7 @@
             const data = await res.json();
             if (data.success) {
                 showModal('Harvested', data.message);
-                initApp();
+                updateUI(data.user, data.plots);
             } else {
                 showModal('Notice', data.error);
             }
@@ -360,7 +377,7 @@
             const data = await res.json();
             if (data.success) {
                 showModal('Market Success', data.message);
-                initApp();
+                updateUI(data.user, data.plots);
                 
                 const logBox = document.getElementById('activity-log-box');
                 logBox.innerHTML = '';
