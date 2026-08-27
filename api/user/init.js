@@ -1,54 +1,80 @@
 const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
   try {
     const { telegram_id, username } = req.body;
-    if (!telegram_id) return res.status(400).json({ error: "Missing telegram_id" });
+    if (!telegram_id) {
+      return res.status(400).json({ error: "Missing telegram_id parameter" });
+    }
 
-    let { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
+    // 1. Check if user exists
+    let { data: user, error: userErr } = await supabase
+      .from('users')
+      .select('*')
+      .eq('telegram_id', telegram_id)
+      .single();
 
+    // 2. If user does not exist, insert new user (Trigger will automatically create plots)
     if (!user) {
-      const { data: insertedUser, error: insertErr } = await supabase
+      const { data: newUser, error: insertErr } = await supabase
         .from('users')
-        .insert([{ telegram_id, username: username || 'Farmer', coins: 50, water_inventory: 1, seed_inventory: 1 }])
+        .insert([{ telegram_id, username: username || 'Farmer' }])
         .select()
         .single();
+
       if (insertErr) throw insertErr;
-      user = insertedUser;
-
-      // Inisialisasi plot 0 (default terbuka) dan plot 1, 2, 3 (terkunci)
-      const initialPlots = [
-        { telegram_id, plot_index: 0, status: 'empty' },
-        { telegram_id, plot_index: 1, status: 'locked' },
-        { telegram_id, plot_index: 2, status: 'locked' },
-        { telegram_id, plot_index: 3, status: 'locked' }
-      ];
-      await supabase.from('plots').insert(initialPlots);
+      user = newUser;
     }
 
-    let { data: plots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index');
-    if (!plots || plots.length === 0) {
-      const defaultPlots = [
-        { telegram_id, plot_index: 0, status: 'empty' },
-        { telegram_id, plot_index: 1, status: 'locked' },
-        { telegram_id, plot_index: 2, status: 'locked' },
-        { telegram_id, plot_index: 3, status: 'locked' }
-      ];
-      await supabase.from('plots').insert(defaultPlots);
-      const { data: newPlots } = await supabase.from('plots').select('*').eq('telegram_id', telegram_id).order('plot_index');
-      plots = newPlots;
-    }
+    // 3. Fetch user plots
+    const { data: plots, error: plotsErr } = await supabase
+      .from('plots')
+      .select('*')
+      .eq('telegram_id', telegram_id)
+      .order('plot_index', { ascending: true });
 
-    const { data: completed_tasks } = await supabase.from('completed_tasks').select('*').eq('telegram_id', telegram_id);
+    if (plotsErr) throw plotsErr;
 
-    return res.status(200).json({ success: true, user, plots: plots || [], completed_tasks: completed_tasks || [] });
+    // 4. Fetch market history
+    const { data: history } = await supabase
+      .from('market_history')
+      .select('*')
+      .eq('telegram_id', telegram_id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    // 5. Fetch completed tasks
+    const { data: completedTasks } = await supabase
+      .from('completed_tasks')
+      .select('*')
+      .eq('telegram_id', telegram_id);
+
+    return res.status(200).json({
+      success: true,
+      user,
+      plots: plots || [],
+      completed_tasks: completedTasks || [],
+      history: history || []
+    });
+
   } catch (err) {
     return res.status(500).json({ error: "Server Error: " + err.message });
   }
