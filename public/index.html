@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATFarmBot Mini App</title>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg-color: #070b14;
@@ -26,10 +28,9 @@
         
         .notice-board { background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8)); border: 1px solid rgba(0, 255, 136, 0.3); margin: 14px; padding: 14px; border-radius: 14px; font-size: 13px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
         .notice-board button { margin-top: 10px; background: linear-gradient(135deg, #00ff88, #00cc6a); border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; color: #070b14; font-size: 12px; width: 100%; transition: all 0.3s; }
-        .notice-board button:disabled { background: var(--accent-green-disabled) !important; color: var(--text-muted) !important; cursor: not-allowed; box-shadow: none; }
-
-        .inventory-bar { display: flex; justify-content: space-around; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); border: 1px solid var(--border-color); padding: 12px; margin: 0 14px 14px 14px; border-radius: 12px; font-size: 12px; color: var(--text-muted); }
-        .inventory-bar span b { color: var(--text-main); }
+        
+        .inventory-bar { display: flex; justify-content: space-around; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); border: 1px solid var(--border-color); padding: 12px; margin: 0 14px 14px 14px; border-radius: 12px; font-size: 11px; color: var(--text-muted); text-align: center; }
+        .inventory-bar span b { display: block; color: var(--text-main); font-size: 13px; }
         
         .tab-content { display: none; padding: 0 14px; }
         .tab-content.active { display: block; }
@@ -48,7 +49,7 @@
         .market-item button, .mission-card button { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #070b14; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 11px; }
         
         .mission-card { flex-direction: column; align-items: flex-start; }
-        .mission-header { display: flex; justify-content: space-width; width: 100%; justify-content: space-between; margin-bottom: 4px; }
+        .mission-header { display: flex; width: 100%; justify-content: space-between; margin-bottom: 4px; }
         .mission-header h4 { font-size: 13px; color: var(--accent-green); }
         .mission-header span { color: #ffaa00; font-size: 12px; font-weight: 700; }
         .mission-card p { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
@@ -77,14 +78,14 @@
 
     <div class="header">
         <div class="user-info">
-            <div class="avatar">GE</div>
+            <div class="avatar" id="user-avatar">AT</div>
             <div>
-                <h4 style="font-size: 14px; font-weight: 700;">Gamutwo</h4>
-                <small style="color: #64748b; font-size: 11px;">ID: 8560233709</small>
+                <h4 id="user-name" style="font-size: 14px; font-weight: 700;">Farmer</h4>
+                <small id="user-id" style="color: #64748b; font-size: 11px;">ID: Loading...</small>
             </div>
         </div>
         <div class="balances">
-            <div>COINS: <span id="coin-balance">25</span></div>
+            <div>COINS: <span id="coin-balance">0</span></div>
             <div>ATF: <span id="atf-balance">0.0000</span></div>
         </div>
     </div>
@@ -92,19 +93,19 @@
     <!-- TAB 1: FARM -->
     <div id="tab-farm" class="tab-content active">
         <div class="notice-board">
-            <p>📢 System Notice: Build your sustainable loop steadily!</p>
-            <button id="claim-bonus-btn" onclick="claimDevBonus()">Claim Bonus (+15 Coins)</button>
+            <p>📢 System Notice: Secure cloud-synced forest farming ecosystem active.</p>
+            <button onclick="completeTask('DAILY_CHECKIN')">Claim Daily Check-in (+20 Coins)</button>
         </div>
 
         <div class="inventory-bar">
-            <span>💧 Water: <b id="inv-water">1</b></span>
-            <span>🧪 Fert: <b id="inv-fert">0</b></span>
-            <span>🌱 Seeds: <b id="inv-seed">1</b></span>
-            <span>🍎 Fruits: <b id="inv-fruit">0</b></span>
+            <span>💧 Water <b id="inv-water">0</b></span>
+            <span>🧪 Fert <b id="inv-fert">0</b></span>
+            <span>🌱 Seeds <b id="inv-seed">0</b></span>
+            <span>🍎 Fruits <b id="inv-fruit">0</b></span>
         </div>
 
         <div class="plots-container" id="plots-container">
-            <!-- Dinamis Render Plot -->
+            <!-- Render dinamis dari Database -->
         </div>
         <div class="bot-footer">@ATFarmBot</div>
     </div>
@@ -112,19 +113,19 @@
     <!-- TAB 2: MARKET -->
     <div id="tab-market" class="tab-content">
         <h3 style="margin: 14px 0 4px 0; color: var(--accent-green); font-size: 16px;">Sustainable Agro Market</h3>
-        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 14px;">Closed-loop economy: Buy supplies, harvest, and sell fruits safely.</p>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 14px;">Closed-loop economy backed by secure database records.</p>
         
         <div class="market-item">
             <div><b>Crop Seed</b><br><small style="color:#64748b;">Price: 10 Coins</small></div>
-            <button onclick="buyItem('seed', 10)">Buy 1x</button>
+            <button onclick="buyItem('seed')">Buy 1x</button>
         </div>
         <div class="market-item">
             <div><b>Water Supply</b><br><small style="color:#64748b;">Price: 20 Coins</small></div>
-            <button onclick="buyItem('water', 20)">Buy 1x</button>
+            <button onclick="buyItem('water')">Buy 1x</button>
         </div>
         <div class="market-item">
             <div><b>Fertilizer</b><br><small style="color:#64748b;">Price: 50 Coins</small></div>
-            <button onclick="buyItem('fert', 50)">Buy 1x</button>
+            <button onclick="buyItem('fertilizer')">Buy 1x</button>
         </div>
         <div class="market-item">
             <div><b>Sell Harvested Fruits</b><br><small style="color:#64748b;">Reward: 45 Coins / Fruit</small></div>
@@ -138,41 +139,15 @@
         <h3 style="margin: 14px 0 12px 0; color: var(--accent-green); font-size: 16px;">Executive Missions</h3>
         
         <div class="mission-card">
-            <div class="mission-header"><h4>Watch Ads</h4><span>Reward: +5 Coins</span></div>
-            <p>Watch short ads to earn extra operational coins daily.</p>
-            <button onclick="completeTask('Ads', 5)">Watch Ad</button>
+            <div class="mission-header"><h4>Join Telegram Channel</h4><span>Reward: +100 Coins</span></div>
+            <p>Join our official channel for governance updates and announcements.</p>
+            <button onclick="completeTask('JOIN_CHANNEL')">Complete Task</button>
         </div>
 
         <div class="mission-card">
-            <div class="mission-header"><h4>Promote your project</h4><span>Reward: +20 Coins</span></div>
-            <p>Promote your project to global Web3 farmers securely.</p>
-            <button onclick="completeTask('Promo', 20)">Publish Ad</button>
-        </div>
-
-        <h4 style="margin: 16px 0 10px 0; font-size: 12px; color: #ffaa00; font-weight: 700;">⭐ Special Identity Missions</h4>
-        
-        <div class="mission-card">
-            <div class="mission-header"><h4>1. Telegram Story Share</h4><span>Reward: +15 Coins</span></div>
-            <p>Share bot mini app on your Telegram story daily.</p>
-            <button onclick="completeTask('Story', 15)">Verify Story</button>
-        </div>
-
-        <div class="mission-card">
-            <div class="mission-header"><h4>2. Username Prefix Badge (@ATFarmBot)</h4><span>Reward: +30 Coins</span></div>
-            <p>Attach @ATFarmBot to the front of your Telegram name for daily streak rewards.</p>
-            <button onclick="completeTask('Username', 30)">Verify Name</button>
-        </div>
-
-        <div class="mission-card">
-            <div class="mission-header"><h4>3. Bio Referral Link</h4><span>Reward: +50 Coins</span></div>
-            <p>Put your unique invite link in your Telegram bio for structural rewards.</p>
-            <button onclick="completeTask('Bio', 50)">Verify Bio</button>
-        </div>
-
-        <div class="mission-card">
-            <div class="mission-header"><h4>4. Email Account Binding</h4><span>Reward: +100 Coins</span></div>
-            <p>Bind your email to secure your farm progress against data loss.</p>
-            <button onclick="bindEmail()">Bind Email</button>
+            <div class="mission-header"><h4>Invite Friend</h4><span>Reward: +50 Coins</span></div>
+            <p>Share your referral link with peers to expand the ecosystem.</p>
+            <button onclick="completeTask('INVITE_FRIEND')">Verify Invite</button>
         </div>
         <div class="bot-footer">@ATFarmBot</div>
     </div>
@@ -180,10 +155,10 @@
     <!-- TAB 4: FRIENDS -->
     <div id="tab-friends" class="tab-content">
         <h3 style="margin: 14px 0 6px 0; color: var(--accent-green); font-size: 16px;">Friends Referral</h3>
-        <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">Invite friends and earn sustainable commissions from their activities.</p>
+        <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">Invite friends and earn structural network commissions.</p>
         <div class="market-item">
-            <div><b>Invite Link</b><br><small style="color:var(--accent-green);">t.me/moneytree_game_bot?start=ref856</small></div>
-            <button onclick="showModal('Invite', 'Referral link copied to clipboard!')">Copy Link</button>
+            <div><b>Invite Link</b><br><small style="color:var(--accent-green);" id="ref-link">Generating...</small></div>
+            <button onclick="copyRefLink()">Copy Link</button>
         </div>
         <div class="bot-footer">@ATFarmBot</div>
     </div>
@@ -191,10 +166,10 @@
     <!-- TAB 5: WALLET -->
     <div id="tab-wallet" class="tab-content">
         <h3 style="margin: 14px 0 6px 0; color: var(--accent-green); font-size: 16px;">Web3 Wallet</h3>
-        <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">Connected wallet assets and token balances overview.</p>
+        <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">Connected TON mainnet asset overview.</p>
         <div class="market-item">
-            <div><b>TON Wallet</b><br><small style="color:#64748b;">Not Connected</small></div>
-            <button onclick="showModal('Wallet', 'TON Wallet integration ready for mainnet launch!')">Connect</button>
+            <div><b>TON Wallet</b><br><small style="color:#64748b;" id="wallet-status">Not Connected</small></div>
+            <button onclick="showModal('Wallet', 'TON Wallet synchronization ready.')">Connect</button>
         </div>
         <div class="bot-footer">@ATFarmBot</div>
     </div>
@@ -208,30 +183,19 @@
     </div>
 
     <script>
-        // Persistent Game Data Initialization
-        let game = {
-            coins: parseInt(localStorage.getItem('atf_coins')) || 25,
-            atf: parseFloat(localStorage.getItem('atf_atf')) || 0.0000,
-            seeds: parseInt(localStorage.getItem('atf_seeds')) || 1,
-            water: parseInt(localStorage.getItem('atf_water')) || 1,
-            fert: parseInt(localStorage.getItem('atf_fert')) || 0,
-            fruits: parseInt(localStorage.getItem('atf_fruits')) || 0,
-            plots: JSON.parse(localStorage.getItem('atf_plots')) || [
-                { id: 1, status: 'empty', plantedAt: null, duration: 60 }, // 60 detik siklus contoh
-                { id: 2, status: 'locked', cost: 250 },
-                { id: 3, status: 'locked', cost: 450 }
-            ]
-        };
+        // Inisialisasi Telegram WebApp & Fallback untuk testing lokal
+        const tg = window.Telegram?.WebApp;
+        if (tg) tg.expand();
 
-        function saveGame() {
-            localStorage.setItem('atf_coins', game.coins);
-            localStorage.setItem('atf_atf', game.atf);
-            localStorage.setItem('atf_seeds', game.seeds);
-            localStorage.setItem('atf_water', game.water);
-            localStorage.setItem('atf_fert', game.fert);
-            localStorage.setItem('atf_fruits', game.fruits);
-            localStorage.setItem('atf_plots', JSON.stringify(game.plots));
-        }
+        // Ambil telegram_id asli dari Telegram, atau fallback ke ID dummy jika dibuka di browser biasa
+        const telegram_id = tg?.initDataUnsafe?.user?.id || 8560233709;
+        const username = tg?.initDataUnsafe?.user?.username || 'Gamutwo';
+
+        let gameState = {
+            user: {},
+            plots: [],
+            completed_tasks: []
+        };
 
         function showModal(title, msg) {
             document.getElementById('modal-title').innerText = title;
@@ -243,81 +207,103 @@
             document.getElementById('custom-modal').style.display = 'none';
         }
 
-        function updateUI() {
-            document.getElementById('coin-balance').innerText = game.coins;
-            document.getElementById('atf-balance').innerText = game.atf.toFixed(4);
-            document.getElementById('inv-water').innerText = game.water;
-            document.getElementById('inv-fert').innerText = game.fert;
-            document.getElementById('inv-seed').innerText = game.seeds;
-            document.getElementById('inv-fruit').innerText = game.fruits;
-
-            // Check Daily Bonus Status
-            const today = new Date().toISOString().slice(0, 10);
-            const claimBtn = document.getElementById('claim-bonus-btn');
-            if (localStorage.getItem('atf_last_claim') === today) {
-                claimBtn.innerText = "Claimed (Come back tomorrow)";
-                claimBtn.disabled = true;
-            } else {
-                claimBtn.innerText = "Claim Bonus (+15 Coins)";
-                claimBtn.disabled = false;
+        // Fetch data utama dari backend API /api/init
+        async function fetchGameData() {
+            try {
+                const response = await fetch('/api/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegram_id, username })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    gameState.user = data.user;
+                    gameState.plots = data.plots;
+                    gameState.completed_tasks = data.completed_tasks;
+                    updateUI();
+                } else {
+                    showModal('Error', data.error || 'Failed to initialize game data.');
+                }
+            } catch (err) {
+                console.error(err);
+                showModal('Connection Error', 'Unable to connect to backend server.');
             }
+        }
+
+        function updateUI() {
+            const u = gameState.user;
+            document.getElementById('user-name').innerText = u.username || 'Farmer';
+            document.getElementById('user-id').innerText = `ID: ${u.telegram_id}`;
+            document.getElementById('user-avatar').innerText = (u.username || 'F').substring(0, 2).toUpperCase();
+            
+            document.getElementById('coin-balance').innerText = u.coins || 0;
+            document.getElementById('atf-balance').innerText = parseFloat(u.atf_balance || 0).toFixed(4);
+            
+            document.getElementById('inv-water').innerText = u.water_inventory || 0;
+            document.getElementById('inv-fert').innerText = u.fertilizer_inventory || 0;
+            document.getElementById('inv-seed').innerText = u.seed_inventory || 0;
+            document.getElementById('inv-fruit').innerText = u.fruit_inventory || 0;
+
+            document.getElementById('ref-link').innerText = `t.me/atfarm_bot?start=${u.telegram_id}`;
 
             renderPlots();
-            saveGame();
         }
 
         function renderPlots() {
             const container = document.getElementById('plots-container');
             container.innerHTML = '';
 
-            game.plots.forEach(plot => {
+            gameState.plots.forEach(plot => {
                 let html = '';
                 if (plot.status === 'locked') {
                     html = `
                         <div class="plot-card">
                             <div class="plot-info">
-                                <h4>Locked Plot #${plot.id}</h4>
-                                <p>Unlock requirement: ${plot.cost} Coins</p>
+                                <h4>Plot #${plot.plot_index}</h4>
+                                <p>Status: Locked</p>
                             </div>
-                            <button class="plot-btn unlock" onclick="unlockPlot(${plot.id})">Unlock (${plot.cost} Coins)</button>
+                            <button class="plot-btn unlock" disabled>Locked</button>
                         </div>
                     `;
                 } else if (plot.status === 'empty') {
                     html = `
                         <div class="plot-card">
                             <div class="plot-info">
-                                <h4>Plot #${plot.id} (Active)</h4>
+                                <h4>Plot #${plot.plot_index} (Active)</h4>
                                 <p>Status: Empty (Ready to Plant)</p>
                             </div>
-                            <button class="plot-btn" onclick="plantSeed(${plot.id})">Plant Seed</button>
+                            <button class="plot-btn" onclick="plantSeed(${plot.plot_index})">Plant Seed (-10 Coins)</button>
                         </div>
                     `;
                 } else if (plot.status === 'growing') {
                     const now = Date.now();
-                    const timeLeft = Math.max(0, Math.floor((plot.plantedAt + (plot.duration * 1000) - now) / 1000));
+                    const harvestTime = new Date(plot.harvest_time).getTime();
+                    const timeLeft = Math.max(0, Math.floor((harvestTime - now) / 1000));
 
                     if (timeLeft === 0) {
                         html = `
                             <div class="plot-card" style="border: 1px solid rgba(0,255,136,0.4);">
                                 <div class="plot-info">
-                                    <h4>Plot #${plot.id} (Active)</h4>
+                                    <h4>Plot #${plot.plot_index} (Active)</h4>
                                     <p style="color:var(--accent-green); font-weight:700;">Ready to Harvest!</p>
                                 </div>
-                                <button class="plot-btn" onclick="harvestPlot(${plot.id})">Harvest (+1 Fruit)</button>
+                                <button class="plot-btn" onclick="harvestPlot(${plot.plot_index})">Harvest (+50 Coins)</button>
                             </div>
                         `;
                     } else {
+                        const mins = Math.floor(timeLeft / 60);
+                        const secs = timeLeft % 60;
                         html = `
                             <div class="plot-card">
                                 <div class="plot-info">
-                                    <h4>Plot #${plot.id} (Active)</h4>
-                                    <p>Growing... Time left: <b>${timeLeft}s</b></p>
+                                    <h4>Plot #${plot.plot_index} (Active)</h4>
+                                    <p>Growing... Time left: <b>${mins}m ${secs}s</b></p>
                                 </div>
                                 <div class="plot-actions">
                                     <span style="font-size:10px; color:#38bdf8;">Growing</span>
                                     <div style="display:flex; gap:4px; margin-top:4px;">
-                                        <button class="plot-btn secondary" onclick="useWater(${plot.id})">💧 Water (-20s)</button>
-                                        <button class="plot-btn secondary" onclick="useFert(${plot.id})">🧪 Fert (-50s)</button>
+                                        <button class="plot-btn secondary" onclick="useBoost(${plot.plot_index}, 'water')">💧 Water</button>
+                                        <button class="plot-btn secondary" onclick="useBoost(${plot.plot_index}, 'fertilizer')">🧪 Fert</button>
                                     </div>
                                 </div>
                             </div>
@@ -328,110 +314,122 @@
             });
         }
 
-        function claimDevBonus() {
-            const today = new Date().toISOString().slice(0, 10);
-            if (localStorage.getItem('atf_last_claim') === today) return;
-
-            game.coins += 15;
-            localStorage.setItem('atf_last_claim', today);
-            updateUI();
-            showModal('Success', 'Successfully claimed +15 Coins bonus!');
-        }
-
-        function unlockPlot(id) {
-            const plot = game.plots.find(p => p.id === id);
-            if (game.coins < plot.cost) {
-                showModal('Notice', `Not enough coins! You need ${plot.cost} Coins.`);
-                return;
+        async function plantSeed(plot_index) {
+            try {
+                const res = await fetch('/api/plant', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegram_id, plot_index })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    fetchGameData();
+                } else {
+                    showModal('Notice', data.error);
+                }
+            } catch (err) {
+                showModal('Error', 'Failed to communicate with server.');
             }
-            game.coins -= plot.cost;
-            plot.status = 'empty';
-            updateUI();
-            showModal('Success', `Plot #${id} unlocked successfully!`);
         }
 
-        function plantSeed(id) {
-            if (game.seeds <= 0) {
-                showModal('Notice', "No seeds available! Please buy seeds in MARKET.");
-                return;
+        async function harvestPlot(plot_index) {
+            try {
+                const res = await fetch('/api/harvest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegram_id, plot_index })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    fetchGameData();
+                    showModal('Success', data.message);
+                } else {
+                    showModal('Notice', data.error);
+                }
+            } catch (err) {
+                showModal('Error', 'Failed to communicate with server.');
             }
-            game.seeds -= 1;
-            const plot = game.plots.find(p => p.id === id);
-            plot.status = 'growing';
-            plot.plantedAt = Date.now();
-            updateUI();
-            showModal('Success', "Seed planted successfully!");
         }
 
-        function harvestPlot(id) {
-            const plot = game.plots.find(p => p.id === id);
-            plot.status = 'empty';
-            plot.plantedAt = null;
-            game.fruits += 1;
-            updateUI();
-            showModal('Success', "Successfully harvested 1 Fruit!");
-        }
-
-        function useWater(id) {
-            if (game.water <= 0) {
-                showModal('Notice', "No water supply! Buy water in MARKET.");
-                return;
+        async function useBoost(plot_index, boost_type) {
+            try {
+                const res = await fetch('/api/boost', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegram_id, plot_index, boost_type })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    fetchGameData();
+                } else {
+                    showModal('Notice', data.error);
+                }
+            } catch (err) {
+                showModal('Error', 'Failed to communicate with server.');
             }
-            game.water -= 1;
-            const plot = game.plots.find(p => p.id === id);
-            plot.plantedAt -= 20000; // Pangkas 20 detik
-            updateUI();
         }
 
-        function useFert(id) {
-            if (game.fert <= 0) {
-                showModal('Notice', "No fertilizer! Buy fertilizer in MARKET.");
-                return;
+        async function buyItem(item_type) {
+            try {
+                const res = await fetch('/api/buy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegram_id, action_type: 'BUY', item_type })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    fetchGameData();
+                    showModal('Market Success', data.message);
+                } else {
+                    showModal('Market Error', data.error);
+                }
+            } catch (err) {
+                showModal('Error', 'Failed to communicate with server.');
             }
-            game.fert -= 1;
-            const plot = game.plots.find(p => p.id === id);
-            plot.plantedAt -= 50000; // Pangkas 50 detik
-            updateUI();
         }
 
-        function buyItem(type, cost) {
-            if (game.coins < cost) {
-                showModal('Market Error', "Not enough coins!");
-                return;
+        async function sellFruits() {
+            try {
+                const res = await fetch('/api/buy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegram_id, action_type: 'SELL_FRUIT' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    fetchGameData();
+                    showModal('Market Success', data.message);
+                } else {
+                    showModal('Market Error', data.error);
+                }
+            } catch (err) {
+                showModal('Error', 'Failed to communicate with server.');
             }
-            game.coins -= cost;
-            if (type === 'seed') game.seeds += 1;
-            if (type === 'water') game.water += 1;
-            if (type === 'fert') game.fert += 1;
-            updateUI();
-            showModal('Market Success', `Successfully purchased 1x ${type.toUpperCase()}!`);
         }
 
-        function sellFruits() {
-            if (game.fruits <= 0) {
-                showModal('Market Error', "No harvested fruits to sell!");
-                return;
+        async function completeTask(task_code) {
+            try {
+                const res = await fetch('/api/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegram_id, task_code })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    fetchGameData();
+                    showModal('Mission Complete', data.message);
+                } else {
+                    showModal('Notice', data.error);
+                }
+            } catch (err) {
+                showModal('Error', 'Failed to communicate with server.');
             }
-            const earned = game.fruits * 45;
-            game.coins += earned;
-            game.fruits = 0;
-            updateUI();
-            showModal('Market Success', `Sold all fruits for ${earned} Coins!`);
         }
 
-        function completeTask(taskName, reward) {
-            game.coins += reward;
-            updateUI();
-            showModal('Mission Complete', `Successfully completed ${taskName}! +${reward} Coins added.`);
-        }
-
-        function bindEmail() {
-            const email = prompt("Enter your email address for account recovery:");
-            if (email) {
-                game.coins += 100;
-                updateUI();
-                showModal('Email Bound', `Email successfully bound! +100 Coins reward added.`);
-            }
+        function copyRefLink() {
+            const link = document.getElementById('ref-link').innerText;
+            navigator.clipboard.writeText(link);
+            showModal('Success', 'Referral link copied to clipboard!');
         }
 
         function switchTab(tabName, btnElement) {
@@ -441,9 +439,9 @@
             btnElement.classList.add('active');
         }
 
-        // Realtime Countdown Loop & Init
+        // Inisialisasi awal & Loop realtime countdown UI setiap 1 detik
         window.onload = function() {
-            updateUI();
+            fetchGameData();
             setInterval(() => {
                 if(document.getElementById('tab-farm').classList.contains('active')) {
                     renderPlots();
