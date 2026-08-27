@@ -14,7 +14,6 @@ module.exports = async function handler(req, res) {
     let { data: user } = await supabase.from('users').select('*').eq('telegram_id', telegram_id).single();
 
     if (action === 'claim_dev_bonus') {
-      // Cek apakah sudah pernah claim (bisa disimpan di completed_tasks atau tabel notices)
       const { data: existingNotice } = await supabase
         .from('completed_tasks')
         .select('*')
@@ -23,11 +22,11 @@ module.exports = async function handler(req, res) {
         .single();
 
       if (existingNotice) {
-        return res.status(400).json({ error: 'Dev Bonus already claimed!' });
+        return res.status(400).json({ error: 'Bonus already claimed!' });
       }
 
-      // Berikan tepat 30 koin sesuai teks UI
-      const newCoins = (user.coins || 0) + 30;
+      // Berikan 15 koin sesuai permintaan
+      const newCoins = (user.coins || 0) + 15;
       const { data: updatedUser } = await supabase
         .from('users')
         .update({ coins: newCoins })
@@ -37,11 +36,10 @@ module.exports = async function handler(req, res) {
 
       await supabase.from('completed_tasks').insert([{ telegram_id, task_id: 'dev_bonus' }]);
 
-      return res.status(200).json({ success: true, user: updatedUser, message: 'Successfully claimed 30 coins dev bonus!' });
+      return res.status(200).json({ success: true, user: updatedUser, message: 'Successfully claimed 15 coins bonus!' });
     }
 
     if (action === 'unlock_plot') {
-      // Biaya unlock plot berdasarkan indeks
       const costs = { 2: 150, 3: 400, 4: 1000 };
       const cost = costs[plot_index];
       if (!cost) return res.status(400).json({ error: 'Invalid plot index' });
@@ -50,7 +48,6 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: `Not enough coins! Plot #${plot_index} costs ${cost} Coins.` });
       }
 
-      // Kurangi koin & update status plot
       await supabase.from('users').update({ coins: user.coins - cost }).eq('telegram_id', telegram_id);
       await supabase.from('plots')
         .update({ status: 'empty' })
