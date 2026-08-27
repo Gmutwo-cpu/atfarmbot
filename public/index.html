@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ATFarmbot - AI Forex Farming Node</title>
+<title>ATFarmbot - Sustainable GameFi Node</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
     --bg-color: #080c14;
-    --card-bg: rgba(16, 24, 40, 0.9);
+    --card-bg: rgba(16, 24, 40, 0.95);
     --primary-cyan: #00f2fe;
     --accent-green: #00ff87;
     --text-white: #ffffff;
@@ -32,21 +32,25 @@
   .inventory-bar { display: flex; justify-content: space-around; background: rgba(0, 242, 254, 0.08); border: 1px solid var(--border-color); border-radius: 10px; padding: 6px; font-size: 9px; font-weight: 600; text-align: center; }
   .inventory-bar span b { color: var(--primary-cyan); }
 
-  .view-screen { flex: 1; display: none; flex-direction: column; gap: 6px; margin: 6px 0; overflow-y: auto; padding-bottom: 65px; }
+  .view-screen { flex: 1; display: none; flex-direction: column; gap: 8px; margin: 6px 0; overflow-y: auto; padding-bottom: 65px; }
   .view-screen.active { display: flex; }
 
   .announcement-box { background: linear-gradient(135deg, rgba(0,242,254,0.1), rgba(0,255,135,0.05)); border: 1px dashed var(--primary-cyan); border-radius: 10px; padding: 8px; font-size: 9px; color: var(--text-dim); line-height: 1.35; }
   .announcement-box b { color: var(--primary-cyan); }
 
   .farm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px; text-align: center; }
-  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 5px 8px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; }
+  .plot-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; min-height: 125px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px; text-align: center; }
+  .btn-action { background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; color: #fff; padding: 5px 8px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; width: 100%; }
   .btn-action:active { opacity: 0.8; }
   .booster-group { display: flex; gap: 3px; margin-top: 2px; }
-  .btn-boost { background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); padding: 2px 4px; border-radius: 4px; font-size: 8px; font-weight: bold; cursor: pointer; }
+  .btn-boost { background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); padding: 2px 6px; border-radius: 4px; font-size: 8px; font-weight: bold; cursor: pointer; }
 
-  .card-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
-  .market-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; }
+  .card-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .market-row, .task-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; }
+  
+  .btn-market { background: var(--accent-green); color: #000; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: bold; cursor: pointer; }
+  .btn-task { background: var(--primary-cyan); color: #000; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: bold; cursor: pointer; }
+  .btn-task:disabled { background: var(--text-dim); cursor: not-allowed; opacity: 0.6; }
 
   /* Custom Clean Modal */
   #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
@@ -64,6 +68,7 @@
 <body>
 
 <div class="app-container">
+  <!-- Header Status -->
   <div class="header-card">
     <div class="user-info">
       <div class="avatar" id="txtAvatar">A</div>
@@ -78,52 +83,93 @@
     </div>
   </div>
 
+  <!-- 1. FARM VIEW -->
   <div id="viewFarm" class="view-screen active">
     <div class="announcement-box">
-      <b>📢 System Notice:</b> Clean architecture deployed. Plant AI Forex nodes, use boosters, and harvest rewards!
+      <b>🌱 Sustainable Farm:</b> Gunakan modal awal untuk menanam, panen koin, dan putar kembali ke market tanpa risiko kebangkrutan.
     </div>
 
     <div class="inventory-bar">
       <span>💧 Water: <b id="invWater">0</b></span>
       <span>🧪 Fert: <b id="invFert" style="color:var(--accent-green);">0</b></span>
-      <span>🍎 Yield: <b id="invYield">Active</b></span>
-      <span>🎟️ Pass: <b style="color:#ffaa00;">VIP 0</b></span>
+      <span>🍎 Cycle: <b style="color:var(--primary-cyan);">3h 40m</b></span>
+      <span>🎟️ VIP: <b style="color:#ffaa00;">0</b></span>
     </div>
 
     <div class="farm-grid" id="gridPlots"></div>
   </div>
 
+  <!-- 2. MARKET VIEW (Closed-Loop Economy) -->
   <div id="viewMarket" class="view-screen">
     <div class="card-box">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📈 AI Forex Market</span>
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📈 Closed-Loop Market</span>
+      <span style="font-size:9px; color:var(--text-dim);">Tukar koin internal untuk membeli perlengkapan bertani. Aman dari inflasi eksternal.</span>
+      
       <div class="market-row">
-        <span><b>Water Booster</b> (💧)</span>
-        <span style="font-size:9px; color:var(--text-dim);">Coming Soon</span>
+        <div>
+          <div style="font-weight:bold;">💧 Water Supply</div>
+          <div style="font-size:8px; color:var(--text-dim);">Harga: 20 Coins (-30m timer)</div>
+        </div>
+        <button class="btn-market" onclick="buyItem('water')">Buy 1x</button>
+      </div>
+
+      <div class="market-row">
+        <div>
+          <div style="font-weight:bold;">🧪 Fertilizer</div>
+          <div style="font-size:8px; color:var(--text-dim);">Harga: 50 Coins (-60m timer)</div>
+        </div>
+        <button class="btn-market" onclick="buyItem('fertilizer')">Buy 1x</button>
       </div>
     </div>
   </div>
 
+  <!-- 3. TASK VIEW (Viral Growth Engine) -->
   <div id="viewTask" class="view-screen">
     <div class="card-box">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📝 Tasks</span>
-      <span style="font-size:9px; color:var(--text-dim);">Task board will be available soon.</span>
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">📝 Community Tasks</span>
+      <span style="font-size:9px; color:var(--text-dim);">Selesaikan misi untuk mendapatkan modal koin gratis tanpa biaya iklan.</span>
+      
+      <div class="task-row">
+        <div>
+          <div style="font-weight:bold;">Join Official Channel</div>
+          <div style="font-size:8px; color:var(--accent-green);">Reward: +100 Coins</div>
+        </div>
+        <button class="btn-task" id="btnTaskChannel" onclick="completeTask('JOIN_CHANNEL')">Claim</button>
+      </div>
+
+      <div class="task-row">
+        <div>
+          <div style="font-weight:bold;">Daily Check-In</div>
+          <div style="font-size:8px; color:var(--accent-green);">Reward: +20 Coins</div>
+        </div>
+        <button class="btn-task" id="btnTaskDaily" onclick="completeTask('DAILY_CHECKIN')">Claim</button>
+      </div>
     </div>
   </div>
 
+  <!-- 4. FRIENDS VIEW (Organic Referral) -->
   <div id="viewFriends" class="view-screen">
-    <div class="card-box" style="text-align:center;">
-      <span style="font-size:11px; font-weight:bold;">Invite Friends</span>
-      <input type="text" id="refUrl" readonly style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:9px; padding:6px; border-radius:6px; text-align:center;">
+    <div class="card-box" style="text-align:center; gap:8px;">
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">👥 Invite Friends</span>
+      <span style="font-size:9px; color:var(--text-dim);">Ajak teman bergabung dan bangun ekosistem bersama tanpa modal promosi.</span>
+      <input type="text" id="refUrl" readonly style="width:100%; background:#000; border:1px solid var(--border-color); color:#fff; font-size:9px; padding:8px; border-radius:6px; text-align:center;">
+      <button class="btn-action" onclick="copyRefLink()">Copy Referral Link</button>
     </div>
   </div>
 
+  <!-- 5. WALLET VIEW (High Threshold Safety) -->
   <div id="viewWallet" class="view-screen">
     <div class="card-box">
-      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">💎 TON Web3 Withdrawal</span>
-      <span style="font-size:9px; color:var(--text-dim);">Wallet integration ready.</span>
+      <span style="font-size:11px; font-weight:bold; color:var(--primary-cyan);">💎 Web3 Treasury & Vault</span>
+      <span style="font-size:9px; color:var(--text-dim);">Penarikan token ATF dilindungi oleh sistem ambang batas tinggi dan batch manual untuk mencegah pengurasan kas pengembang.</span>
+      <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:8px; border:1px solid var(--border-color); font-size:9px; display:flex; flex-direction:column; gap:4px;">
+        <span>Status Vault: <b style="color:var(--accent-green);">Protected & Secure</b></span>
+        <span>Min. Withdrawal: <b style="color:var(--primary-cyan);">1,000 ATF</b></span>
+      </div>
     </div>
   </div>
 
+  <!-- Bottom Navigation Bar -->
   <div class="navbar">
     <button class="nav-item active" onclick="switchTab('Farm', this)"><span class="nav-icon">🌾</span><span>FARM</span></button>
     <button class="nav-item" onclick="switchTab('Market', this)"><span class="nav-icon">📈</span><span>MARKET</span></button>
@@ -136,7 +182,7 @@
 <!-- Custom Notification Modal -->
 <div id="customModal">
   <div class="modal-content">
-    <div class="modal-title" id="modalTitle">System Notification</div>
+    <div class="modal-title" id="modalTitle">System Notice</div>
     <div class="modal-text" id="modalMessage">Message here</div>
     <button class="modal-btn" onclick="closeModal()">OK</button>
   </div>
@@ -149,6 +195,7 @@
   const API_URL = "/api";
   let currentUser = null;
   let userPlots = [];
+  let completedTasksList = [];
   let timerInterval = null;
 
   function showModal(title, message) {
@@ -162,7 +209,7 @@
   }
 
   async function initGame() {
-    const tgUser = tg?.initDataUnsafe?.user || { id: 123456789, first_name: "WebTestUser" };
+    const tgUser = tg?.initDataUnsafe?.user || { id: 123456789, first_name: "FarmerTest" };
     
     document.getElementById('txtUsername').textContent = tgUser.first_name;
     document.getElementById('txtAvatar').textContent = tgUser.first_name[0] || "F";
@@ -180,12 +227,13 @@
       if(res.ok && data.success) {
         currentUser = data.user;
         userPlots = data.plots || [];
+        completedTasksList = data.completed_tasks || [];
         updateUI();
       } else {
-        showModal("Init Error", data.error || "Failed to initialize session.");
+        showModal("Initialization Error", data.error || "Failed to load user session.");
       }
     } catch(e) {
-      showModal("Connection Error", "Could not connect to backend server.");
+      showModal("Connection Error", "Unable to reach backend server.");
     }
   }
 
@@ -196,6 +244,7 @@
     document.getElementById('invWater').textContent = currentUser.water_inventory || 0;
     document.getElementById('invFert').textContent = currentUser.fertilizer_inventory || 0;
     renderPlots();
+    renderTasksState();
   }
 
   function renderPlots() {
@@ -244,6 +293,28 @@
     });
 
     startGlobalTimer();
+  }
+
+  function renderTasksState() {
+    const channelDone = completedTasksList.some(t => t.task_code === 'JOIN_CHANNEL');
+    const btnChannel = document.getElementById('btnTaskChannel');
+    if (channelDone) {
+      btnChannel.textContent = 'Completed';
+      btnChannel.disabled = true;
+    } else {
+      btnChannel.textContent = 'Claim';
+      btnChannel.disabled = false;
+    }
+
+    const dailyDone = completedTasksList.some(t => t.task_code === 'DAILY_CHECKIN');
+    const btnDaily = document.getElementById('btnTaskDaily');
+    if (dailyDone) {
+      btnDaily.textContent = 'Completed';
+      btnDaily.disabled = true;
+    } else {
+      btnDaily.textContent = 'Claim';
+      btnDaily.disabled = false;
+    }
   }
 
   function calculateRemainingTime(harvestTimeISO) {
@@ -325,6 +396,49 @@
       if(res.ok && data.success) initGame();
       else showModal("Booster Failed", data.error);
     } catch(err) { showModal("Error", err.message); }
+  }
+
+  async function buyItem(itemType) {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`${API_URL}/market/buy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, item_type: itemType })
+      });
+      const data = await res.json();
+      if(res.ok && data.success) {
+        showModal("Market Success", data.message);
+        initGame();
+      } else {
+        showModal("Purchase Failed", data.error || "Not enough coins");
+      }
+    } catch(err) { showModal("Error", err.message); }
+  }
+
+  async function completeTask(taskCode) {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`${API_URL}/task/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: currentUser.telegram_id, task_code: taskCode })
+      });
+      const data = await res.json();
+      if(res.ok && data.success) {
+        showModal("Task Completed", data.message);
+        initGame();
+      } else {
+        showModal("Task Failed", data.error || "Task already completed");
+      }
+    } catch(err) { showModal("Error", err.message); }
+  }
+
+  function copyRefLink() {
+    const copyText = document.getElementById("refUrl");
+    copyText.select();
+    navigator.clipboard.writeText(copyText.value);
+    showModal("Referral Link", "Link copied to clipboard!");
   }
 
   function switchTab(tabName, btn) {
