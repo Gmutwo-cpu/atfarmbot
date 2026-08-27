@@ -32,7 +32,7 @@ module.exports = async function handler(req, res) {
       .eq('telegram_id', telegram_id)
       .single();
 
-    // 2. If user doesn't exist, create with Starter Pack (50 Coins, 1 Water)
+    // 2. If user doesn't exist, create with Guaranteed Starter Pack (50 Coins, 1 Water, 1 Seed)
     if (!user) {
       const newUserObj = {
         telegram_id,
@@ -63,6 +63,23 @@ module.exports = async function handler(req, res) {
         { telegram_id, plot_index: 4, status: 'locked', harvest_time: null }
       ];
       await supabase.from('plots').insert(initialPlots);
+    } else {
+      // Safety check: ensure existing user who had 0 coins gets their starter boost if coins/seeds are null
+      let updates = {};
+      let needsUpdate = false;
+      if (user.coins === undefined || user.coins === null) { updates.coins = 50; needsUpdate = true; }
+      if (user.water_inventory === undefined || user.water_inventory === null) { updates.water_inventory = 1; needsUpdate = true; }
+      if (user.seed_inventory === undefined || user.seed_inventory === null) { updates.seed_inventory = 1; needsUpdate = true; }
+
+      if (needsUpdate) {
+        const { data: updatedUser } = await supabase
+          .from('users')
+          .update(updates)
+          .eq('telegram_id', telegram_id)
+          .select()
+          .single();
+        if (updatedUser) user = updatedUser;
+      }
     }
 
     // 3. Fetch user plots
