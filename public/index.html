@@ -242,7 +242,9 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(userData)
                 });
+                
                 let result = await response.json();
+                
                 if (result.success) {
                     gameState.coins = Number(result.user.coins);
                     gameState.atf = Number(result.user.atf_balance);
@@ -254,11 +256,12 @@
                     gameState.harvestDueAt = result.farm.harvest_due_at;
                     updateUI();
                 } else {
-                    showModal("Error: " + result.error);
+                    // Tampilkan pesan error spesifik dari backend ke popup modal
+                    showModal("Server Error: " + result.error);
                 }
             } catch (err) {
                 console.error(err);
-                showModal("Failed to connect to backend server.");
+                showModal("Failed to connect to backend server. Please check Vercel logs.");
             }
         }
 
