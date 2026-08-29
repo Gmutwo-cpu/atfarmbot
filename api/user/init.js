@@ -1,4 +1,4 @@
-import { supabase } from '../../utils/supabase.js';
+import { supabase } from '../utils/supabase.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,15 +12,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Telegram User ID is required' });
     }
 
-    // Cek apakah user sudah ada
-    let { data: user, error: fetchError } = await supabase
+    // 1. Cek atau buat user baru
+    let { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('id', id)
       .single();
 
     if (!user) {
-      // Jika belum ada, buat user baru beserta data farm default-nya
       const { data: newUser, error: insertError } = await supabase
         .from('users')
         .insert([{ id, username, first_name, photo_url, coins: 50.00, atf_balance: 0.0000 }])
@@ -30,12 +29,15 @@ export default async function handler(req, res) {
       if (insertError) throw insertError;
       user = newUser;
 
-      // Inisialisasi data farm untuk user baru
+      // Buat data farm default untuk user baru
       await supabase.from('farms').insert([{ user_id: id, water: 1, fertilizer: 0, seeds: 1, fruits: 0 }]);
+    } else {
+      // Update info profil terbaru jika berubah
+      await supabase.from('users').update({ username, first_name, photo_url, updated_at: new Date() }).eq('id', id);
     }
 
-    // Ambil juga data farm terkait
-    const { data: farm } = await supabase
+    // 2. Ambil data farm terkait
+    let { data: farm } = await supabase
       .from('farms')
       .select('*')
       .eq('user_id', id)
