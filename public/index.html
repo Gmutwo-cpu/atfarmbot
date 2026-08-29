@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATFarm - Fruits Farming AI Trading Forex</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { background-color: #0b0f19; color: #ffffff; font-family: sans-serif; }
@@ -25,18 +23,18 @@
         </div>
         <div class="text-right">
             <p class="text-xs text-gray-400">COINS: <span id="user-coins" class="text-[#00f076] font-bold">50</span></p>
-            <p class="text-xs text-gray-400">ATF: <span id="user-atf" class="text-yellow-400 font-bold">0.0000</span></p>
+            <p class="text-xs text-gray-400">ATF MILESTONE: <span id="user-atf" class="text-yellow-400 font-bold">0.0000</span></p>
         </div>
     </header>
 
-    <!-- KONTEN UTAMA (DINAMIS BERDASARKAN TAB) -->
+    <!-- KONTEN UTAMA -->
     <main class="p-4 flex-1">
         
         <!-- 1. MENU FARM -->
         <div id="section-farm" class="space-y-4">
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-4">
                 <p class="text-sm font-semibold mb-2">📢 System Notice:</p>
-                <button onclick="completeTask('claim_bonus')" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-sm">Claim Bonus (+15 Coins)</button>
+                <button onclick="completeTask('claim_bonus')" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-sm">Claim Daily Bonus (+15 Coins)</button>
             </div>
 
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-3 flex justify-around text-xs">
@@ -82,7 +80,7 @@
         <!-- 2. MENU MARKET -->
         <div id="section-market" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">Sustainable Agro Market</h2>
-            <p class="text-xs text-gray-400 mb-4">Closed-loop economy: Buy supplies, harvest, and sell fruits safely.</p>
+            <p class="text-xs text-gray-400 mb-4">Closed-loop economy: Buy supplies, harvest, and trade securely.</p>
             
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
                 <div>
@@ -118,8 +116,8 @@
 
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
                 <div>
-                    <h3 class="font-bold text-sm">Exchange to ATF Token</h3>
-                    <p class="text-xs text-gray-400">Rate: 500 Coins = 1.0000 ATF</p>
+                    <h3 class="font-bold text-sm">Exchange to ATF Milestone</h3>
+                    <p class="text-xs text-gray-400">Rate: 500 Coins = 1.0000 ATF (Daily Pool Cap)</p>
                 </div>
                 <button onclick="transactMarket('EXCHANGE_ATF')" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-1.5 rounded-lg text-xs">Exchange</button>
             </div>
@@ -130,10 +128,10 @@
             <h2 class="text-lg font-bold text-[#00f076]">⭐ Executive Missions</h2>
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
                 <div>
-                    <h3 class="font-bold text-sm">Watch Ads</h3>
-                    <p class="text-xs text-gray-400">Watch short ads to earn extra coins.</p>
+                    <h3 class="font-bold text-sm">Watch Sponsor Ads</h3>
+                    <p class="text-xs text-gray-400">Support server costs (Reward: +10 Coins)</p>
                 </div>
-                <span class="text-xs text-gray-500 font-bold">Coming Soon</span>
+                <button onclick="completeTask('watch_ads')" class="bg-[#00f076] text-black font-bold px-4 py-1.5 rounded-lg text-xs">Watch</button>
             </div>
 
             <h2 class="text-lg font-bold text-[#00f076] mt-4">⭐ Special Missions</h2>
@@ -141,7 +139,7 @@
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
                 <div>
                     <h3 class="font-bold text-sm">1. Telegram Story Share</h3>
-                    <p class="text-xs text-gray-400">Share bot mini app daily (Reward: +15 Coins)</p>
+                    <p class="text-xs text-gray-400">Share bot mini app (Reward: +15 Coins)</p>
                 </div>
                 <button onclick="completeTask('story_share')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Verify</button>
             </div>
@@ -149,7 +147,7 @@
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
                 <div>
                     <h3 class="font-bold text-sm">2. Username Prefix Badge</h3>
-                    <p class="text-xs text-gray-400">Attach @ATFarmBot to name (Reward: +30 Coins)</p>
+                    <p class="text-xs text-gray-400">Attach @ATFarmBot (Reward: +30 Coins)</p>
                 </div>
                 <button onclick="completeTask('username_badge')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Verify</button>
             </div>
@@ -165,7 +163,7 @@
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
                 <div>
                     <h3 class="font-bold text-sm">4. Email Account Binding</h3>
-                    <p class="text-xs text-gray-400">Secure farm data (Reward: +20 Coins)</p>
+                    <p class="text-xs text-gray-400">Secure data (Reward: +20 Coins)</p>
                 </div>
                 <button onclick="completeTask('bind_email')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Bind</button>
             </div>
@@ -175,7 +173,7 @@
         <div id="section-friends" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">👥 Referral System</h2>
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl text-center space-y-3">
-                <p class="text-xs text-gray-400">Invite friends and get 10% commission rewards!</p>
+                <p class="text-xs text-gray-400">Invite friends and grow the community together!</p>
                 <input type="text" id="ref-link" readonly class="w-full bg-black/40 border border-gray-700 p-2 rounded-lg text-xs text-center text-[#00f076]" value="https://t.me/ATFarmBot?start=ref_999999">
                 <button onclick="copyRefLink()" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-xs">Copy Invite Link</button>
             </div>
@@ -190,17 +188,18 @@
                     <span id="wallet-coins" class="text-[#00f076] font-bold">50</span>
                 </div>
                 <div class="flex justify-between text-sm">
-                    <span class="text-gray-400">Total ATF Token:</span>
+                    <span class="text-gray-400">ATF Milestone (Off-Chain):</span>
                     <span id="wallet-atf" class="text-yellow-400 font-bold">0.0000</span>
                 </div>
+                <p class="text-[10px] text-gray-500 italic">Note: ATF is an in-game achievement milestone. External on-chain claims are subject to optional third-party portal terms and user-handled gas fees.</p>
                 <hr class="border-gray-800">
-                <button onclick="showModal('TonConnect wallet integration coming soon!')" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg text-xs">Connect TonWallet</button>
+                <button onclick="showModal('Telegram Stars checkout for comfort pass coming soon!')" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg text-xs">Buy Telegram Stars Pass</button>
             </div>
         </div>
 
     </main>
 
-    <!-- CUSTOM POPUP MODAL (DENGAN TOMBOL X & OK) -->
+    <!-- CUSTOM POPUP MODAL -->
     <div id="custom-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-[#131b2e] border border-[#00f076] rounded-2xl w-full max-w-sm p-5 relative shadow-xl">
             <button onclick="closeModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white font-bold text-lg">✕</button>
@@ -210,7 +209,7 @@
         </div>
     </div>
 
-    <!-- NAVIGASI BAWAH (BOTTOM NAVBAR) -->
+    <!-- NAVIGASI BAWAH -->
     <nav class="fixed bottom-0 left-0 right-0 bg-[#131b2e] border-t border-gray-800 flex justify-around py-3 text-xs z-40">
         <button id="nav-farm" onclick="switchTab('farm')" class="text-[#00f076] font-bold">🌾 FARM</button>
         <button id="nav-market" onclick="switchTab('market')" class="text-gray-400">📈 MARKET</button>
@@ -219,7 +218,7 @@
         <button id="nav-wallet" onclick="switchTab('wallet')" class="text-gray-400">💎 WALLET</button>
     </nav>
 
-    <!-- LOGIKA JAVASCRIPT LENGKAP -->
+    <!-- LOGIKA JAVASCRIPT -->
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
@@ -242,9 +241,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(userData)
                 });
-                
                 let result = await response.json();
-                
                 if (result.success) {
                     gameState.coins = Number(result.user.coins);
                     gameState.atf = Number(result.user.atf_balance);
@@ -256,12 +253,11 @@
                     gameState.harvestDueAt = result.farm.harvest_due_at;
                     updateUI();
                 } else {
-                    // Tampilkan pesan error spesifik dari backend ke popup modal
-                    showModal("Server Error: " + result.error);
+                    showModal("Error: " + result.error);
                 }
             } catch (err) {
                 console.error(err);
-                showModal("Failed to connect to backend server. Please check Vercel logs.");
+                showModal("Failed to connect to backend server.");
             }
         }
 
@@ -294,7 +290,6 @@
                     document.getElementById('farm-harvest-view').classList.add('hidden');
                     document.getElementById('farm-active-view').classList.remove('hidden');
                     
-                    // Update timer text
                     let diff = Math.max(0, Math.floor((due - now) / 1000));
                     let h = Math.floor(diff / 3600).toString().padStart(2, '0');
                     let m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
@@ -310,7 +305,7 @@
 
         window.onload = () => { 
             initUserSession(); 
-            setInterval(updateUI, 1000); // Refresh timer setiap detik
+            setInterval(updateUI, 1000);
         };
 
         function showModal(msg) {
