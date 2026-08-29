@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { user_id, action_type } = req.body; // action_type: 'SELL_FRUITS' or 'EXCHANGE_ATF'
+    const { user_id, action_type } = req.body;
 
     if (!user_id || !action_type) {
       return res.status(400).json({ success: false, message: 'Missing user_id or action_type!' });
@@ -35,11 +35,9 @@ export default async function handler(req, res) {
 
       const earnedCoins = farm.fruits * 45; // 45 Coins per fruit
 
-      // Reset fruits ke 0 dan tambahkan koin
       await supabase.from('farms').update({ fruits: 0, updated_at: new Date() }).eq('user_id', user_id);
       await supabase.from('users').update({ coins: Number(user.coins) + earnedCoins, updated_at: new Date() }).eq('id', user_id);
 
-      // Catat transaksi
       await supabase.from('transactions').insert([{
         user_id,
         type: 'SELL_FRUIT',
@@ -56,10 +54,34 @@ export default async function handler(req, res) {
     else if (action_type === 'EXCHANGE_ATF') {
       const requiredCoins = 500;
       if (Number(user.coins) < requiredCoins) {
-        return res.status(400).json({ success: false, message: 'Need at least 500 Coins to exchange for 1.0000 ATF Token!' });
+        return res.status(400).json({ success: false, message: 'Need at least 500 Coins to exchange for 1.0000 ATF Achievement!' });
       }
 
-      // Kurangi 500 koin, tambah 1.0000 ATF Token
+      // === SISTEM PENGAMAN: DAILY POOL LIMIT ===
+      // Hitung total ATF yang ditukar oleh seluruh user hari ini di tabel transactions
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const { data: todayTxs } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('type', 'EXCHANGE_ATF')
+        .gte('created_at', todayStart.toISOString());
+
+      let totalTodayExchanged = 0;
+      if (todayTxs) {
+        totalTodayExchanged = todayTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
+      }
+
+      const DAILY_GLOBAL_POOL_LIMIT = 50.0000; // Maksimal 50 ATF per hari untuk seluruh pemain
+      if (totalTodayExchanged + 1.0000 > DAILY_GLOBAL_POOL_LIMIT) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Daily global ATF exchange pool is fully claimed for today! Please try again tomorrow.' 
+        });
+      }
+      // ===========================================
+
       const newCoins = Number(user.coins) - requiredCoins;
       const newAtf = Number(user.atf_balance) + 1.0000;
 
@@ -69,18 +91,17 @@ export default async function handler(req, res) {
         updated_at: new Date() 
       }).eq('id', user_id);
 
-      // Catat transaksi
       await supabase.from('transactions').insert([{
         user_id,
         type: 'EXCHANGE_ATF',
         amount: 1.0000,
         currency_type: 'ATF',
-        description: 'Exchanged 500 Coins for 1.0000 ATF Token'
+        description: 'Exchanged 500 Coins for 1.0000 ATF Achievement'
       }]);
 
       return res.status(200).json({ 
         success: true, 
-        message: 'Successfully exchanged 500 Coins for 1.0000 ATF Token!' 
+        message: 'Successfully exchanged 500 Coins for 1.0000 ATF Achievement! (Off-chain milestone recorded).' 
       });
     } 
     else {
