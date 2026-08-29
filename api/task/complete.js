@@ -12,9 +12,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Missing user_id or task_key!' });
     }
 
-    // Daftar reward transparan sesuai spesifikasi task
     const rewards = {
       'claim_bonus': 15,
+      'watch_ads': 10,        // Reward nonton iklan penopang server
       'story_share': 15,
       'username_badge': 30,
       'bio_link': 50,
@@ -26,8 +26,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Invalid task identifier!' });
     }
 
-    // Cek apakah misi sekali selesai sudah pernah diklaim sebelumnya
-    if (task_key !== 'claim_bonus' && task_key !== 'story_share') {
+    // Misi harian seperti watch_ads dan claim_bonus boleh diulang, misi sosial sekali saja
+    if (task_key !== 'claim_bonus' && task_key !== 'watch_ads' && task_key !== 'story_share') {
       const { data: existingTask } = await supabase
         .from('tasks_completed')
         .select('*')
@@ -39,11 +39,9 @@ export default async function handler(req, res) {
         return res.status(400).json({ success: false, message: 'This task has already been completed!' });
       }
 
-      // Catat bahwa misi ini sudah diselesaikan
       await supabase.from('tasks_completed').insert([{ user_id, task_key }]);
     }
 
-    // Ambil data user untuk menambahkan koin reward
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
