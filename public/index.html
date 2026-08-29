@@ -113,90 +113,97 @@
     <!-- JAVASCRIPT LOGIC UTAMA -->
     <script>
         let tg = window.Telegram.WebApp;
-        tg.expand();
+tg.expand();
 
-        // Data User Default / Fallback untuk Browser Lokal
-        let userData = {
-            id: tg.initDataUnsafe?.user?.id || 12345678,
-            username: tg.initDataUnsafe?.user?.username || "DemoFarmer",
-            first_name: tg.initDataUnsafe?.user?.first_name || "Farmer",
-            photo_url: tg.initDataUnsafe?.user?.photo_url || "https://via.placeholder.com/48"
-        };
+// Data User dari Telegram WebApp (dengan fallback data demo untuk uji coba di browser lokal)
+let userData = {
+    id: tg.initDataUnsafe?.user?.id || 999999, // ID dummy untuk testing lokal
+    username: tg.initDataUnsafe?.user?.username || "DemoFarmer",
+    first_name: tg.initDataUnsafe?.user?.first_name || "Farmer",
+    photo_url: tg.initDataUnsafe?.user?.photo_url || "https://via.placeholder.com/48"
+};
 
-        let userState = { coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, isPlanted: false, dueTime: null };
+let gameState = {
+    coins: 50,
+    atf: 0,
+    water: 1,
+    fert: 0,
+    seeds: 1,
+    fruits: 0,
+    isPlanted: false,
+    harvestDueAt: null
+};
 
-        // Inisialisasi Tampilan Profil
-        document.getElementById('user-name').innerText = userData.first_name;
-        document.getElementById('user-id').innerText = `ID: ${userData.id}`;
-        if(userData.photo_url) {
-            document.getElementById('user-avatar').src = userData.photo_url;
+// Fungsi untuk Memuat Data Pengguna dari Backend Supabase saat Aplikasi Dibuka
+async function initUserSession() {
+    try {
+        let response = await fetch('/api/user/init', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+        let result = await response.json();
+        
+        if (result.success) {
+            // Sinkronkan data dari database ke variabel global frontend
+            gameState.coins = Number(result.user.coins);
+            gameState.atf = Number(result.user.atf_balance);
+            gameState.water = result.farm.water;
+            gameState.fert = result.farm.fertilizer;
+            gameState.seeds = result.farm.seeds;
+            gameState.fruits = result.farm.fruits;
+            gameState.isPlanted = result.farm.is_planted;
+            gameState.harvestDueAt = result.farm.harvest_due_at;
+
+            // Perbarui tampilan UI
+            updateUI();
+        } else {
+            showModal("Error initializing user: " + result.error);
         }
+    } catch (err) {
+        console.error("Network error during init:", err);
+        showModal("Failed to connect to server. Running in offline UI mode.");
+    }
+}
 
-        // Fungsi Menampilkan Popup Modal Dinamis
-        function showModal(message) {
-            document.getElementById('modal-message').innerText = message;
-            document.getElementById('custom-modal').classList.remove('hidden');
-        }
+// Fungsi pembantu untuk memperbarui tampilan teks di layar secara dinamis
+function updateUI() {
+    document.getElementById('user-name').innerText = userData.first_name;
+    document.getElementById('user-id').innerText = `ID: ${userData.id}`;
+    if(userData.photo_url) document.getElementById('user-avatar').src = userData.photo_url;
+    
+    document.getElementById('user-coins').innerText = gameState.coins;
+    document.getElementById('user-atf').innerText = gameState.atf.toFixed(4);
+    
+    document.getElementById('res-water').innerText = gameState.water;
+    document.getElementById('res-fert').innerText = gameState.fert;
+    document.getElementById('res-seeds').innerText = gameState.seeds;
+    document.getElementById('res-fruits').innerText = gameState.fruits;
 
-        function closeModal() {
-            document.getElementById('custom-modal').classList.add('hidden');
-        }
+    // Logika tampilan lahan tani
+    if (gameState.isPlanted) {
+        document.getElementById('farm-status-view').classList.add('hidden');
+        document.getElementById('farm-active-view').classList.remove('hidden');
+    } else {
+        document.getElementById('farm-active-view').classList.add('hidden');
+        document.getElementById('farm-status-view').classList.remove('hidden');
+    }
+}
 
-        // Fungsi Navigasi Tab Sederhana (Contoh Interaktif)
-        function switchTab(tabName) {
-            if(tabName === 'market') {
-                showModal("Market feature will load market endpoints next.");
-            } else if(tabName === 'task') {
-                showModal("Task feature will load executive & special missions next.");
-            } else {
-                showModal(`Switched to ${tabName.toUpperCase()} tab.`);
-            }
-        }
+// Jalankan inisialisasi saat halaman selesai dimuat
+window.onload = () => {
+    initUserSession();
+};
 
-        // Interaksi Tombol-Tombol Dummy Frontend (Akan dihubungkan ke backend Vercel)
-        function claimBonus() {
-            userState.coins += 15;
-            document.getElementById('user-coins').innerText = userState.coins;
-            showModal("Successfully claimed +15 Coins bonus!");
-        }
+// Fungsi Popup Modal
+function showModal(message) {
+    document.getElementById('modal-message').innerText = message;
+    document.getElementById('custom-modal').classList.remove('hidden');
+}
 
-        function plantSeed() {
-            if(userState.seeds < 1) {
-                showModal("Insufficient Crop Seeds! Buy more in Market.");
-                return;
-            }
-            userState.seeds -= 1;
-            userState.isPlanted = true;
-            document.getElementById('res-seeds').innerText = userState.seeds;
-            
-            // Set Timer 5 jam 40 menit dari sekarang (untuk simulasi, kita buat 10 detik atau sesuai waktu asli)
-            document.getElementById('farm-status-view').classList.add('hidden');
-            document.getElementById('farm-active-view').classList.remove('hidden');
-            showModal("Apple seed planted successfully! Timer started (5h 40m).");
-        }
-
-        function useBoost(type) {
-            if(type === 'WATER' && userState.water > 0) {
-                userState.water -= 1;
-                document.getElementById('res-water').innerText = userState.water;
-                showModal("Water applied! Timer reduced by 30 minutes.");
-            } else if(type === 'FERTILIZER' && userState.fert > 0) {
-                userState.fert -= 1;
-                document.getElementById('res-fert').innerText = userState.fert;
-                showModal("Fertilizer applied! Timer reduced by 60 minutes.");
-            } else {
-                showModal(`Not enough ${type.toLowerCase()} supply!`);
-            }
-        }
-
-        function harvestFruit() {
-            userState.fruits += 1;
-            userState.isPlanted = false;
-            document.getElementById('res-fruits').innerText = userState.fruits;
-            document.getElementById('farm-harvest-view').classList.add('hidden');
-            document.getElementById('farm-status-view').classList.remove('hidden');
-            showModal("Successfully harvested 1 Apple Fruit!");
-        }
+function closeModal() {
+    document.getElementById('custom-modal').classList.add('hidden');
+}
     </script>
 </body>
 </html>
