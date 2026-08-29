@@ -209,13 +209,28 @@
         </div>
     </div>
 
-    <!-- NAVIGASI BAWAH -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-[#131b2e] border-t border-gray-800 flex justify-around py-3 text-xs z-40">
-        <button id="nav-farm" onclick="switchTab('farm')" class="text-[#00f076] font-bold">🌾 FARM</button>
-        <button id="nav-market" onclick="switchTab('market')" class="text-gray-400">📈 MARKET</button>
-        <button id="nav-task" onclick="switchTab('task')" class="text-gray-400">📋 TASK</button>
-        <button id="nav-friends" onclick="switchTab('friends')" class="text-gray-400">👥 FRIENDS</button>
-        <button id="nav-wallet" onclick="switchTab('wallet')" class="text-gray-400">💎 WALLET</button>
+    <!-- NAVIGASI BAWAH (IKON DI ATAS TULISAN DENGAN UKURAN BESAR) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-[#131b2e] border-t border-gray-800 flex justify-around py-2 z-40">
+        <button id="nav-farm" onclick="switchTab('farm')" class="flex flex-col items-center text-[#00f076] font-bold">
+            <span class="text-xl mb-0.5">🌾</span>
+            <span class="text-[10px]">FARM</span>
+        </button>
+        <button id="nav-market" onclick="switchTab('market')" class="flex flex-col items-center text-gray-400">
+            <span class="text-xl mb-0.5">📈</span>
+            <span class="text-[10px]">MARKET</span>
+        </button>
+        <button id="nav-task" onclick="switchTab('task')" class="flex flex-col items-center text-gray-400">
+            <span class="text-xl mb-0.5">📋</span>
+            <span class="text-[10px]">TASK</span>
+        </button>
+        <button id="nav-friends" onclick="switchTab('friends')" class="flex flex-col items-center text-gray-400">
+            <span class="text-xl mb-0.5">👥</span>
+            <span class="text-[10px]">FRIENDS</span>
+        </button>
+        <button id="nav-wallet" onclick="switchTab('wallet')" class="flex flex-col items-center text-gray-400">
+            <span class="text-xl mb-0.5">💎</span>
+            <span class="text-[10px]">WALLET</span>
+        </button>
     </nav>
 
     <!-- LOGIKA JAVASCRIPT -->
@@ -317,10 +332,10 @@
         function switchTab(tab) {
             ['farm', 'market', 'task', 'friends', 'wallet'].forEach(t => {
                 document.getElementById(`section-${t}`).classList.add('hidden');
-                document.getElementById(`nav-${t}`).className = "text-gray-400";
+                document.getElementById(`nav-${t}`).className = "flex flex-col items-center text-gray-400";
             });
             document.getElementById(`section-${tab}`).classList.remove('hidden');
-            document.getElementById(`nav-${tab}`).className = "text-[#00f076] font-bold";
+            document.getElementById(`nav-${tab}`).className = "flex flex-col items-center text-[#00f076] font-bold";
         }
 
         async function plantSeed() {
@@ -384,6 +399,7 @@
                 });
                 let data = await res.json();
                 showModal(data.message);
+                if(data.success) initState(); // diperbarui atau initUserSession
                 if(data.success) initUserSession();
             } catch(e) { showModal("Network error during transaction."); }
         }
@@ -396,7 +412,7 @@
                     body: JSON.stringify({ user_id: userData.id, task_key: taskKey })
                 });
                 let data = await res.json();
-                showModal(data.message);
+                    showModal(data.message);
                 if(data.success) initUserSession();
             } catch(e) { showModal("Network error while completing task."); }
         }
