@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATFarm - Fruits Farming AI Trading Forex</title>
-    <!-- Tailwind CSS untuk Styling Cepat & Elegan -->
+    <!-- Tailwind CSS untuk Styling -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -12,7 +12,7 @@
         body { background-color: #0b0f19; color: #ffffff; font-family: sans-serif; }
     </style>
 </head>
-<body class="min-h-screen pb-20 flex flex-col justify-between">
+<body class="min-h-screen pb-24 flex flex-col justify-between">
 
     <!-- HEADER PROFIL USER -->
     <header class="p-4 flex items-center justify-between bg-[#131b2e] border-b border-gray-800">
@@ -29,9 +29,9 @@
         </div>
     </header>
 
-    <!-- KONTEN UTAMA HALAMAN (DIPERBARUI DINAMIS) -->
-    <main id="main-content" class="p-4 flex-1">
-        <!-- Default Content: FARM -->
+    <!-- KONTEN UTAMA HALAMAN -->
+    <main class="p-4 flex-1">
+        <!-- Menu FARM -->
         <div id="section-farm" class="space-y-4">
             <!-- System Notice Banner -->
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-4">
@@ -71,7 +71,7 @@
                             <span id="countdown-timer" class="text-[#00f076] font-mono font-bold text-sm">05:40:00</span>
                         </div>
                     </div>
-                    <!-- Tombol Booster Pupuk di Bawah Tengah/Kanan jika ingin dipisah -->
+                    <!-- Tombol Booster Pupuk di Kanan Bawah (Alternatif / Bawah Tengah) -->
                     <div class="mt-3">
                         <button onclick="useBoost('FERTILIZER')" class="bg-purple-600 hover:bg-purple-500 text-xs px-3 py-1.5 rounded-lg font-semibold w-full">
                             🧪 Apply Fertilizer (-60m)
@@ -79,7 +79,7 @@
                     </div>
                 </div>
 
-                <!-- Tombol Siap Panen (Muncul jika waktu habis) -->
+                <!-- Tombol Siap Panen -->
                 <div id="farm-harvest-view" class="hidden w-full mt-4">
                     <p class="text-[#00f076] font-bold mb-2">Apple Tree is Ready to Harvest!</p>
                     <button onclick="harvestFruit()" class="bg-[#00f076] text-black font-bold w-full py-2.5 rounded-xl">Harvest Fruit</button>
@@ -88,21 +88,18 @@
         </div>
     </main>
 
-    <!-- CUSTOM POPUP MODAL (DENGAN TOMBOL X & OK) -->
+    <!-- CUSTOM POPUP MODAL -->
     <div id="custom-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-[#131b2e] border border-[#00f076] rounded-2xl w-full max-w-sm p-5 relative shadow-xl">
-            <!-- Tombol X (Tanda Silang) untuk Keluar -->
             <button onclick="closeModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white font-bold text-lg">✕</button>
-            
             <h3 class="text-[#00f076] font-bold text-center text-lg mb-2">Notice</h3>
-            <p id="modal-message" class="text-sm text-center text-gray-200 mb-6">Server Error / Message goes here</p>
-            
+            <p id="modal-message" class="text-sm text-center text-gray-200 mb-6">Message goes here</p>
             <button onclick="closeModal()" class="w-full bg-[#00f076] text-black font-bold py-2.5 rounded-xl">OK</button>
         </div>
     </div>
 
-    <!-- NAVIGASI BAWAH (BOTTOM NAVBAR) -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-[#131b2e] border-t border-gray-800 flex justify-around py-3 text-xs">
+    <!-- NAVIGASI BAWAH -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-[#131b2e] border-t border-gray-800 flex justify-around py-3 text-xs z-40">
         <button onclick="switchTab('farm')" class="text-[#00f076] font-bold">🌾 FARM</button>
         <button onclick="switchTab('market')" class="text-gray-400">📈 MARKET</button>
         <button onclick="switchTab('task')" class="text-gray-400">📋 TASK</button>
@@ -110,100 +107,148 @@
         <button onclick="switchTab('wallet')" class="text-gray-400">💎 WALLET</button>
     </nav>
 
-    <!-- JAVASCRIPT LOGIC UTAMA -->
+    <!-- LOGIKA JAVASCRIPT FRONTEND & KONEKSI API -->
     <script>
         let tg = window.Telegram.WebApp;
-tg.expand();
+        tg.expand();
 
-// Data User dari Telegram WebApp (dengan fallback data demo untuk uji coba di browser lokal)
-let userData = {
-    id: tg.initDataUnsafe?.user?.id || 999999, // ID dummy untuk testing lokal
-    username: tg.initDataUnsafe?.user?.username || "DemoFarmer",
-    first_name: tg.initDataUnsafe?.user?.first_name || "Farmer",
-    photo_url: tg.initDataUnsafe?.user?.photo_url || "https://via.placeholder.com/48"
-};
+        let userData = {
+            id: tg.initDataUnsafe?.user?.id || 999999,
+            username: tg.initDataUnsafe?.user?.username || "DemoFarmer",
+            first_name: tg.initDataUnsafe?.user?.first_name || "Farmer",
+            photo_url: tg.initDataUnsafe?.user?.photo_url || "https://via.placeholder.com/48"
+        };
 
-let gameState = {
-    coins: 50,
-    atf: 0,
-    water: 1,
-    fert: 0,
-    seeds: 1,
-    fruits: 0,
-    isPlanted: false,
-    harvestDueAt: null
-};
+        let gameState = {
+            coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, isPlanted: false, harvestDueAt: null
+        };
 
-// Fungsi untuk Memuat Data Pengguna dari Backend Supabase saat Aplikasi Dibuka
-async function initUserSession() {
-    try {
-        let response = await fetch('/api/user/init', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
-        });
-        let result = await response.json();
-        
-        if (result.success) {
-            // Sinkronkan data dari database ke variabel global frontend
-            gameState.coins = Number(result.user.coins);
-            gameState.atf = Number(result.user.atf_balance);
-            gameState.water = result.farm.water;
-            gameState.fert = result.farm.fertilizer;
-            gameState.seeds = result.farm.seeds;
-            gameState.fruits = result.farm.fruits;
-            gameState.isPlanted = result.farm.is_planted;
-            gameState.harvestDueAt = result.farm.harvest_due_at;
-
-            // Perbarui tampilan UI
-            updateUI();
-        } else {
-            showModal("Error initializing user: " + result.error);
+        async function initUserSession() {
+            try {
+                let response = await fetch('/api/user/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                let result = await response.json();
+                if (result.success) {
+                    gameState.coins = Number(result.user.coins);
+                    gameState.atf = Number(result.user.atf_balance);
+                    gameState.water = result.farm.water;
+                    gameState.fert = result.farm.fertilizer;
+                    gameState.seeds = result.farm.seeds;
+                    gameState.fruits = result.farm.fruits;
+                    gameState.isPlanted = result.farm.is_planted;
+                    gameState.harvestDueAt = result.farm.harvest_due_at;
+                    updateUI();
+                } else {
+                    showModal("Error: " + result.error);
+                }
+            } catch (err) {
+                console.error(err);
+                showModal("Failed to connect to backend server.");
+            }
         }
-    } catch (err) {
-        console.error("Network error during init:", err);
-        showModal("Failed to connect to server. Running in offline UI mode.");
-    }
-}
 
-// Fungsi pembantu untuk memperbarui tampilan teks di layar secara dinamis
-function updateUI() {
-    document.getElementById('user-name').innerText = userData.first_name;
-    document.getElementById('user-id').innerText = `ID: ${userData.id}`;
-    if(userData.photo_url) document.getElementById('user-avatar').src = userData.photo_url;
-    
-    document.getElementById('user-coins').innerText = gameState.coins;
-    document.getElementById('user-atf').innerText = gameState.atf.toFixed(4);
-    
-    document.getElementById('res-water').innerText = gameState.water;
-    document.getElementById('res-fert').innerText = gameState.fert;
-    document.getElementById('res-seeds').innerText = gameState.seeds;
-    document.getElementById('res-fruits').innerText = gameState.fruits;
+        function updateUI() {
+            document.getElementById('user-name').innerText = userData.first_name;
+            document.getElementById('user-id').innerText = `ID: ${userData.id}`;
+            if(userData.photo_url) document.getElementById('user-avatar').src = userData.photo_url;
+            
+            document.getElementById('user-coins').innerText = gameState.coins;
+            document.getElementById('user-atf').innerText = gameState.atf.toFixed(4);
+            
+            document.getElementById('res-water').innerText = gameState.water;
+            document.getElementById('res-fert').innerText = gameState.fert;
+            document.getElementById('res-seeds').innerText = gameState.seeds;
+            document.getElementById('res-fruits').innerText = gameState.fruits;
 
-    // Logika tampilan lahan tani
-    if (gameState.isPlanted) {
-        document.getElementById('farm-status-view').classList.add('hidden');
-        document.getElementById('farm-active-view').classList.remove('hidden');
-    } else {
-        document.getElementById('farm-active-view').classList.add('hidden');
-        document.getElementById('farm-status-view').classList.remove('hidden');
-    }
-}
+            if (gameState.isPlanted) {
+                let now = new Date().getTime();
+                let due = new Date(gameState.harvestDueAt).getTime();
+                if (now >= due) {
+                    document.getElementById('farm-status-view').classList.add('hidden');
+                    document.getElementById('farm-active-view').classList.add('hidden');
+                    document.getElementById('farm-harvest-view').classList.remove('hidden');
+                } else {
+                    document.getElementById('farm-status-view').classList.add('hidden');
+                    document.getElementById('farm-harvest-view').classList.add('hidden');
+                    document.getElementById('farm-active-view').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('farm-active-view').classList.add('hidden');
+                document.getElementById('farm-harvest-view').classList.add('hidden');
+                document.getElementById('farm-status-view').classList.remove('hidden');
+            }
+        }
 
-// Jalankan inisialisasi saat halaman selesai dimuat
-window.onload = () => {
-    initUserSession();
-};
+        window.onload = () => { initUserSession(); };
 
-// Fungsi Popup Modal
-function showModal(message) {
-    document.getElementById('modal-message').innerText = message;
-    document.getElementById('custom-modal').classList.remove('hidden');
-}
+        function showModal(msg) {
+            document.getElementById('modal-message').innerText = msg;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
 
-function closeModal() {
-    document.getElementById('custom-modal').classList.add('hidden');
-}
+        async function plantSeed() {
+            try {
+                let res = await fetch('/api/farm/plant', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userData.id })
+                });
+                let data = await res.json();
+                showModal(data.message);
+                if(data.success) initUserSession();
+            } catch(e) { showModal("Network error while planting."); }
+        }
+
+        async function useBoost(type) {
+            try {
+                let res = await fetch('/api/farm/boost', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userData.id, boost_type: type })
+                });
+                let data = await res.json();
+                showModal(data.message);
+                if(data.success) initUserSession();
+            } catch(e) { showModal("Network error while applying boost."); }
+        }
+
+        async function harvestFruit() {
+            try {
+                let res = await fetch('/api/farm/harvest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userData.id })
+                });
+                let data = await res.json();
+                showModal(data.message);
+                if(data.success) initUserSession();
+            } catch(e) { showModal("Network error while harvesting."); }
+        }
+
+        async function claimBonus() {
+            try {
+                let res = await fetch('/api/task/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userData.id, task_key: 'claim_bonus' })
+                });
+                let data = await res.json();
+                showModal(data.message);
+                if(data.success) initUserSession();
+            } catch(e) { showModal("Network error."); }
+        }
+
+        function switchTab(tab) {
+            if(tab === 'farm') {
+                showModal("You are currently on FARM tab.");
+            } else {
+                showModal(`Menu ${tab.toUpperCase()} is under active backend development.`);
+            }
+        }
     </script>
 </body>
 </html>
