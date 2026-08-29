@@ -4,115 +4,199 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATFarm - Fruits Farming AI Trading Forex</title>
+    <!-- Tailwind CSS untuk Styling Cepat & Elegan -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0b0f19; color: #f3f4f6; font-family: sans-serif; }
-        .neon-border { border: 1px solid #00f076; box-shadow: 0 0 10px rgba(0, 240, 118, 0.2); }
+        body { background-color: #0b0f19; color: #ffffff; font-family: sans-serif; }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="min-h-screen pb-20 flex flex-col justify-between">
 
-    <!-- Global Custom Popup Modal -->
-    <div id="custom-popup" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
-        <div class="bg-[#0b0f19] p-6 rounded-xl w-80 neon-border relative">
-            <button onclick="closePopup()" class="absolute top-3 right-3 text-gray-400 hover:text-white font-bold text-lg">×</button>
-            <h3 class="text-[#00f076] font-bold text-lg mb-2">Notice</h3>
-            <p id="popup-message" class="text-sm text-gray-300 mb-4">Dynamic message goes here.</p>
-            <button onclick="closePopup()" class="w-full bg-[#00f076] text-black font-semibold py-2 rounded-lg hover:opacity-90">OK</button>
-        </div>
-    </div>
-
-    <!-- Header Profil User -->
-    <header class="p-4 border-b border-gray-800 flex items-center justify-between">
+    <!-- HEADER PROFIL USER -->
+    <header class="p-4 flex items-center justify-between bg-[#131b2e] border-b border-gray-800">
         <div class="flex items-center space-x-3">
-            <img id="user-avatar" src="https://via.placeholder.com/40" alt="Avatar" class="w-10 h-10 rounded-full border border-[#00f076] object-cover">
+            <img id="user-avatar" src="https://via.placeholder.com/48" alt="Avatar" class="w-12 h-12 rounded-full border-2 border-[#00f076] object-cover">
             <div>
-                <h4 id="user-name" class="font-bold text-sm text-white">Loading...</h4>
-                <span id="user-id" class="text-xs text-gray-400">ID: --</span>
+                <h2 id="user-name" class="font-bold text-lg">Farmer</h2>
+                <p id="user-id" class="text-xs text-gray-400">ID: --</p>
             </div>
         </div>
-        <div class="flex space-x-3 text-xs">
-            <div class="bg-gray-900 px-3 py-1 rounded-lg border border-gray-700">🪙 <span id="coin-balance">0</span></div>
-            <div class="bg-gray-900 px-3 py-1 rounded-lg border border-gray-700">💎 <span id="atf-balance">0.0000</span></div>
+        <div class="text-right">
+            <p class="text-xs text-gray-400">COINS: <span id="user-coins" class="text-[#00f076] font-bold">50</span></p>
+            <p class="text-xs text-gray-400">ATF: <span id="user-atf" class="text-yellow-400 font-bold">0.0000</span></p>
         </div>
     </header>
 
-    <!-- Main Content SPA -->
-    <main class="flex-1 p-4 pb-20">
-        <div id="app-view">
-            <h2 class="text-xl font-bold text-[#00f076] mb-2">FARM Dashboard</h2>
-            <p class="text-sm text-gray-400">Welcome to ATFarm sustainable agro ecosystem.</p>
+    <!-- KONTEN UTAMA HALAMAN (DIPERBARUI DINAMIS) -->
+    <main id="main-content" class="p-4 flex-1">
+        <!-- Default Content: FARM -->
+        <div id="section-farm" class="space-y-4">
+            <!-- System Notice Banner -->
+            <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-4">
+                <p class="text-sm font-semibold mb-2">📢 System Notice:</p>
+                <button onclick="claimBonus()" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-sm">Claim Bonus (+15 Coins)</button>
+            </div>
+
+            <!-- Resource Status Bar -->
+            <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-3 flex justify-around text-xs">
+                <span>💧 Water: <b id="res-water">1</b></span>
+                <span>🧪 Fert: <b id="res-fert">0</b></span>
+                <span>🌱 Seeds: <b id="res-seeds">1</b></span>
+                <span>🍎 Fruits: <b id="res-fruits">0</b></span>
+            </div>
+
+            <!-- Active Planting Land UI -->
+            <div class="bg-[#131b2e] border border-[#00f076]/30 rounded-2xl p-6 text-center relative min-h-[220px] flex flex-col items-center justify-center">
+                <div id="farm-status-view">
+                    <p class="text-gray-400 mb-2">Land is empty</p>
+                    <button onclick="plantSeed()" class="bg-[#00f076] text-black font-bold px-6 py-2 rounded-xl">Plant Apple Seed</button>
+                </div>
+
+                <!-- Active Timer & Boosters Layout -->
+                <div id="farm-active-view" class="hidden w-full">
+                    <div class="text-2xl mb-2">🍎</div>
+                    <p class="text-xs text-gray-400">Growing Apple Tree...</p>
+                    
+                    <div class="flex justify-between items-center mt-6 w-full px-2">
+                        <!-- Tombol Booster Air di Kiri Bawah -->
+                        <button onclick="useBoost('WATER')" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1">
+                            <span>💧 Water (-30m)</span>
+                        </button>
+
+                        <!-- Waktu Mundur di Kanan Bawah -->
+                        <div class="text-right">
+                            <span class="text-xs text-gray-400 block">Harvest in:</span>
+                            <span id="countdown-timer" class="text-[#00f076] font-mono font-bold text-sm">05:40:00</span>
+                        </div>
+                    </div>
+                    <!-- Tombol Booster Pupuk di Bawah Tengah/Kanan jika ingin dipisah -->
+                    <div class="mt-3">
+                        <button onclick="useBoost('FERTILIZER')" class="bg-purple-600 hover:bg-purple-500 text-xs px-3 py-1.5 rounded-lg font-semibold w-full">
+                            🧪 Apply Fertilizer (-60m)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tombol Siap Panen (Muncul jika waktu habis) -->
+                <div id="farm-harvest-view" class="hidden w-full mt-4">
+                    <p class="text-[#00f076] font-bold mb-2">Apple Tree is Ready to Harvest!</p>
+                    <button onclick="harvestFruit()" class="bg-[#00f076] text-black font-bold w-full py-2.5 rounded-xl">Harvest Fruit</button>
+                </div>
+            </div>
         </div>
     </main>
 
-    <!-- Bottom Navigation Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-[#0b0f19] border-t border-gray-800 flex justify-around py-3 text-xs">
-        <button class="text-[#00f076] font-semibold">FARM</button>
-        <button class="text-gray-400 hover:text-white">MARKET</button>
-        <button class="text-gray-400 hover:text-white">TASK</button>
-        <button class="text-gray-400 hover:text-white">FRIENDS</button>
-        <button class="text-gray-400 hover:text-white">WALLET</button>
+    <!-- CUSTOM POPUP MODAL (DENGAN TOMBOL X & OK) -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#131b2e] border border-[#00f076] rounded-2xl w-full max-w-sm p-5 relative shadow-xl">
+            <!-- Tombol X (Tanda Silang) untuk Keluar -->
+            <button onclick="closeModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white font-bold text-lg">✕</button>
+            
+            <h3 class="text-[#00f076] font-bold text-center text-lg mb-2">Notice</h3>
+            <p id="modal-message" class="text-sm text-center text-gray-200 mb-6">Server Error / Message goes here</p>
+            
+            <button onclick="closeModal()" class="w-full bg-[#00f076] text-black font-bold py-2.5 rounded-xl">OK</button>
+        </div>
+    </div>
+
+    <!-- NAVIGASI BAWAH (BOTTOM NAVBAR) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-[#131b2e] border-t border-gray-800 flex justify-around py-3 text-xs">
+        <button onclick="switchTab('farm')" class="text-[#00f076] font-bold">🌾 FARM</button>
+        <button onclick="switchTab('market')" class="text-gray-400">📈 MARKET</button>
+        <button onclick="switchTab('task')" class="text-gray-400">📋 TASK</button>
+        <button onclick="switchTab('friends')" class="text-gray-400">👥 FRIENDS</button>
+        <button onclick="switchTab('wallet')" class="text-gray-400">💎 WALLET</button>
     </nav>
 
+    <!-- JAVASCRIPT LOGIC UTAMA -->
     <script>
-        // Popup Handler
-        function showPopup(message) {
-            document.getElementById('popup-message').innerText = message;
-            document.getElementById('custom-popup').classList.remove('hidden');
-        }
-        function closePopup() {
-            document.getElementById('custom-popup').classList.add('hidden');
-        }
+        let tg = window.Telegram.WebApp;
+        tg.expand();
 
-        // Telegram WebApp Initialization & Fallback Logic
-        async function initApp() {
-            let userData = {
-                id: 123456789, // Fallback local ID
-                username: "local_farmer",
-                first_name: "Local Farmer",
-                photo_url: "https://via.placeholder.com/40"
-            };
+        // Data User Default / Fallback untuk Browser Lokal
+        let userData = {
+            id: tg.initDataUnsafe?.user?.id || 12345678,
+            username: tg.initDataUnsafe?.user?.username || "DemoFarmer",
+            first_name: tg.initDataUnsafe?.user?.first_name || "Farmer",
+            photo_url: tg.initDataUnsafe?.user?.photo_url || "https://via.placeholder.com/48"
+        };
 
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-                userData = {
-                    id: tgUser.id,
-                    username: tgUser.username || `user_${tgUser.id}`,
-                    first_name: tgUser.first_name || "Farmer",
-                    photo_url: tgUser.photo_url || "https://via.placeholder.com/40"
-                };
-                window.Telegram.WebApp.ready();
-                window.Telegram.WebApp.expand();
-            }
+        let userState = { coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, isPlanted: false, dueTime: null };
 
-            // Render ke UI Header
+        // Inisialisasi Tampilan Profil
+        document.getElementById('user-name').innerText = userData.first_name;
+        document.getElementById('user-id').innerText = `ID: ${userData.id}`;
+        if(userData.photo_url) {
             document.getElementById('user-avatar').src = userData.photo_url;
-            document.getElementById('user-name').textContent = userData.first_name;
-            document.getElementById('user-id').textContent = `ID: ${userData.id}`;
+        }
 
-            // Kirim data ke Backend /api/user/init.js
-            try {
-                const response = await fetch('/api/user/init', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(userData)
-                });
-                const result = await response.json();
-                if (result.success) {
-                    document.getElementById('coin-balance').textContent = result.data.coins;
-                    document.getElementById('atf-balance').textContent = result.data.atf_balance;
-                } else {
-                    showPopup("Failed to sync user data with server.");
-                }
-            } catch (error) {
-                console.error("Initialization error:", error);
-                showPopup("Network error during initialization.");
+        // Fungsi Menampilkan Popup Modal Dinamis
+        function showModal(message) {
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
+
+        // Fungsi Navigasi Tab Sederhana (Contoh Interaktif)
+        function switchTab(tabName) {
+            if(tabName === 'market') {
+                showModal("Market feature will load market endpoints next.");
+            } else if(tabName === 'task') {
+                showModal("Task feature will load executive & special missions next.");
+            } else {
+                showModal(`Switched to ${tabName.toUpperCase()} tab.`);
             }
         }
 
-        window.addEventListener('DOMContentLoaded', initApp);
+        // Interaksi Tombol-Tombol Dummy Frontend (Akan dihubungkan ke backend Vercel)
+        function claimBonus() {
+            userState.coins += 15;
+            document.getElementById('user-coins').innerText = userState.coins;
+            showModal("Successfully claimed +15 Coins bonus!");
+        }
+
+        function plantSeed() {
+            if(userState.seeds < 1) {
+                showModal("Insufficient Crop Seeds! Buy more in Market.");
+                return;
+            }
+            userState.seeds -= 1;
+            userState.isPlanted = true;
+            document.getElementById('res-seeds').innerText = userState.seeds;
+            
+            // Set Timer 5 jam 40 menit dari sekarang (untuk simulasi, kita buat 10 detik atau sesuai waktu asli)
+            document.getElementById('farm-status-view').classList.add('hidden');
+            document.getElementById('farm-active-view').classList.remove('hidden');
+            showModal("Apple seed planted successfully! Timer started (5h 40m).");
+        }
+
+        function useBoost(type) {
+            if(type === 'WATER' && userState.water > 0) {
+                userState.water -= 1;
+                document.getElementById('res-water').innerText = userState.water;
+                showModal("Water applied! Timer reduced by 30 minutes.");
+            } else if(type === 'FERTILIZER' && userState.fert > 0) {
+                userState.fert -= 1;
+                document.getElementById('res-fert').innerText = userState.fert;
+                showModal("Fertilizer applied! Timer reduced by 60 minutes.");
+            } else {
+                showModal(`Not enough ${type.toLowerCase()} supply!`);
+            }
+        }
+
+        function harvestFruit() {
+            userState.fruits += 1;
+            userState.isPlanted = false;
+            document.getElementById('res-fruits').innerText = userState.fruits;
+            document.getElementById('farm-harvest-view').classList.add('hidden');
+            document.getElementById('farm-status-view').classList.remove('hidden');
+            showModal("Successfully harvested 1 Apple Fruit!");
+        }
     </script>
 </body>
 </html>
