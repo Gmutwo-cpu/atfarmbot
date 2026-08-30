@@ -16,7 +16,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: `Insufficient Coins! Plot #${plot_index} costs ${cost.toLocaleString()} Coins.` });
     }
 
-    // Kurangi koin & ubah status plot dari LOCKED menjadi EMPTY
     await supabase.from('users').update({ coins: Number(user.coins) - cost }).eq('id', user_id);
     await supabase.from('user_plots').update({ status: 'EMPTY' }).eq('user_id', user_id).eq('plot_index', plot_index);
 
