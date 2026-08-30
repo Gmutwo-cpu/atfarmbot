@@ -1,47 +1,64 @@
 import { supabase } from '../utils/supabase.js';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+  }
 
   try {
-    const { user_id, plot_index } = req.body;
-    let { data: plot } = await supabase.from('user_plots')
+    const { user_id } = req.body;
+    if (!user_id) {
+      return res.status(400).json({ success: false, message: 'Invalid user ID!' });
+    }
+
+    let { data: farm, error: farmErr } = await supabase
+      .from('farms')
       .select('*')
-      .eq('telegram_id', user_id)
-      .eq('plot_index', plot_index)
+      .eq('user_id', user_id)
       .single();
 
-    if (!plot || !plot.is_planted) {
-      return res.status(400).json({ success: false, message: 'No active plant on this plot!' });
+    if (farmErr || !farm || !farm.is_planted) {
+      return res.status(400).json({ success: false, message: 'No active plant found on your farm!' });
     }
 
-    if (new Date() < new Date(plot.harvest_due_at)) {
-      return res.status(400).json({ success: false, message: 'Crop is not ready to harvest yet!' });
+    // Validasi waktu panen (5 jam 40 menit)
+    let now = new Date();
+    let dueAt = new Date(farm.harvest_due_at);
+    if (now < dueAt) {
+      return res.status(400).json({ success: false, message: 'Apple tree is still growing!' });
     }
 
-    let { data: user } = await supabase.from('users').select('*').eq('telegram_id', user_id).single();
-    
-    // Reward buah berdasarkan jenis tanaman
-    const fruitRewards = { 'APPLE': 1, 'STRAWBERRY': 2, 'COFFEE': 4 };
-    let rewardFruits = fruitRewards[plot.crop_type] || 1;
+    // Update status lahan kembali kosong dan tambah buah
+    let newFruits = Number(farm.fruits || 0) + 1;
+    let { error: updateErr } = await supabase
+      .from('farms')
+      .update({
+        is_planted: false,
+        harvest_due_at: null,
+        fruits: newFruits
+      })
+      .eq('user_id', user_id);
 
-    // Reset status plot
-    await supabase.from('user_plots').update({
-      is_planted: false,
-      harvest_due_at: null
-    }).eq('id', plot.id);
+    if (updateErr) {
+      throw new Error('Failed to update harvest state.');
+    }
 
-    let currentFruits = Number(user.fruits || 0) + rewardFruits;
-    await supabase.from('users').update({ fruits: currentFruits }).eq('telegram_id', user_id);
+    // Catat histori transaksi
+    await supabase.from('transactions').insert([
+      {
+        telegram_id: user_id,
+        type: 'HARVEST',
+        description: 'Successfully harvested 1 Apple fruit.'
+      }
+    ]);
 
-    await supabase.from('transactions').insert([{
-      telegram_id: user_id,
-      type: 'HARVEST',
-      description: `Harvested ${rewardFruits}x fruits from ${plot.crop_type} (Plot ${plot_index}).`
-    }]);
+    return res.status(200).json({
+      success: true,
+      message: 'Harvest successful! +1 Apple added to your storage.',
+      fruits: newFruits
+    });
 
-    return res.status(200).json({ success: true, message: `Harvest successful! Got ${rewardFruits} fruits.` });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Server error: ' + err.message });
+    return res.status(500).json({ success: false, message: 'Server Exception: ' + err.message });
   }
 }
