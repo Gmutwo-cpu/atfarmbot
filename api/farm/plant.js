@@ -1,66 +1,67 @@
 import { supabase } from '../utils/supabase.js';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+  }
 
   try {
-    const { user_id, plot_index, crop_type } = req.body;
-    if (!user_id || plot_index === undefined || !crop_type) {
+    const { user_id } = req.body;
+    if (!user_id) {
       return res.status(400).json({ success: false, message: 'Missing parameters!' });
     }
 
-    // Konfigurasi Durasi & Hasil Berdasarkan Jenis Tanaman
-    const cropConfigs = {
-      'APPLE': { durationMinutes: 340, seedCost: 10 },      // 5 jam 40 min
-      'STRAWBERRY': { durationMinutes: 180, seedCost: 25 }, // 3 jam
-      'COFFEE': { durationMinutes: 600, seedCost: 60 }      // 10 jam
-    };
-
-    const config = cropConfigs[crop_type];
-    if (!config) return res.status(400).json({ success: false, message: 'Invalid crop type!' });
-
-    // Cek data user & koin/benih
-    let { data: user } = await supabase.from('users').select('*').eq('telegram_id', user_id).single();
-    if (!user) return res.status(404).json({ success: false, message: 'User not found!' });
-
-    if (Number(user.coins) < config.seedCost) {
-      return res.status(400).json({ success: false, message: `Insufficient coins! Need ${config.seedCost} Coins.` });
-    }
-
-    // Cek status lahan (plot) tertentu
-    let { data: plot } = await supabase.from('user_plots')
+    // Ambil data farm user
+    let { data: farm, error: farmErr } = await supabase
+      .from('farms')
       .select('*')
-      .eq('telegram_id', user_id)
-      .eq('plot_index', plot_index)
+      .eq('user_id', user_id)
       .single();
 
-    if (plot && plot.is_planted) {
-      return res.status(400).json({ success: false, message: 'This plot is already planted!' });
+    if (farmErr || !farm) {
+      return res.status(404).json({ success: false, message: 'Farm data not found!' });
     }
 
-    let harvestTime = new Date(Date.now() + config.durationMinutes * 60000).toISOString();
+    if (farm.is_planted) {
+      return res.status(400).json({ success: false, message: 'Land is already planted!' });
+    }
 
-    if (plot) {
-      await supabase.from('user_plots').update({
-        crop_type: crop_type,
+    if (farm.seeds <= 0) {
+      return res.status(400).json({ success: false, message: 'You have no seeds left! Please buy seeds in the market.' });
+    }
+
+    // Kurangi jumlah seed dan aktifkan status tanam dengan durasi 5 jam 40 menit
+    let newSeeds = farm.seeds - 1;
+    let harvestDue = new Date(Date.now() + (5 * 60 + 40) * 60000).toISOString();
+
+    let { error: updateErr } = await supabase
+      .from('farms')
+      .update({
+        seeds: newSeeds,
         is_planted: true,
-        harvest_due_at: harvestTime
-      }).eq('id', plot.id);
-    } else {
-      await supabase.from('user_plots').insert([{
+        harvest_due_at: harvestDue
+      })
+      .eq('user_id', user_id);
+
+    if (updateErr) {
+      throw new Error('Failed to plant seed.');
+    }
+
+    // Catat riwayat transaksi
+    await supabase.from('transactions').insert([
+      {
         telegram_id: user_id,
-        plot_index: plot_index,
-        crop_type: crop_type,
-        is_planted: true,
-        harvest_due_at: harvestTime
-      }]);
-    }
+        type: 'PLANT',
+        description: 'Planted an Apple seed.'
+      }
+    ]);
 
-    // Kurangi koin user
-    await supabase.from('users').update({ coins: Number(user.coins) - config.seedCost }).eq('telegram_id', user_id);
+    return res.status(200).json({
+      success: true,
+      message: 'Successfully planted Apple seed! Timer started (5h 40m).'
+    });
 
-    return res.status(200).json({ success: true, message: `Successfully planted ${crop_type}!` });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Server error: ' + err.message });
+    return res.status(500).json({ success: false, message: 'Server Exception: ' + err.message });
   }
 }
