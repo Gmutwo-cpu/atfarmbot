@@ -32,11 +32,11 @@
         <div class="text-right space-y-1">
             <div class="flex items-center justify-end space-x-1.5">
                 <span class="text-[10px] text-gray-400">COINS: <span id="user-coins" class="text-[#00f076] font-bold">50</span></span>
-                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-[#00f076] text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Go to Wallet Deposit">+</button>
+                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-[#00f076] text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Go to Wallet">+</button>
             </div>
             <div class="flex items-center justify-end space-x-1.5">
                 <span class="text-[10px] text-gray-400">ATF: <span id="user-atf" class="text-yellow-400 font-bold">0.0000</span></span>
-                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-yellow-400 text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Go to Wallet Deposit">+</button>
+                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-yellow-400 text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Go to Wallet">+</button>
             </div>
         </div>
     </header>
@@ -136,9 +136,9 @@
                 <button onclick="transactMarket('EXCHANGE_ATF')" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-1.5 rounded-lg text-xs">Exchange</button>
             </div>
 
-            <!-- MARKET TRANSACTION HISTORY -->
+            <!-- MARKET TRANSACTION HISTORY (Diubah menjadi: History) -->
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl mt-6">
-                <h3 class="font-bold text-sm text-[#00f076] mb-3">📜 Activity & Transaction History</h3>
+                <h3 class="font-bold text-sm text-[#00f076] mb-3">📜 History</h3>
                 <div id="history-list" class="space-y-2 text-xs text-gray-300 max-h-48 overflow-y-auto">
                     <p class="text-gray-500 italic">Loading history...</p>
                 </div>
@@ -201,23 +201,34 @@
             </div>
         </div>
 
-        <!-- 5. MENU WALLET (MULTI-TIER DEPOSIT) -->
+        <!-- 5. MENU WALLET (Bahasa familiar & menu penarikan ATF) -->
         <div id="section-wallet" class="space-y-4 hidden">
-            <h2 class="text-lg font-bold text-[#00f076]">💎 Web3 Asset Management</h2>
+            <h2 class="text-lg font-bold text-[#00f076]">💎 My Wallet & Top Up</h2>
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl space-y-3">
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-400">Total Coins:</span>
                     <span id="wallet-coins" class="text-[#00f076] font-bold">50</span>
                 </div>
                 <div class="flex justify-between text-sm">
-                    <span class="text-gray-400">ATF Milestone:</span>
+                    <span class="text-gray-400">ATF Balance:</span>
                     <span id="wallet-atf" class="text-yellow-400 font-bold">0.0000</span>
                 </div>
-                <p class="text-[10px] text-gray-500 italic">Select multi-tier packages below to top-up securely via Telegram Stars (XTR).</p>
+                <p class="text-[10px] text-gray-500 italic">Top up instantly using Telegram Stars to accelerate your farming progress.</p>
             </div>
 
-            <!-- COINS STATIC TIERS -->
-            <h3 class="text-sm font-bold text-[#00f076] mt-4">🪙 Coins Fixed Tiers (Static)</h3>
+            <!-- MENU PENARIKAN TOKEN ATF (WITHDRAWAL) -->
+            <div class="bg-[#131b2e] border border-yellow-500/40 p-4 rounded-xl space-y-3 mt-4">
+                <h3 class="text-sm font-bold text-yellow-400">💸 Withdraw ATF Tokens</h3>
+                <p class="text-[10px] text-gray-400">Rule: Max withdrawal 500 ATF/day. Minimum requirement: 25,000 Coins in balance.</p>
+                
+                <div class="space-y-2">
+                    <input type="number" id="withdraw-amount-input" placeholder="Enter amount to withdraw (Max 500)" class="w-full bg-black/50 border border-gray-700 p-2.5 rounded-lg text-xs text-white focus:outline-none focus:border-yellow-400">
+                    <button onclick="requestAtfWithdrawal()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2.5 rounded-lg text-xs">Withdraw ATF</button>
+                </div>
+            </div>
+
+            <!-- COINS PACKAGES -->
+            <h3 class="text-sm font-bold text-[#00f076] mt-4">🪙 Game Coins Packages</h3>
             <div class="space-y-2">
                 <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
                     <div>
@@ -242,8 +253,8 @@
                 </div>
             </div>
 
-            <!-- ATF DYNAMIC MARKET RATE TIERS -->
-            <h3 class="text-sm font-bold text-yellow-400 mt-4">📈 ATF Market Tiers (Real-Time Dynamic Rate)</h3>
+            <!-- ATF MARKET PACKAGES -->
+            <h3 class="text-sm font-bold text-yellow-400 mt-4">📈 ATF Token Packages (Market Rate)</h3>
             <div class="space-y-2">
                 <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
                     <div>
@@ -375,7 +386,7 @@
                         </div>
                     `).join('');
                 } else {
-                    historyList.innerHTML = `<p class="text-gray-500 italic">No transactions recorded yet.</p>`;
+                    historyList.innerHTML = `<p class="text-gray-500 italic">No history recorded yet.</p>`;
                 }
             } catch (e) {
                 console.error("Failed to load history");
@@ -436,9 +447,35 @@
         }
         function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
 
+        async function requestAtfWithdrawal() {
+            let amountVal = document.getElementById('withdraw-amount-input').value;
+            if (!amountVal || Number(amountVal) <= 0) {
+                showModal("Please enter a valid ATF amount to withdraw.");
+                return;
+            }
+
+            try {
+                showModal("Processing ATF withdrawal request...");
+                let res = await fetch('/api/market/withdraw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userData.id, amount: Number(amountVal) })
+                });
+                let data = await res.json();
+                showModal(data.message);
+                if (data.success) {
+                    document.getElementById('withdraw-amount-input').value = '';
+                    initUserSession();
+                    fetchHistory();
+                }
+            } catch (e) {
+                showModal("Network error while processing withdrawal.");
+            }
+        }
+
         async function handleDeposit(packageType, tierId) {
             try {
-                showModal("Generating secure Telegram Stars invoice for selected tier...");
+                showModal("Generating secure Telegram Stars invoice...");
                 
                 let res = await fetch('/api/payment/create-invoice', {
                     method: 'POST',
@@ -464,8 +501,7 @@
                     showModal("Deposit Error: " + (data.message || "Unknown server error."));
                 }
             } catch (e) {
-                console.error("Deposit network exception:", e);
-                showModal("Network error while processing deposit. Check console/logs.");
+                showModal("Network error while processing deposit.");
             }
         }
 
