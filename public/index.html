@@ -30,15 +30,13 @@
             </div>
         </div>
         <div class="text-right space-y-1">
-            <!-- COINS DENGAN TOMBOL DEPOSIT (+) -->
             <div class="flex items-center justify-end space-x-1.5">
                 <span class="text-[10px] text-gray-400">COINS: <span id="user-coins" class="text-[#00f076] font-bold">50</span></span>
-                <button onclick="handleDeposit('COINS')" class="w-4 h-4 bg-[#00f076] text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Deposit Coins">+</button>
+                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-[#00f076] text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Go to Wallet Deposit">+</button>
             </div>
-            <!-- ATF MILESTONE DENGAN TOMBOL DEPOSIT (+) -->
             <div class="flex items-center justify-end space-x-1.5">
-                <span class="text-[10px] text-gray-400">ATF MILESTONE: <span id="user-atf" class="text-yellow-400 font-bold">0.0000</span></span>
-                <button onclick="handleDeposit('ATF')" class="w-4 h-4 bg-yellow-400 text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Deposit ATF">+</button>
+                <span class="text-[10px] text-gray-400">ATF: <span id="user-atf" class="text-yellow-400 font-bold">0.0000</span></span>
+                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-yellow-400 text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Go to Wallet Deposit">+</button>
             </div>
         </div>
     </header>
@@ -203,7 +201,7 @@
             </div>
         </div>
 
-        <!-- 5. MENU WALLET -->
+        <!-- 5. MENU WALLET (MULTI-TIER DEPOSIT) -->
         <div id="section-wallet" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">💎 Web3 Asset Management</h2>
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl space-y-3">
@@ -212,12 +210,62 @@
                     <span id="wallet-coins" class="text-[#00f076] font-bold">50</span>
                 </div>
                 <div class="flex justify-between text-sm">
-                    <span class="text-gray-400">ATF Milestone (Off-Chain):</span>
+                    <span class="text-gray-400">ATF Milestone:</span>
                     <span id="wallet-atf" class="text-yellow-400 font-bold">0.0000</span>
                 </div>
-                <p class="text-[10px] text-gray-500 italic">Note: ATF is an in-game achievement milestone. External on-chain claims are subject to optional third-party portal terms and user-handled gas fees.</p>
-                <hr class="border-gray-800">
-                <button onclick="showModal('Telegram Stars checkout for comfort pass coming soon!')" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg text-xs">Buy Telegram Stars Pass</button>
+                <p class="text-[10px] text-gray-500 italic">Select multi-tier packages below to top-up securely via Telegram Stars (XTR).</p>
+            </div>
+
+            <!-- COINS STATIC TIERS -->
+            <h3 class="text-sm font-bold text-[#00f076] mt-4">🪙 Coins Fixed Tiers (Static)</h3>
+            <div class="space-y-2">
+                <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-xs">Starter Coins (100 Coins)</p>
+                        <p class="text-[10px] text-gray-400">Price: 30 Telegram Stars</p>
+                    </div>
+                    <button onclick="handleDeposit('COINS', 'starter')" class="bg-[#00f076] text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy 30 ⭐</button>
+                </div>
+                <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-xs">Farmer Pro (500 Coins + Bonus)</p>
+                        <p class="text-[10px] text-gray-400">Price: 120 Telegram Stars</p>
+                    </div>
+                    <button onclick="handleDeposit('COINS', 'popular')" class="bg-[#00f076] text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy 120 ⭐</button>
+                </div>
+                <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-xs">Agro Empire (2,500 Coins)</p>
+                        <p class="text-[10px] text-gray-400">Price: 500 Telegram Stars</p>
+                    </div>
+                    <button onclick="handleDeposit('COINS', 'whale')" class="bg-[#00f076] text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy 500 ⭐</button>
+                </div>
+            </div>
+
+            <!-- ATF DYNAMIC MARKET RATE TIERS -->
+            <h3 class="text-sm font-bold text-yellow-400 mt-4">📈 ATF Market Tiers (Real-Time Dynamic Rate)</h3>
+            <div class="space-y-2">
+                <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-xs">1.0000 ATF Milestone</p>
+                        <p class="text-[10px] text-gray-400">Dynamic Market Rate (~150 ⭐)</p>
+                    </div>
+                    <button onclick="handleDeposit('ATF', 'tier_1')" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy ATF</button>
+                </div>
+                <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-xs">5.0000 ATF Milestone</p>
+                        <p class="text-[10px] text-gray-400">Dynamic Market Rate (~750 ⭐)</p>
+                    </div>
+                    <button onclick="handleDeposit('ATF', 'tier_5')" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy ATF</button>
+                </div>
+                <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-xs">20.0000 ATF Milestone (Whale)</p>
+                        <p class="text-[10px] text-gray-400">Dynamic Market Rate (~3,000 ⭐)</p>
+                    </div>
+                    <button onclick="handleDeposit('ATF', 'tier_20')" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy ATF</button>
+                </div>
             </div>
         </div>
 
@@ -388,14 +436,14 @@
         }
         function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
 
-        async function handleDeposit(packageType) {
+        async function handleDeposit(packageType, tierId) {
             try {
-                showModal("Generating secure Telegram Stars invoice...");
+                showModal("Generating secure Telegram Stars invoice for selected tier...");
                 
                 let res = await fetch('/api/payment/create-invoice', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id, package_type: packageType })
+                    body: JSON.stringify({ user_id: userData.id, package_type: packageType, tier_id: tierId })
                 });
                 
                 let data = await res.json();
