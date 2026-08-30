@@ -24,7 +24,6 @@
         <div class="flex items-center space-x-3">
             <img id="user-avatar" src="https://via.placeholder.com/48" alt="Avatar" class="w-12 h-12 rounded-full border-2 border-[#00f076] object-cover">
             <div>
-                <!-- Ukuran nama profil disesuaikan menjadi text-xs seukuran ID -->
                 <h2 id="user-name" class="font-bold text-xs text-white">Farmer</h2>
                 <p id="user-username" class="text-[10px] text-gray-400">@username</p>
                 <p id="user-id" class="text-[10px] text-gray-500">ID: --</p>
@@ -401,7 +400,7 @@
                 
                 let data = await res.json();
                 
-                if (data.success && data.invoice_link) {
+                if (res.ok && data.success && data.invoice_link) {
                     closeModal();
                     tg.openInvoice(data.invoice_link, async (status) => {
                         if (status === 'paid') {
@@ -414,10 +413,11 @@
                         }
                     });
                 } else {
-                    showModal("Error: " + (data.message || "Failed to create invoice."));
+                    showModal("Deposit Error: " + (data.message || "Unknown server error."));
                 }
             } catch (e) {
-                showModal("Network error while processing deposit.");
+                console.error("Deposit network exception:", e);
+                showModal("Network error while processing deposit. Check console/logs.");
             }
         }
 
