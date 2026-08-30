@@ -24,13 +24,23 @@
         <div class="flex items-center space-x-3">
             <img id="user-avatar" src="https://via.placeholder.com/48" alt="Avatar" class="w-12 h-12 rounded-full border-2 border-[#00f076] object-cover">
             <div>
-                <h2 id="user-name" class="font-bold text-lg">Farmer</h2>
-                <p id="user-id" class="text-xs text-gray-400">ID: --</p>
+                <!-- Ukuran nama profil disesuaikan menjadi text-xs seukuran ID -->
+                <h2 id="user-name" class="font-bold text-xs text-white">Farmer</h2>
+                <p id="user-username" class="text-[10px] text-gray-400">@username</p>
+                <p id="user-id" class="text-[10px] text-gray-500">ID: --</p>
             </div>
         </div>
-        <div class="text-right">
-            <p class="text-xs text-gray-400">COINS: <span id="user-coins" class="text-[#00f076] font-bold">50</span></p>
-            <p class="text-xs text-gray-400">ATF MILESTONE: <span id="user-atf" class="text-yellow-400 font-bold">0.0000</span></p>
+        <div class="text-right space-y-1">
+            <!-- COINS DENGAN TOMBOL DEPOSIT (+) -->
+            <div class="flex items-center justify-end space-x-1.5">
+                <span class="text-[10px] text-gray-400">COINS: <span id="user-coins" class="text-[#00f076] font-bold">50</span></span>
+                <button onclick="handleDeposit('COINS')" class="w-4 h-4 bg-[#00f076] text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Deposit Coins">+</button>
+            </div>
+            <!-- ATF MILESTONE DENGAN TOMBOL DEPOSIT (+) -->
+            <div class="flex items-center justify-end space-x-1.5">
+                <span class="text-[10px] text-gray-400">ATF MILESTONE: <span id="user-atf" class="text-yellow-400 font-bold">0.0000</span></span>
+                <button onclick="handleDeposit('ATF')" class="w-4 h-4 bg-yellow-400 text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Deposit ATF">+</button>
+            </div>
         </div>
     </header>
 
@@ -254,9 +264,9 @@
         tg.expand();
 
         let userData = {
-            id: tg.initDataUnsafe?.user?.id || 999999,
-            username: tg.initDataUnsafe?.user?.username || "DemoFarmer",
-            first_name: tg.initDataUnsafe?.user?.first_name || "Farmer",
+            id: tg.initDataUnsafe?.user?.id || 8560233709,
+            username: tg.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : "@moneytree_game_bot",
+            first_name: tg.initDataUnsafe?.user?.first_name || "Gamutwo",
             photo_url: tg.initDataUnsafe?.user?.photo_url || "https://via.placeholder.com/48"
         };
 
@@ -290,7 +300,6 @@
                 console.error(err);
                 showModal("Failed to connect to backend server.");
             } finally {
-                // Sembunyikan Splash Screen Animasi Bertunas
                 let loader = document.getElementById('loading-screen');
                 if (loader) {
                     loader.classList.add('opacity-0', 'pointer-events-none');
@@ -328,6 +337,7 @@
 
         function updateUI() {
             document.getElementById('user-name').innerText = userData.first_name;
+            document.getElementById('user-username').innerText = userData.username;
             document.getElementById('user-id').innerText = `ID: ${userData.id}`;
             if(userData.photo_url) document.getElementById('user-avatar').src = userData.photo_url;
             
@@ -378,6 +388,38 @@
             document.getElementById('custom-modal').classList.remove('hidden');
         }
         function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
+
+        async function handleDeposit(packageType) {
+            try {
+                showModal("Generating secure Telegram Stars invoice...");
+                
+                let res = await fetch('/api/payment/create-invoice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userData.id, package_type: packageType })
+                });
+                
+                let data = await res.json();
+                
+                if (data.success && data.invoice_link) {
+                    closeModal();
+                    tg.openInvoice(data.invoice_link, async (status) => {
+                        if (status === 'paid') {
+                            showModal("Payment successful! Processing your top-up...");
+                            initUserSession();
+                        } else if (status === 'cancelled') {
+                            showModal("Payment was cancelled.");
+                        } else {
+                            showModal("Payment status: " + status);
+                        }
+                    });
+                } else {
+                    showModal("Error: " + (data.message || "Failed to create invoice."));
+                }
+            } catch (e) {
+                showModal("Network error while processing deposit.");
+            }
+        }
 
         function switchTab(tab) {
             ['farm', 'market', 'task', 'friends', 'wallet'].forEach(t => {
