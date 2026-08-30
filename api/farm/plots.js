@@ -11,7 +11,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Missing user_id!' });
     }
 
-    // Ambil data plot dari tabel user_plots
     let { data: plots, error } = await supabase
       .from('user_plots')
       .select('*')
@@ -20,7 +19,6 @@ export default async function handler(req, res) {
 
     if (error) throw error;
 
-    // Jika user belum memiliki data plot sama sekali, inisialisasi default 4 plot (Plot 1 aktif, 2-3-4 terkunci)
     if (!plots || plots.length === 0) {
       const defaultPlots = [
         { user_id, plot_index: 1, status: 'EMPTY', crop_type: 'APPLE' },
