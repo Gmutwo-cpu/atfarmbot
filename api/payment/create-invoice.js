@@ -1,6 +1,7 @@
 import { supabase } from '../../utils/supabase.js';
 
 export default async function handler(req, res) {
+  // Izinkan metode POST
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
@@ -8,12 +9,12 @@ export default async function handler(req, res) {
   try {
     const { user_id, package_type } = req.body;
     if (!user_id || !package_type) {
-      return res.status(400).json({ success: false, message: 'Missing parameters!' });
+      return res.status(400).json({ success: false, message: 'Missing user_id or package_type parameters!' });
     }
 
     const BOT_TOKEN = process.env.BOT_TOKEN;
     if (!BOT_TOKEN) {
-      return res.status(500).json({ success: false, message: 'Bot Token not configured on server environment!' });
+      return res.status(500).json({ success: false, message: 'Server configuration error: BOT_TOKEN is missing!' });
     }
 
     let title = '';
@@ -32,7 +33,7 @@ export default async function handler(req, res) {
       amountInStars = 150; // 150 Telegram Stars
       payloadData = `TOPUP_ATF_${user_id}_${Date.now()}`;
     } else {
-      return res.status(400).json({ success: false, message: 'Invalid package type!' });
+      return res.status(400).json({ success: false, message: 'Invalid package type selected!' });
     }
 
     const telegramUrl = `https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`;
@@ -56,7 +57,10 @@ export default async function handler(req, res) {
     const tgResult = await tgResponse.json();
 
     if (!tgResult.ok) {
-      throw new Error(tgResult.description || 'Failed to create Telegram invoice link.');
+      return res.status(400).json({ 
+        success: false, 
+        message: `Telegram API Error: ${tgResult.description || 'Failed to generate invoice link'}` 
+      });
     }
 
     return res.status(200).json({
@@ -65,6 +69,6 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Server Error: ' + err.message });
+    return res.status(500).json({ success: false, message: 'Server Exception: ' + err.message });
   }
 }
