@@ -108,6 +108,27 @@
         </div>
     </div>
 
+    <div id="crop-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#131b2e] border border-yellow-400 rounded-xl w-full max-w-xs p-4 relative text-center space-y-3">
+            <h3 class="text-sm font-bold text-yellow-400">🌱 Select Crop to Plant</h3>
+            <p class="text-[11px] text-gray-400">Choose your preferred seed for Plot <span id="selected-plot-num">1</span>:</p>
+            
+            <div class="space-y-2">
+                <button onclick="confirmPlant('APPLE')" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded text-xs flex justify-between px-3 items-center">
+                    <span>🍎 Apple</span><span class="text-[10px] bg-black/30 px-2 py-0.5 rounded">10 Coins (5h 40m)</span>
+                </button>
+                <button onclick="confirmPlant('STRAWBERRY')" class="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 rounded text-xs flex justify-between px-3 items-center">
+                    <span>🍓 Strawberry</span><span class="text-[10px] bg-black/30 px-2 py-0.5 rounded">25 Coins (3h)</span>
+                </button>
+                <button onclick="confirmPlant('COFFEE')" class="w-full bg-amber-700 hover:bg-amber-600 text-white font-bold py-2 rounded text-xs flex justify-between px-3 items-center">
+                    <span>☕ Coffee</span><span class="text-[10px] bg-black/30 px-2 py-0.5 rounded">60 Coins (10h)</span>
+                </button>
+            </div>
+
+            <button onclick="closeCropModal()" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 rounded text-xs mt-2">Cancel</button>
+        </div>
+    </div>
+
     <nav class="fixed bottom-0 left-0 right-0 bg-[#131b2e] border-t border-gray-800 flex justify-around py-2 z-40">
         <button onclick="switchTab('farm')" id="nav-farm" class="flex flex-col items-center text-[#00f076] font-bold"><span class="text-lg">🌾</span><span class="text-[9px]">FARM</span></button>
         <button onclick="switchTab('market')" id="nav-market" class="flex flex-col items-center text-gray-400"><span class="text-lg">📈</span><span class="text-[9px]">MARKET</span></button>
@@ -125,6 +146,8 @@
             username: tg.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : "@atfarm_bot"
         };
 
+        let activePlotIndex = 1;
+
         function switchTab(tab) {
             ['farm', 'market', 'task', 'friends', 'wallet'].forEach(t => {
                 document.getElementById(`section-${t}`).classList.add('hidden');
@@ -139,6 +162,13 @@
             document.getElementById('custom-modal').classList.remove('hidden');
         }
         function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
+
+        function openCropModal(plotIndex) {
+            activePlotIndex = plotIndex;
+            document.getElementById('selected-plot-num').innerText = plotIndex;
+            document.getElementById('crop-modal').classList.remove('hidden');
+        }
+        function closeCropModal() { document.getElementById('crop-modal').classList.add('hidden'); }
 
         function hideLoader() {
             let loader = document.getElementById('loading-screen');
@@ -156,7 +186,7 @@
                     <div class="bg-[#131b2e] border border-gray-800 p-2.5 rounded-xl text-center space-y-1">
                         <p class="text-[10px] font-bold text-gray-400">Plot #${i}</p>
                         <div id="plot-box-${i}" class="text-xs">
-                            <button onclick="plantModal(${i})" class="bg-[#00f076] text-black font-bold px-2 py-1 rounded text-[10px]">Plant Seed</button>
+                            <button onclick="openCropModal(${i})" class="bg-[#00f076] text-black font-bold px-2 py-1 rounded text-[10px]">Plant Seed</button>
                         </div>
                     </div>
                 `;
@@ -180,27 +210,20 @@
                     document.getElementById('user-name').innerText = userData.first_name;
                     document.getElementById('user-id').innerText = `ID: ${userData.id}`;
                     document.getElementById('ref-link').value = `https://t.me/ATFarmBot?start=ref_${userData.id}`;
-                } else {
-                    console.warn("Init warning:", data.error || data.message);
                 }
             } catch (err) {
                 console.error("Connection error during init:", err);
             } finally {
-                // Selalu pastikan loader tertutup meskipun terjadi error jaringan / exception
                 hideLoader();
             }
         }
 
-        function plantModal(plotIndex) {
-            let crop = prompt("Choose crop type (APPLE, STRAWBERRY, COFFEE):", "APPLE");
-            if(crop) plantSeed(plotIndex, crop.toUpperCase());
-        }
-
-        async function plantSeed(plotIndex, cropType) {
+        async function confirmPlant(cropType) {
+            closeCropModal();
             try {
                 let res = await fetch('/api/farm/plant', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id, plot_index: plotIndex, crop_type: cropType })
+                    body: JSON.stringify({ user_id: userData.id, plot_index: activePlotIndex, crop_type: cropType })
                 });
                 let data = await res.json();
                 showModal(data.message);
