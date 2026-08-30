@@ -1,67 +1,66 @@
-import { supabase } from '../utils/supabase.js';
+import { supabase } from '../../utils/supabase.js';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method Not Allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method Not Allowed' });
 
   try {
-    const { user_id } = req.body;
-    if (!user_id) {
+    const { user_id, plot_index, crop_type } = req.body;
+    if (!user_id || plot_index === undefined || !crop_type) {
       return res.status(400).json({ success: false, message: 'Missing parameters!' });
     }
 
-    // Ambil data farm user
-    let { data: farm, error: farmErr } = await supabase
-      .from('farms')
+    // Konfigurasi Bibit: Durasi & Harga Koin
+    const cropConfigs = {
+      'APPLE': { durationMinutes: 340, cost: 10, rewardFruits: 1 },      // 5 jam 40 min
+      'STRAWBERRY': { durationMinutes: 120, cost: 25, rewardFruits: 2 }, // 2 jam
+      'ORANGE': { durationMinutes: 600, cost: 60, rewardFruits: 5 }      // 10 jam
+    };
+
+    const config = cropConfigs[crop_type];
+    if (!config) return res.status(400).json({ success: false, message: 'Invalid crop type selected!' });
+
+    // Cek saldo user
+    let { data: user, error: userErr } = await supabase.from('users').select('*').eq('id', user_id).single();
+    if (userErr || !user) return res.status(404).json({ success: false, message: 'User not found!' });
+
+    if (Number(user.coins) < config.cost) {
+      return res.status(400).json({ success: false, message: `Insufficient Coins! Need ${config.cost} Coins for ${crop_type}.` });
+    }
+
+    // Cek status plot lahan user
+    let { data: plot } = await supabase.from('user_plots')
       .select('*')
       .eq('user_id', user_id)
+      .eq('plot_index', plot_index)
       .single();
 
-    if (farmErr || !farm) {
-      return res.status(404).json({ success: false, message: 'Farm data not found!' });
+    if (!plot || plot.status === 'LOCKED') {
+      return res.status(400).json({ success: false, message: 'This plot is locked! Unlock it first.' });
+    }
+    if (plot.status === 'PLANTED') {
+      return res.status(400).json({ success: false, message: 'This plot already has an active crop growing!' });
     }
 
-    if (farm.is_planted) {
-      return res.status(400).json({ success: false, message: 'Land is already planted!' });
-    }
+    let harvestTime = new Date(Date.now() + config.durationMinutes * 60000).toISOString();
 
-    if (farm.seeds <= 0) {
-      return res.status(400).json({ success: false, message: 'You have no seeds left! Please buy seeds in the market.' });
-    }
+    // Potong koin user & update status plot
+    await supabase.from('users').update({ coins: Number(user.coins) - config.cost }).eq('id', user_id);
+    await supabase.from('user_plots').update({
+      status: 'PLANTED',
+      crop_type: crop_type,
+      harvest_due_at: harvestTime
+    }).eq('id', plot.id);
 
-    // Kurangi jumlah seed dan aktifkan status tanam dengan durasi 5 jam 40 menit
-    let newSeeds = farm.seeds - 1;
-    let harvestDue = new Date(Date.now() + (5 * 60 + 40) * 60000).toISOString();
+    await supabase.from('transactions').insert([{
+      user_id,
+      type: 'PLANT_CROP',
+      amount: config.cost,
+      currency_type: 'COINS',
+      description: `Planted ${crop_type} on Plot #${plot_index} for ${config.cost} Coins.`
+    }]);
 
-    let { error: updateErr } = await supabase
-      .from('farms')
-      .update({
-        seeds: newSeeds,
-        is_planted: true,
-        harvest_due_at: harvestDue
-      })
-      .eq('user_id', user_id);
-
-    if (updateErr) {
-      throw new Error('Failed to plant seed.');
-    }
-
-    // Catat riwayat transaksi
-    await supabase.from('transactions').insert([
-      {
-        telegram_id: user_id,
-        type: 'PLANT',
-        description: 'Planted an Apple seed.'
-      }
-    ]);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Successfully planted Apple seed! Timer started (5h 40m).'
-    });
-
+    return res.status(200).json({ success: true, message: `Successfully planted ${crop_type}!` });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Server Exception: ' + err.message });
+    return res.status(500).json({ success: false, message: 'Server error: ' + err.message });
   }
 }
