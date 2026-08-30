@@ -6,20 +6,16 @@
     <title>ATFarm - Fruits Farming AI Trading Forex</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body { background-color: #0b0f19; color: #ffffff; font-family: sans-serif; }
-    </style>
+    <style>body { background-color: #0b0f19; color: #ffffff; font-family: sans-serif; }</style>
 </head>
 <body class="min-h-screen pb-24 flex flex-col justify-between">
 
-    <!-- SPLASH SCREEN / LOADING ANIMATION -->
     <div id="loading-screen" class="fixed inset-0 bg-[#0b0f19] flex flex-col items-center justify-center z-50 transition-opacity duration-500">
         <div class="text-5xl animate-bounce mb-4">🌱</div>
         <h2 class="text-[#00f076] font-bold text-xl mb-1">ATFarm</h2>
         <p class="text-xs text-gray-400 animate-pulse">Initializing your agricultural hub...</p>
     </div>
 
-    <!-- HEADER PROFIL USER -->
     <header class="p-4 flex items-center justify-between bg-[#131b2e] border-b border-gray-800">
         <div class="flex items-center space-x-3">
             <img id="user-avatar" src="https://via.placeholder.com/48" alt="Avatar" class="w-12 h-12 rounded-full border-2 border-[#00f076] object-cover">
@@ -32,23 +28,20 @@
         <div class="text-right space-y-1">
             <div class="flex items-center justify-end space-x-1.5">
                 <span class="text-[10px] text-gray-400">COINS: <span id="user-coins" class="text-[#00f076] font-bold">50</span></span>
-                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-[#00f076] text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Go to Wallet">+</button>
+                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-[#00f076] text-black font-extrabold rounded-full flex items-center justify-center text-[10px]">+</button>
             </div>
             <div class="flex items-center justify-end space-x-1.5">
                 <span class="text-[10px] text-gray-400">ATF: <span id="user-atf" class="text-yellow-400 font-bold">0.0000</span></span>
-                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-yellow-400 text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform" title="Go to Wallet">+</button>
+                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-yellow-400 text-black font-extrabold rounded-full flex items-center justify-center text-[10px]">+</button>
             </div>
         </div>
     </header>
 
-    <!-- KONTEN UTAMA -->
     <main class="p-4 flex-1">
         
-        <!-- 1. MENU FARM -->
         <div id="section-farm" class="space-y-4">
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-4">
-                <p class="text-sm font-semibold mb-2">📢 System Notice:</p>
-                <button id="btn-claim-bonus" onclick="completeTask('claim_bonus')" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-sm">Claim Daily Bonus (+15 Coins)</button>
+                <button onclick="completeTask('claim_bonus')" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-sm">Claim Daily Bonus (+15 Coins)</button>
             </div>
 
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-3 flex justify-around text-xs">
@@ -86,57 +79,25 @@
 
                 <div id="farm-harvest-view" class="hidden w-full mt-4">
                     <p class="text-[#00f076] font-bold mb-2">Apple Tree is Ready to Harvest!</p>
-                    <button onclick="harvestFruit()" class="bg-[#00f076] text-black font-bold w-full py-2.5 rounded-xl">Harvest Fruit (Max 5/day)</button>
+                    <button onclick="harvestFruit()" class="bg-[#00f076] text-black font-bold w-full py-2.5 rounded-xl">Harvest Fruit</button>
                 </div>
             </div>
         </div>
 
-        <!-- 2. MENU MARKET -->
         <div id="section-market" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">Sustainable Agro Market</h2>
-            <p class="text-xs text-gray-400 mb-4">Closed-loop economy: Buy supplies, harvest, and trade securely.</p>
-            
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">Crop Seed</h3>
-                    <p class="text-xs text-gray-400">Price: 10 Coins</p>
-                </div>
+                <div><h3 class="font-bold text-sm">Crop Seed</h3><p class="text-xs text-gray-400">Price: 10 Coins</p></div>
                 <button onclick="buyItem('SEED')" class="bg-[#00f076] text-black font-bold px-4 py-1.5 rounded-lg text-xs">Buy 1x</button>
             </div>
-
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">Water Supply</h3>
-                    <p class="text-xs text-gray-400">Price: 20 Coins (-30m timer)</p>
-                </div>
-                <button onclick="buyItem('WATER')" class="bg-[#00f076] text-black font-bold px-4 py-1.5 rounded-lg text-xs">Buy 1x</button>
+                <div><h3 class="font-bold text-sm">Sell Harvested Fruits</h3><p class="text-xs text-gray-400">Reward: 45 Coins / Fruit</p></div>
+                <button onclick="transactMarket('SELL_FRUITS')" class="bg-red-600 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Sell All</button>
             </div>
-
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">Fertilizer</h3>
-                    <p class="text-xs text-gray-400">Price: 50 Coins (-60m timer)</p>
-                </div>
-                <button onclick="buyItem('FERTILIZER')" class="bg-[#00f076] text-black font-bold px-4 py-1.5 rounded-lg text-xs">Buy 1x</button>
+                <div><h3 class="font-bold text-sm">Exchange to ATF</h3><p class="text-xs text-gray-400">500 Coins = 1 ATF</p></div>
+                <button onclick="transactMarket('EXCHANGE_ATF')" class="bg-yellow-500 text-black font-bold px-4 py-1.5 rounded-lg text-xs">Exchange</button>
             </div>
-
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">Sell Harvested Fruits</h3>
-                    <p class="text-xs text-gray-400">Reward: 45 Coins / Fruit</p>
-                </div>
-                <button onclick="transactMarket('SELL_FRUITS')" class="bg-red-600 hover:bg-red-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Sell All</button>
-            </div>
-
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">Exchange to ATF Milestone</h3>
-                    <p class="text-xs text-gray-400">Rate: 500 Coins = 1.0000 ATF (Daily Pool Cap)</p>
-                </div>
-                <button onclick="transactMarket('EXCHANGE_ATF')" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-1.5 rounded-lg text-xs">Exchange</button>
-            </div>
-
-            <!-- MARKET TRANSACTION HISTORY (Diubah menjadi: History) -->
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl mt-6">
                 <h3 class="font-bold text-sm text-[#00f076] mb-3">📜 History</h3>
                 <div id="history-list" class="space-y-2 text-xs text-gray-300 max-h-48 overflow-y-auto">
@@ -145,251 +106,102 @@
             </div>
         </div>
 
-        <!-- 3. MENU TASK -->
         <div id="section-task" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">⭐ Executive Missions</h2>
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">Watch Sponsor Ads</h3>
-                    <p class="text-xs text-gray-400">Support server costs (Max 3 times/day)</p>
-                </div>
-                <button id="btn-watch-ads" onclick="completeTask('watch_ads')" class="bg-[#00f076] text-black font-bold px-4 py-1.5 rounded-lg text-xs">Watch (3/3)</button>
-            </div>
-
-            <h2 class="text-lg font-bold text-[#00f076] mt-4">⭐ Special Missions</h2>
-            
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">1. Telegram Story Share</h3>
-                    <p class="text-xs text-gray-400">Share bot mini app (Reward: +15 Coins)</p>
-                </div>
-                <button onclick="completeTask('story_share')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Verify</button>
-            </div>
-
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">2. Username Prefix Badge</h3>
-                    <p class="text-xs text-gray-400">Attach @ATFarmBot (Reward: +30 Coins)</p>
-                </div>
-                <button onclick="completeTask('username_badge')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Verify</button>
-            </div>
-
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">3. Bio Referral Link</h3>
-                    <p class="text-xs text-gray-400">Put link in bio (Reward: +50 Coins)</p>
-                </div>
-                <button onclick="completeTask('bio_link')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Verify</button>
-            </div>
-
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">4. Email Account Binding</h3>
-                    <p class="text-xs text-gray-400">Secure data (Reward: +20 Coins)</p>
-                </div>
-                <button onclick="completeTask('bind_email')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Bind</button>
+                <div><h3 class="font-bold text-sm">Watch Sponsor Ads</h3><p class="text-xs text-gray-400">Max 3 times/day</p></div>
+                <button onclick="completeTask('watch_ads')" class="bg-[#00f076] text-black font-bold px-4 py-1.5 rounded-lg text-xs">Watch</button>
             </div>
         </div>
 
-        <!-- 4. MENU FRIENDS -->
         <div id="section-friends" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">👥 Referral System</h2>
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl text-center space-y-3">
-                <p class="text-xs text-gray-400">Invite friends and grow the community together!</p>
-                <input type="text" id="ref-link" readonly class="w-full bg-black/40 border border-gray-700 p-2 rounded-lg text-xs text-center text-[#00f076]" value="https://t.me/ATFarmBot?start=ref_999999">
+                <input type="text" id="ref-link" readonly class="w-full bg-black/40 border border-gray-700 p-2 rounded-lg text-xs text-center text-[#00f076]" value="...">
                 <button onclick="copyRefLink()" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-xs">Copy Invite Link</button>
             </div>
         </div>
 
-        <!-- 5. MENU WALLET (Bahasa familiar & menu penarikan ATF) -->
         <div id="section-wallet" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">💎 My Wallet & Top Up</h2>
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl space-y-3">
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-400">Total Coins:</span>
-                    <span id="wallet-coins" class="text-[#00f076] font-bold">50</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-400">ATF Balance:</span>
-                    <span id="wallet-atf" class="text-yellow-400 font-bold">0.0000</span>
-                </div>
-                <p class="text-[10px] text-gray-500 italic">Top up instantly using Telegram Stars to accelerate your farming progress.</p>
-            </div>
-
-            <!-- MENU PENARIKAN TOKEN ATF (WITHDRAWAL) -->
             <div class="bg-[#131b2e] border border-yellow-500/40 p-4 rounded-xl space-y-3 mt-4">
                 <h3 class="text-sm font-bold text-yellow-400">💸 Withdraw ATF Tokens</h3>
-                <p class="text-[10px] text-gray-400">Rule: Max withdrawal 500 ATF/day. Minimum requirement: 25,000 Coins in balance.</p>
-                
-                <div class="space-y-2">
-                    <input type="number" id="withdraw-amount-input" placeholder="Enter amount to withdraw (Max 500)" class="w-full bg-black/50 border border-gray-700 p-2.5 rounded-lg text-xs text-white focus:outline-none focus:border-yellow-400">
-                    <button onclick="requestAtfWithdrawal()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2.5 rounded-lg text-xs">Withdraw ATF</button>
-                </div>
+                <input type="number" id="withdraw-amount-input" placeholder="Enter amount to withdraw (Max 500)" class="w-full bg-black/50 border border-gray-700 p-2.5 rounded-lg text-xs text-white">
+                <button onclick="requestAtfWithdrawal()" class="w-full bg-yellow-500 text-black font-bold py-2.5 rounded-lg text-xs">Withdraw ATF</button>
             </div>
-
-            <!-- COINS PACKAGES -->
-            <h3 class="text-sm font-bold text-[#00f076] mt-4">🪙 Game Coins Packages</h3>
-            <div class="space-y-2">
+            <div class="space-y-2 mt-4">
                 <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
-                    <div>
-                        <p class="font-bold text-xs">Starter Coins (100 Coins)</p>
-                        <p class="text-[10px] text-gray-400">Price: 30 Telegram Stars</p>
-                    </div>
+                    <div><p class="font-bold text-xs">Starter Coins (100 Coins)</p></div>
                     <button onclick="handleDeposit('COINS', 'starter')" class="bg-[#00f076] text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy 30 ⭐</button>
-                </div>
-                <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
-                    <div>
-                        <p class="font-bold text-xs">Farmer Pro (500 Coins + Bonus)</p>
-                        <p class="text-[10px] text-gray-400">Price: 120 Telegram Stars</p>
-                    </div>
-                    <button onclick="handleDeposit('COINS', 'popular')" class="bg-[#00f076] text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy 120 ⭐</button>
-                </div>
-                <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
-                    <div>
-                        <p class="font-bold text-xs">Agro Empire (2,500 Coins)</p>
-                        <p class="text-[10px] text-gray-400">Price: 500 Telegram Stars</p>
-                    </div>
-                    <button onclick="handleDeposit('COINS', 'whale')" class="bg-[#00f076] text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy 500 ⭐</button>
-                </div>
-            </div>
-
-            <!-- ATF MARKET PACKAGES -->
-            <h3 class="text-sm font-bold text-yellow-400 mt-4">📈 ATF Token Packages (Market Rate)</h3>
-            <div class="space-y-2">
-                <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
-                    <div>
-                        <p class="font-bold text-xs">1.0000 ATF Milestone</p>
-                        <p class="text-[10px] text-gray-400">Dynamic Market Rate (~150 ⭐)</p>
-                    </div>
-                    <button onclick="handleDeposit('ATF', 'tier_1')" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy ATF</button>
-                </div>
-                <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
-                    <div>
-                        <p class="font-bold text-xs">5.0000 ATF Milestone</p>
-                        <p class="text-[10px] text-gray-400">Dynamic Market Rate (~750 ⭐)</p>
-                    </div>
-                    <button onclick="handleDeposit('ATF', 'tier_5')" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy ATF</button>
-                </div>
-                <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex justify-between items-center">
-                    <div>
-                        <p class="font-bold text-xs">20.0000 ATF Milestone (Whale)</p>
-                        <p class="text-[10px] text-gray-400">Dynamic Market Rate (~3,000 ⭐)</p>
-                    </div>
-                    <button onclick="handleDeposit('ATF', 'tier_20')" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-3 py-1.5 rounded-lg text-xs">Buy ATF</button>
                 </div>
             </div>
         </div>
 
     </main>
 
-    <!-- CUSTOM POPUP MODAL -->
     <div id="custom-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-[#131b2e] border border-[#00f076] rounded-2xl w-full max-w-sm p-5 relative shadow-xl">
-            <button onclick="closeModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white font-bold text-lg">✕</button>
-            <h3 class="text-[#00f076] font-bold text-center text-lg mb-2">Notice</h3>
-            <p id="modal-message" class="text-sm text-center text-gray-200 mb-6">Message goes here</p>
+        <div class="bg-[#131b2e] border border-[#00f076] rounded-2xl w-full max-w-sm p-5 relative text-center">
+            <p id="modal-message" class="text-sm text-gray-200 mb-6">Message</p>
             <button onclick="closeModal()" class="w-full bg-[#00f076] text-black font-bold py-2.5 rounded-xl">OK</button>
         </div>
     </div>
 
-    <!-- NAVIGASI BAWAH -->
     <nav class="fixed bottom-0 left-0 right-0 bg-[#131b2e] border-t border-gray-800 flex justify-around py-2 z-40">
-        <button id="nav-farm" onclick="switchTab('farm')" class="flex flex-col items-center text-[#00f076] font-bold">
-            <span class="text-xl mb-0.5">🌾</span>
-            <span class="text-[10px]">FARM</span>
-        </button>
-        <button id="nav-market" onclick="switchTab('market')" class="flex flex-col items-center text-gray-400">
-            <span class="text-xl mb-0.5">📈</span>
-            <span class="text-[10px]">MARKET</span>
-        </button>
-        <button id="nav-task" onclick="switchTab('task')" class="flex flex-col items-center text-gray-400">
-            <span class="text-xl mb-0.5">📋</span>
-            <span class="text-[10px]">TASK</span>
-        </button>
-        <button id="nav-friends" onclick="switchTab('friends')" class="flex flex-col items-center text-gray-400">
-            <span class="text-xl mb-0.5">👥</span>
-            <span class="text-[10px]">FRIENDS</span>
-        </button>
-        <button id="nav-wallet" onclick="switchTab('wallet')" class="flex flex-col items-center text-gray-400">
-            <span class="text-xl mb-0.5">💎</span>
-            <span class="text-[10px]">WALLET</span>
-        </button>
+        <button id="nav-farm" onclick="switchTab('farm')" class="flex flex-col items-center text-[#00f076] font-bold"><span class="text-xl">🌾</span><span class="text-[10px]">FARM</span></button>
+        <button id="nav-market" onclick="switchTab('market')" class="flex flex-col items-center text-gray-400"><span class="text-xl">📈</span><span class="text-[10px]">MARKET</span></button>
+        <button id="nav-task" onclick="switchTab('task')" class="flex flex-col items-center text-gray-400"><span class="text-xl">📋</span><span class="text-[10px]">TASK</span></button>
+        <button id="nav-friends" onclick="switchTab('friends')" class="flex flex-col items-center text-gray-400"><span class="text-xl">👥</span><span class="text-[10px]">FRIENDS</span></button>
+        <button id="nav-wallet" onclick="switchTab('wallet')" class="flex flex-col items-center text-gray-400"><span class="text-xl">💎</span><span class="text-[10px]">WALLET</span></button>
     </nav>
 
-    <!-- LOGIKA JAVASCRIPT -->
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-
         let userData = {
             id: tg.initDataUnsafe?.user?.id || 8560233709,
-            username: tg.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : "@moneytree_game_bot",
-            first_name: tg.initDataUnsafe?.user?.first_name || "Gamutwo",
+            username: tg.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : "@atfarm_bot",
+            first_name: tg.initDataUnsafe?.user?.first_name || "Farmer",
             photo_url: tg.initDataUnsafe?.user?.photo_url || "https://via.placeholder.com/48"
         };
+        let gameState = { coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, isPlanted: false, harvestDueAt: null };
 
-        let gameState = {
-            coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, isPlanted: false, harvestDueAt: null
-        };
-
-        async function initUserSession() {
-            try {
-                let response = await fetch('/api/user/init', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(userData)
-                });
-                let result = await response.json();
-                if (result.success) {
-                    gameState.coins = Number(result.user.coins);
-                    gameState.atf = Number(result.user.atf_balance);
-                    gameState.water = result.farm.water;
-                    gameState.fert = result.farm.fertilizer;
-                    gameState.seeds = result.farm.seeds;
-                    gameState.fruits = result.farm.fruits;
-                    gameState.isPlanted = result.farm.is_planted;
-                    gameState.harvestDueAt = result.farm.harvest_due_at;
-                    updateUI();
-                    fetchHistory();
-                } else {
-                    showModal("Error: " + result.error);
-                }
-            } catch (err) {
-                console.error(err);
-                showModal("Failed to connect to backend server.");
-            } finally {
-                let loader = document.getElementById('loading-screen');
-                if (loader) {
-                    loader.classList.add('opacity-0', 'pointer-events-none');
-                    setTimeout(() => loader.remove(), 400);
-                }
-            }
+        function switchTab(tab) {
+            ['farm', 'market', 'task', 'friends', 'wallet'].forEach(t => {
+                document.getElementById(`section-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "flex flex-col items-center text-gray-400";
+            });
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-${tab}`).className = "flex flex-col items-center text-[#00f076] font-bold";
         }
 
-        async function fetchHistory() {
+        function showModal(msg) {
+            document.getElementById('modal-message').innerText = msg;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
+
+        async function initSession() {
             try {
-                let res = await fetch('/api/market/history', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id })
+                let res = await fetch('/api/user/init', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
                 });
                 let data = await res.json();
-                let historyList = document.getElementById('history-list');
-                if (data.success && data.history.length > 0) {
-                    historyList.innerHTML = data.history.map(tx => `
-                        <div class="flex justify-between items-center border-b border-gray-800 pb-1">
-                            <div>
-                                <span class="font-bold text-[#00f076]">${tx.type}</span>
-                                <p class="text-[10px] text-gray-400">${tx.description || '-'}</p>
-                            </div>
-                            <span class="text-right text-[10px] text-gray-400">${new Date(tx.created_at).toLocaleTimeString()}</span>
-                        </div>
-                    `).join('');
-                } else {
-                    historyList.innerHTML = `<p class="text-gray-500 italic">No history recorded yet.</p>`;
+                if(data.success) {
+                    gameState.coins = Number(data.user.coins);
+                    gameState.atf = Number(data.user.atf_balance);
+                    gameState.water = data.farm.water;
+                    gameState.fert = data.farm.fertilizer;
+                    gameState.seeds = data.farm.seeds;
+                    gameState.fruits = data.farm.fruits;
+                    gameState.isPlanted = data.farm.is_planted;
+                    gameState.harvestDueAt = data.farm.harvest_due_at;
+                    updateUI();
                 }
-            } catch (e) {
-                console.error("Failed to load history");
+            } catch (e) { console.error("Init error"); }
+            finally {
+                let loader = document.getElementById('loading-screen');
+                if (loader) { loader.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => loader.remove(), 400); }
             }
         }
 
@@ -397,18 +209,12 @@
             document.getElementById('user-name').innerText = userData.first_name;
             document.getElementById('user-username').innerText = userData.username;
             document.getElementById('user-id').innerText = `ID: ${userData.id}`;
-            if(userData.photo_url) document.getElementById('user-avatar').src = userData.photo_url;
-            
             document.getElementById('user-coins').innerText = gameState.coins;
             document.getElementById('user-atf').innerText = gameState.atf.toFixed(4);
-            document.getElementById('wallet-coins').innerText = gameState.coins;
-            document.getElementById('wallet-atf').innerText = gameState.atf.toFixed(4);
-            
             document.getElementById('res-water').innerText = gameState.water;
             document.getElementById('res-fert').innerText = gameState.fert;
             document.getElementById('res-seeds').innerText = gameState.seeds;
             document.getElementById('res-fruits').innerText = gameState.fruits;
-
             document.getElementById('ref-link').value = `https://t.me/ATFarmBot?start=ref_${userData.id}`;
 
             if (gameState.isPlanted) {
@@ -422,7 +228,6 @@
                     document.getElementById('farm-status-view').classList.add('hidden');
                     document.getElementById('farm-harvest-view').classList.add('hidden');
                     document.getElementById('farm-active-view').classList.remove('hidden');
-                    
                     let diff = Math.max(0, Math.floor((due - now) / 1000));
                     let h = Math.floor(diff / 3600).toString().padStart(2, '0');
                     let m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
@@ -436,168 +241,94 @@
             }
         }
 
-        window.onload = () => { 
-            initUserSession(); 
-            setInterval(updateUI, 1000);
-        };
-
-        function showModal(msg) {
-            document.getElementById('modal-message').innerText = msg;
-            document.getElementById('custom-modal').classList.remove('hidden');
-        }
-        function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
-
-        async function requestAtfWithdrawal() {
-            let amountVal = document.getElementById('withdraw-amount-input').value;
-            if (!amountVal || Number(amountVal) <= 0) {
-                showModal("Please enter a valid ATF amount to withdraw.");
-                return;
-            }
-
-            try {
-                showModal("Processing ATF withdrawal request...");
-                let res = await fetch('/api/market/withdraw', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id, amount: Number(amountVal) })
-                });
-                let data = await res.json();
-                showModal(data.message);
-                if (data.success) {
-                    document.getElementById('withdraw-amount-input').value = '';
-                    initUserSession();
-                    fetchHistory();
-                }
-            } catch (e) {
-                showModal("Network error while processing withdrawal.");
-            }
-        }
-
-        async function handleDeposit(packageType, tierId) {
-            try {
-                showModal("Generating secure Telegram Stars invoice...");
-                
-                let res = await fetch('/api/payment/create-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id, package_type: packageType, tier_id: tierId })
-                });
-                
-                let data = await res.json();
-                
-                if (res.ok && data.success && data.invoice_link) {
-                    closeModal();
-                    tg.openInvoice(data.invoice_link, async (status) => {
-                        if (status === 'paid') {
-                            showModal("Payment successful! Processing your top-up...");
-                            initUserSession();
-                        } else if (status === 'cancelled') {
-                            showModal("Payment was cancelled.");
-                        } else {
-                            showModal("Payment status: " + status);
-                        }
-                    });
-                } else {
-                    showModal("Deposit Error: " + (data.message || "Unknown server error."));
-                }
-            } catch (e) {
-                showModal("Network error while processing deposit.");
-            }
-        }
-
-        function switchTab(tab) {
-            ['farm', 'market', 'task', 'friends', 'wallet'].forEach(t => {
-                document.getElementById(`section-${t}`).classList.add('hidden');
-                document.getElementById(`nav-${t}`).className = "flex flex-col items-center text-gray-400";
-            });
-            document.getElementById(`section-${tab}`).classList.remove('hidden');
-            document.getElementById(`nav-${tab}`).className = "flex flex-col items-center text-[#00f076] font-bold";
-        }
-
         async function plantSeed() {
-            try {
-                let res = await fetch('/api/farm/plant', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id })
-                });
-                let data = await res.json();
-                showModal(data.message);
-                if(data.success) initUserSession();
-            } catch(e) { showModal("Network error while planting."); }
-        }
-
-        async function useBoost(type) {
-            try {
-                let res = await fetch('/api/farm/boost', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id, boost_type: type })
-                });
-                let data = await res.json();
-                showModal(data.message);
-                if(data.success) initUserSession();
-            } catch(e) { showModal("Network error while applying boost."); }
+            let res = await fetch('/api/farm/plant', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userData.id })
+            });
+            let data = await res.json();
+            showModal(data.message);
+            if(data.success) initSession();
         }
 
         async function harvestFruit() {
-            try {
-                let res = await fetch('/api/farm/harvest', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id })
-                });
-                let data = await res.json();
-                showModal(data.message);
-                if(data.success) initUserSession();
-            } catch(e) { showModal("Network error while harvesting."); }
+            let res = await fetch('/api/farm/harvest', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userData.id })
+            });
+            let data = await res.json();
+            showModal(data.message);
+            if(data.success) initSession();
+        }
+
+        async function useBoost(type) {
+            let res = await fetch('/api/farm/boost', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userData.id, boost_type: type })
+            });
+            let data = await res.json();
+            showModal(data.message);
+            if(data.success) initSession();
         }
 
         async function buyItem(itemType) {
-            try {
-                let res = await fetch('/api/market/buy', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id, item_type: itemType })
-                });
-                let data = await res.json();
-                showModal(data.message);
-                if(data.success) { initUserSession(); fetchHistory(); }
-            } catch(e) { showModal("Network error during purchase."); }
+            let res = await fetch('/api/market/buy', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userData.id, item_type: itemType })
+            });
+            let data = await res.json();
+            showModal(data.message);
+            if(data.success) initSession();
         }
 
         async function transactMarket(actionType) {
-            try {
-                let res = await fetch('/api/market/transact', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id, action_type: actionType })
-                });
-                let data = await res.json();
-                showModal(data.message);
-                if(data.success) { initUserSession(); fetchHistory(); }
-            } catch(e) { showModal("Network error during transaction."); }
+            let res = await fetch('/api/market/transact', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userData.id, action_type: actionType })
+            });
+            let data = await res.json();
+            showModal(data.message);
+            if(data.success) initSession();
         }
 
         async function completeTask(taskKey) {
-            try {
-                let res = await fetch('/api/task/complete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id, task_key: taskKey })
-                });
-                let data = await res.json();
-                showModal(data.message);
-                if(data.success) { initUserSession(); }
-            } catch(e) { showModal("Network error while completing task."); }
+            let res = await fetch('/api/task/complete', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userData.id, task_key: taskKey })
+            });
+            let data = await res.json();
+            showModal(data.message);
+            if(data.success) initSession();
+        }
+
+        async function requestAtfWithdrawal() {
+            let amount = document.getElementById('withdraw-amount-input').value;
+            let res = await fetch('/api/market/withdraw', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userData.id, amount: Number(amount) })
+            });
+            let data = await res.json();
+            showModal(data.message);
+            if(data.success) initSession();
+        }
+
+        async function handleDeposit(type, tier) {
+            let res = await fetch('/api/payment/create-invoice', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userData.id, package_type: type, tier_id: tier })
+            });
+            let data = await res.json();
+            if(data.success && data.invoice_link) {
+                tg.openInvoice(data.invoice_link, (status) => { if(status === 'paid') initSession(); });
+            } else { showModal(data.message); }
         }
 
         function copyRefLink() {
-            let copyText = document.getElementById("ref-link");
-            copyText.select();
-            navigator.clipboard.writeText(copyText.value);
-            showModal("Invite link copied to clipboard!");
+            navigator.clipboard.writeText(document.getElementById("ref-link").value);
+            showModal("Invite link copied!");
         }
+
+        window.onload = () => { initSession(); setInterval(updateUI, 1000); };
     </script>
 </body>
 </html>
