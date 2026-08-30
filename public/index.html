@@ -10,14 +10,12 @@
 </head>
 <body class="min-h-screen pb-20 flex flex-col justify-between">
 
-    <!-- SPLASH SCREEN -->
     <div id="loading-screen" class="fixed inset-0 bg-[#0b0f19] flex flex-col items-center justify-center z-50 transition-opacity duration-500">
         <div class="text-5xl animate-bounce mb-4">🌱</div>
         <h2 class="text-[#00f076] font-bold text-xl mb-1">ATFarm</h2>
         <p class="text-xs text-gray-400 animate-pulse">Loading agricultural hub...</p>
     </div>
 
-    <!-- HEADER PROFIL -->
     <header class="p-3 flex items-center justify-between bg-[#131b2e] border-b border-gray-800">
         <div class="flex items-center space-x-2">
             <img id="user-avatar" src="https://via.placeholder.com/36" alt="Avatar" class="w-9 h-9 rounded-full border border-[#00f076] object-cover">
@@ -36,25 +34,20 @@
         </div>
     </header>
 
-    <!-- KONTEN UTAMA DENGAN SISTEM SUB-TAB (ANTI-SCROLL) -->
     <main class="p-3 flex-1 overflow-y-auto max-h-[75vh]">
         
-        <!-- 1. MENU FARM (Multi-Plot Compact) -->
         <div id="section-farm" class="space-y-3">
             <div class="flex justify-between items-center bg-[#131b2e] p-2.5 rounded-xl border border-gray-800 text-xs">
                 <span>💧 Water: <b id="res-water">1</b></span>
                 <span>🧪 Fert: <b id="res-fert">0</b></span>
                 <span>🍎 Fruits: <b id="res-fruits">0</b></span>
-                <button onclick="openModal('Claim Daily Bonus', 'claim_bonus')" class="bg-[#00f076] text-black px-2 py-1 rounded font-bold text-[10px]">Bonus</button>
+                <button onclick="completeTask('claim_bonus')" class="bg-[#00f076] text-black px-2 py-1 rounded font-bold text-[10px]">Bonus</button>
             </div>
 
-            <!-- Plots Grid Container -->
             <div id="plots-container" class="grid grid-cols-2 gap-2">
-                <!-- Dinamik oleh JS -->
-            </div>
+                </div>
         </div>
 
-        <!-- 2. MENU MARKET -->
         <div id="section-market" class="space-y-3 hidden">
             <h2 class="text-sm font-bold text-[#00f076]">Agro Market & History</h2>
             <div class="grid grid-cols-2 gap-2 text-xs">
@@ -65,16 +58,14 @@
                     <p class="font-bold text-red-400">Sell Fruits</p><p class="text-[10px] text-gray-400">45 Coins / pc</p>
                 </button>
             </div>
-            <!-- History Compact Box -->
             <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl mt-2">
-                <h3 class="font-bold text-xs text-[#00f076] mb-2">📜 Activity History</h3>
+                <h3 class="font-bold text-xs text-[#00f076] mb-2">📜 History</h3>
                 <div id="history-list" class="space-y-1.5 text-[11px] text-gray-300 max-h-36 overflow-y-auto">
-                    <p class="text-gray-500 italic">Loading history...</p>
+                    <p class="text-gray-500 italic">No history recorded yet.</p>
                 </div>
             </div>
         </div>
 
-        <!-- 3. MENU TASK -->
         <div id="section-task" class="space-y-2 hidden">
             <h2 class="text-sm font-bold text-[#00f076]">Executive Missions</h2>
             <div class="bg-[#131b2e] border border-gray-800 p-2.5 rounded-xl flex justify-between items-center text-xs">
@@ -83,7 +74,6 @@
             </div>
         </div>
 
-        <!-- 4. MENU FRIENDS -->
         <div id="section-friends" class="space-y-2 hidden">
             <h2 class="text-sm font-bold text-[#00f076]">Referral System</h2>
             <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl text-center space-y-2">
@@ -92,7 +82,6 @@
             </div>
         </div>
 
-        <!-- 5. MENU WALLET & WITHDRAW -->
         <div id="section-wallet" class="space-y-3 hidden">
             <h2 class="text-sm font-bold text-[#00f076]">Wallet & ATF Withdrawal</h2>
             <div class="bg-[#131b2e] border border-yellow-500/30 p-3 rounded-xl space-y-2 text-xs">
@@ -100,7 +89,6 @@
                 <input type="number" id="withdraw-amount-input" placeholder="Withdraw ATF (Max 500)" class="w-full bg-black/50 border border-gray-700 p-2 rounded text-xs text-white">
                 <button onclick="requestAtfWithdrawal()" class="w-full bg-yellow-500 text-black font-bold py-1.5 rounded text-xs">Withdraw ATF (Req: 25k Coins)</button>
             </div>
-            <!-- Deposit Packages Compact -->
             <div class="grid grid-cols-2 gap-2 text-xs">
                 <button onclick="handleDeposit('COINS', 'starter')" class="bg-[#131b2e] border border-gray-800 p-2.5 rounded-xl text-left">
                     <p class="font-bold">Starter Coins</p><p class="text-[10px] text-gray-400">30 Stars ⭐</p>
@@ -113,7 +101,6 @@
 
     </main>
 
-    <!-- MODAL POPUP -->
     <div id="custom-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-[#131b2e] border border-[#00f076] rounded-xl w-full max-w-xs p-4 relative text-center">
             <p id="modal-message" class="text-xs text-gray-200 mb-4">Message</p>
@@ -121,7 +108,6 @@
         </div>
     </div>
 
-    <!-- NAVIGASI BAWAH -->
     <nav class="fixed bottom-0 left-0 right-0 bg-[#131b2e] border-t border-gray-800 flex justify-around py-2 z-40">
         <button onclick="switchTab('farm')" id="nav-farm" class="flex flex-col items-center text-[#00f076] font-bold"><span class="text-lg">🌾</span><span class="text-[9px]">FARM</span></button>
         <button onclick="switchTab('market')" id="nav-market" class="flex flex-col items-center text-gray-400"><span class="text-lg">📈</span><span class="text-[9px]">MARKET</span></button>
@@ -133,7 +119,11 @@
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-        let userData = { id: tg.initDataUnsafe?.user?.id || 8560233709, first_name: tg.initDataUnsafe?.user?.first_name || "Farmer" };
+        let userData = { 
+            id: tg.initDataUnsafe?.user?.id || 8560233709, 
+            first_name: tg.initDataUnsafe?.user?.first_name || "Farmer",
+            username: tg.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : "@atfarm_bot"
+        };
 
         function switchTab(tab) {
             ['farm', 'market', 'task', 'friends', 'wallet'].forEach(t => {
@@ -150,7 +140,14 @@
         }
         function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
 
-        // Render Multi-Plots UI secara dinamis
+        function hideLoader() {
+            let loader = document.getElementById('loading-screen');
+            if (loader) {
+                loader.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => loader.remove(), 400);
+            }
+        }
+
         function renderPlots() {
             let container = document.getElementById('plots-container');
             let plotsHtml = '';
@@ -169,16 +166,28 @@
 
         async function initSession() {
             renderPlots();
-            let res = await fetch('/api/user/init', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userData)
-            });
-            let data = await res.json();
-            if(data.success) {
-                document.getElementById('user-coins').innerText = data.user.coins;
-                document.getElementById('user-atf').innerText = Number(data.user.atf_balance).toFixed(4);
-                document.getElementById('w-coins').innerText = data.user.coins;
-                document.getElementById('w-atf').innerText = Number(data.user.atf_balance).toFixed(4);
+            try {
+                let res = await fetch('/api/user/init', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                let data = await res.json();
+                if(data.success) {
+                    document.getElementById('user-coins').innerText = data.user.coins;
+                    document.getElementById('user-atf').innerText = Number(data.user.atf_balance).toFixed(4);
+                    document.getElementById('w-coins').innerText = data.user.coins;
+                    document.getElementById('w-atf').innerText = Number(data.user.atf_balance).toFixed(4);
+                    document.getElementById('user-name').innerText = userData.first_name;
+                    document.getElementById('user-id').innerText = `ID: ${userData.id}`;
+                    document.getElementById('ref-link').value = `https://t.me/ATFarmBot?start=ref_${userData.id}`;
+                } else {
+                    console.warn("Init warning:", data.error || data.message);
+                }
+            } catch (err) {
+                console.error("Connection error during init:", err);
+            } finally {
+                // Selalu pastikan loader tertutup meskipun terjadi error jaringan / exception
+                hideLoader();
             }
         }
 
@@ -188,13 +197,15 @@
         }
 
         async function plantSeed(plotIndex, cropType) {
-            let res = await fetch('/api/farm/plant', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userData.id, plot_index: plotIndex, crop_type: cropType })
-            });
-            let data = await res.json();
-            showModal(data.message);
-            if(data.success) initSession();
+            try {
+                let res = await fetch('/api/farm/plant', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userData.id, plot_index: plotIndex, crop_type: cropType })
+                });
+                let data = await res.json();
+                showModal(data.message);
+                if(data.success) initSession();
+            } catch(e) { showModal("Network error while planting."); }
         }
 
         window.onload = () => { initSession(); };
