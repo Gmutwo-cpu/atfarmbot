@@ -48,7 +48,7 @@
         <div id="section-farm" class="space-y-4">
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-4">
                 <p class="text-sm font-semibold mb-2">📢 System Notice:</p>
-                <button id="btn-claim-bonus" onclick="completeTask('claim_bonus')" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-sm">Claim Daily Bonus (+15 Coins)</button>
+                <button id="btn-claim-bonus" onclick="claimDevBonus()" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-sm">Claim Daily Bonus (+15 Coins)</button>
             </div>
 
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-3 flex justify-around text-xs">
@@ -58,36 +58,11 @@
                 <span>🍎 Fruits: <b id="res-fruits">0</b></span>
             </div>
 
-            <div class="bg-[#131b2e] border border-[#00f076]/30 rounded-2xl p-6 text-center relative min-h-[220px] flex flex-col items-center justify-center">
-                <div id="farm-status-view">
-                    <p class="text-gray-400 mb-2">Land is empty</p>
-                    <button onclick="plantSeed()" class="bg-[#00f076] text-black font-bold px-6 py-2 rounded-xl">Plant Apple Seed</button>
-                </div>
-
-                <div id="farm-active-view" class="hidden w-full">
-                    <div class="text-2xl mb-2">🍎</div>
-                    <p class="text-xs text-gray-400">Growing Apple Tree (5h 40m)...</p>
-                    
-                    <div class="flex justify-between items-center mt-6 w-full px-2">
-                        <button onclick="useBoost('WATER')" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded-lg font-semibold">
-                            💧 Water (-30m)
-                        </button>
-                        <div class="text-right">
-                            <span class="text-xs text-gray-400 block">Harvest Due:</span>
-                            <span id="countdown-timer" class="text-[#00f076] font-mono font-bold text-xs">Growing...</span>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <button onclick="useBoost('FERTILIZER')" class="bg-purple-600 hover:bg-purple-500 text-xs px-3 py-1.5 rounded-lg font-semibold w-full">
-                            🧪 Apply Fertilizer (-60m)
-                        </button>
-                    </div>
-                </div>
-
-                <div id="farm-harvest-view" class="hidden w-full mt-4">
-                    <p class="text-[#00f076] font-bold mb-2">Apple Tree is Ready to Harvest!</p>
-                    <button onclick="harvestFruit()" class="bg-[#00f076] text-black font-bold w-full py-2.5 rounded-xl">Harvest Fruit (Max 5/day)</button>
-                </div>
+            <h2 class="text-sm font-bold text-[#00f076]">🌾 Multi-Crop Farming Plots</h2>
+            
+            <!-- Grid Container untuk 4 Lahan -->
+            <div id="plots-grid" class="grid grid-cols-2 gap-3">
+                <!-- Dirender secara dinamis oleh JavaScript -->
             </div>
         </div>
 
@@ -136,7 +111,7 @@
                 <button onclick="transactMarket('EXCHANGE_ATF')" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-1.5 rounded-lg text-xs">Exchange</button>
             </div>
 
-            <!-- MARKET TRANSACTION HISTORY (Diubah menjadi: History) -->
+            <!-- MARKET TRANSACTION HISTORY -->
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl mt-6">
                 <h3 class="font-bold text-sm text-[#00f076] mb-3">📜 History</h3>
                 <div id="history-list" class="space-y-2 text-xs text-gray-300 max-h-48 overflow-y-auto">
@@ -201,7 +176,7 @@
             </div>
         </div>
 
-        <!-- 5. MENU WALLET (Bahasa familiar & menu penarikan ATF) -->
+        <!-- 5. MENU WALLET -->
         <div id="section-wallet" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">💎 My Wallet & Top Up</h2>
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl space-y-3">
@@ -292,6 +267,30 @@
         </div>
     </div>
 
+    <!-- MODAL PEMILIHAN BIBIT (PLANT CROP MODAL) -->
+    <div id="crop-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#131b2e] border border-yellow-400 rounded-2xl w-full max-w-xs p-5 relative text-center space-y-3">
+            <h3 class="text-sm font-bold text-yellow-400">🌱 Select Crop for Plot #<span id="active-plot-num">1</span></h3>
+            
+            <div class="space-y-2 text-left">
+                <button onclick="confirmPlant('APPLE')" class="w-full bg-black/40 border border-gray-700 hover:border-[#00f076] p-2.5 rounded-xl flex justify-between items-center text-xs">
+                    <div><b>🍎 Apple</b><p class="text-[9px] text-gray-400">Duration: 5h 40m | Reward: 1 Fruit</p></div>
+                    <span class="text-[#00f076] font-bold">10 Coins</span>
+                </button>
+                <button onclick="confirmPlant('STRAWBERRY')" class="w-full bg-black/40 border border-gray-700 hover:border-pink-500 p-2.5 rounded-xl flex justify-between items-center text-xs">
+                    <div><b>🍓 Strawberry</b><p class="text-[9px] text-gray-400">Duration: 2h | Reward: 2 Fruits</p></div>
+                    <span class="text-pink-400 font-bold">25 Coins</span>
+                </button>
+                <button onclick="confirmPlant('ORANGE')" class="w-full bg-black/40 border border-gray-700 hover:border-orange-500 p-2.5 rounded-xl flex justify-between items-center text-xs">
+                    <div><b>🍊 Orange Tree</b><p class="text-[9px] text-gray-400">Duration: 10h | Reward: 5 Fruits</p></div>
+                    <span class="text-orange-400 font-bold">60 Coins</span>
+                </button>
+            </div>
+
+            <button onclick="closeCropModal()" class="w-full bg-gray-700 text-white font-bold py-2 rounded-xl text-xs mt-2">Cancel</button>
+        </div>
+    </div>
+
     <!-- NAVIGASI BAWAH -->
     <nav class="fixed bottom-0 left-0 right-0 bg-[#131b2e] border-t border-gray-800 flex justify-around py-2 z-40">
         <button id="nav-farm" onclick="switchTab('farm')" class="flex flex-col items-center text-[#00f076] font-bold">
@@ -329,8 +328,9 @@
         };
 
         let gameState = {
-            coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, isPlanted: false, harvestDueAt: null
+            coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, plots: []
         };
+        let selectedPlotIndex = 1;
 
         async function initUserSession() {
             try {
@@ -347,8 +347,16 @@
                     gameState.fert = result.farm.fertilizer;
                     gameState.seeds = result.farm.seeds;
                     gameState.fruits = result.farm.fruits;
-                    gameState.isPlanted = result.farm.is_planted;
-                    gameState.harvestDueAt = result.farm.harvest_due_at;
+                    
+                    // Fetch user plots via unified /api/farm action router
+                    let plotsRes = await fetch('/api/farm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'get_plots', user_id: userData.id, telegram_id: userData.id })
+                    });
+                    let plotsData = await plotsRes.json();
+                    gameState.plots = plotsData.success ? plotsData.plots : [];
+
                     updateUI();
                     fetchHistory();
                 } else {
@@ -411,29 +419,68 @@
 
             document.getElementById('ref-link').value = `https://t.me/ATFarmBot?start=ref_${userData.id}`;
 
-            if (gameState.isPlanted) {
-                let now = new Date().getTime();
-                let due = new Date(gameState.harvestDueAt).getTime();
-                if (now >= due) {
-                    document.getElementById('farm-status-view').classList.add('hidden');
-                    document.getElementById('farm-active-view').classList.add('hidden');
-                    document.getElementById('farm-harvest-view').classList.remove('hidden');
-                } else {
-                    document.getElementById('farm-status-view').classList.add('hidden');
-                    document.getElementById('farm-harvest-view').classList.add('hidden');
-                    document.getElementById('farm-active-view').classList.remove('hidden');
-                    
-                    let diff = Math.max(0, Math.floor((due - now) / 1000));
-                    let h = Math.floor(diff / 3600).toString().padStart(2, '0');
-                    let m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
-                    let s = (diff % 60).toString().padStart(2, '0');
-                    document.getElementById('countdown-timer').innerText = `${h}:${m}:${s}`;
+            renderPlotsGrid();
+        }
+
+        function renderPlotsGrid() {
+            let grid = document.getElementById('plots-grid');
+            let html = '';
+
+            for (let i = 1; i <= 4; i++) {
+                let plot = gameState.plots.find(p => p.plot_index === i) || { status: i === 1 ? 'EMPTY' : 'LOCKED' };
+                
+                if (plot.status === 'LOCKED') {
+                    let cost = i === 2 ? 250 : (i === 3 ? 1000 : 5000);
+                    html += `
+                        <div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px] opacity-75">
+                            <span class="text-xs font-bold text-gray-500">Plot #${i} (Locked)</span>
+                            <div class="text-2xl my-1">🔒</div>
+                            <button onclick="unlockPlot(${i})" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 rounded-xl text-[10px]">Unlock (${cost} Coins)</button>
+                        </div>
+                    `;
+                } else if (plot.status === 'EMPTY') {
+                    html += `
+                        <div class="bg-[#131b2e] border border-gray-700 rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px]">
+                            <span class="text-xs font-bold text-[#00f076]">Plot #${i} (Empty)</span>
+                            <div class="text-2xl my-1">🌱</div>
+                            <button onclick="openCropModal(${i})" class="w-full bg-[#00f076] hover:bg-[#00d065] text-black font-bold py-1.5 rounded-xl text-[10px]">Plant Seed</button>
+                        </div>
+                    `;
+                } else if (plot.status === 'PLANTED') {
+                    let now = Date.now();
+                    let due = new Date(plot.harvest_due_at).getTime();
+                    let icon = plot.crop_type === 'STRAWBERRY' ? '🍓' : (plot.crop_type === 'ORANGE' ? '🍊' : '🍎');
+
+                    if (now >= due) {
+                        html += `
+                            <div class="bg-[#131b2e] border border-[#00f076] rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px]">
+                                <span class="text-xs font-bold text-yellow-400">Plot #${i} (${plot.crop_type})</span>
+                                <div class="text-2xl my-1 animate-bounce">${icon}</div>
+                                <button onclick="harvestPlot(${i})" class="w-full bg-[#00f076] hover:bg-[#00d065] text-black font-bold py-1.5 rounded-xl text-[10px]">Harvest Ready!</button>
+                            </div>
+                        `;
+                    } else {
+                        let diff = Math.max(0, Math.floor((due - now) / 1000));
+                        let h = Math.floor(diff / 3600).toString().padStart(2, '0');
+                        let m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+                        let s = (diff % 60).toString().padStart(2, '0');
+                        html += `
+                            <div class="bg-[#131b2e] border border-gray-700 rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px]">
+                                <span class="text-xs font-bold text-gray-400">Plot #${i} (${plot.crop_type})</span>
+                                <div class="text-2xl my-1">${icon}</div>
+                                <div class="space-y-1">
+                                    <span class="text-[10px] text-[#00f076] font-mono font-bold block">${h}:${m}:${s}</span>
+                                    <div class="flex justify-center gap-1">
+                                        <button onclick="useBoost('WATER', ${i})" class="bg-blue-600 text-[8px] px-2 py-0.5 rounded text-white">💧 -30m</button>
+                                        <button onclick="useBoost('FERTILIZER', ${i})" class="bg-purple-600 text-[8px] px-2 py-0.5 rounded text-white">🧪 -60m</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
                 }
-            } else {
-                document.getElementById('farm-active-view').classList.add('hidden');
-                document.getElementById('farm-harvest-view').classList.add('hidden');
-                document.getElementById('farm-status-view').classList.remove('hidden');
             }
+            grid.innerHTML = html;
         }
 
         window.onload = () => { 
@@ -446,6 +493,79 @@
             document.getElementById('custom-modal').classList.remove('hidden');
         }
         function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
+
+        function openCropModal(plotIndex) {
+            selectedPlotIndex = plotIndex;
+            document.getElementById('active-plot-num').innerText = plotIndex;
+            document.getElementById('crop-modal').classList.remove('hidden');
+        }
+        function closeCropModal() { document.getElementById('crop-modal').classList.add('hidden'); }
+
+        async function unlockPlot(plotIndex) {
+            try {
+                let res = await fetch('/api/farm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'unlock_plot', user_id: userData.id, telegram_id: userData.id, plot_index: plotIndex })
+                });
+                let data = await res.json();
+                showModal(data.message || data.error);
+                if(data.success) initUserSession();
+            } catch(e) { showModal("Network error while unlocking plot."); }
+        }
+
+        async function confirmPlant(cropType) {
+            closeCropModal();
+            try {
+                let res = await fetch('/api/farm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'plant', user_id: userData.id, telegram_id: userData.id, plot_index: selectedPlotIndex, crop_type: cropType })
+                });
+                let data = await res.json();
+                showModal(data.message || data.error);
+                if(data.success) initUserSession();
+            } catch(e) { showModal("Network error while planting crop."); }
+        }
+
+        async function harvestPlot(plotIndex) {
+            try {
+                let res = await fetch('/api/farm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'harvest', user_id: userData.id, telegram_id: userData.id, plot_index: plotIndex })
+                });
+                let data = await res.json();
+                showModal(data.message || data.error);
+                if(data.success) initUserSession();
+            } catch(e) { showModal("Network error while harvesting."); }
+        }
+
+        async function useBoost(type, plotIndex) {
+            try {
+                let res = await fetch('/api/farm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'boost', user_id: userData.id, telegram_id: userData.id, boost_type: type, plot_index: plotIndex })
+                });
+                let data = await res.json();
+                showModal(data.message || data.error);
+                if(data.success) initUserSession();
+            } catch(e) { showModal("Network error while applying boost."); }
+        }
+
+        async function claimDevBonus() {
+            try {
+                let res = await fetch('/api/farm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'claim_dev_bonus', telegram_id: userData.id })
+                });
+                let data = await res.json();
+                showModal(data.message || data.error);
+                if(data.success) initUserSession();
+            } catch(e) { showModal("Network error while claiming bonus."); }
+        }
 
         async function requestAtfWithdrawal() {
             let amountVal = document.getElementById('withdraw-amount-input').value;
@@ -476,13 +596,11 @@
         async function handleDeposit(packageType, tierId) {
             try {
                 showModal("Generating secure Telegram Stars invoice...");
-                
                 let res = await fetch('/api/payment/create-invoice', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: userData.id, package_type: packageType, tier_id: tierId })
                 });
-                
                 let data = await res.json();
                 
                 if (res.ok && data.success && data.invoice_link) {
@@ -512,45 +630,6 @@
             });
             document.getElementById(`section-${tab}`).classList.remove('hidden');
             document.getElementById(`nav-${tab}`).className = "flex flex-col items-center text-[#00f076] font-bold";
-        }
-
-        async function plantSeed() {
-            try {
-                let res = await fetch('/api/farm/plant', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id })
-                });
-                let data = await res.json();
-                showModal(data.message);
-                if(data.success) initUserSession();
-            } catch(e) { showModal("Network error while planting."); }
-        }
-
-        async function useBoost(type) {
-            try {
-                let res = await fetch('/api/farm/boost', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id, boost_type: type })
-                });
-                let data = await res.json();
-                showModal(data.message);
-                if(data.success) initUserSession();
-            } catch(e) { showModal("Network error while applying boost."); }
-        }
-
-        async function harvestFruit() {
-            try {
-                let res = await fetch('/api/farm/harvest', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id })
-                });
-                let data = await res.json();
-                showModal(data.message);
-                if(data.success) initUserSession();
-            } catch(e) { showModal("Network error while harvesting."); }
         }
 
         async function buyItem(itemType) {
