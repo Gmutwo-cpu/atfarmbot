@@ -10,14 +10,12 @@ export default async function handler(req, res) {
 
   try {
     const { action, user_id, telegram_id, plot_index, crop_type, boost_type } = req.body;
-    // Mendukung identifikasi user_id atau telegram_id secara fleksibel
     const identifier = user_id || telegram_id;
 
     if (!identifier && action !== 'get_plots') {
       return res.status(400).json({ success: false, message: 'Missing user identifier!' });
     }
 
-    // Ambil data user jika diperlukan
     let user = null;
     if (identifier) {
       let query = supabase.from('users').select('*');
@@ -27,7 +25,7 @@ export default async function handler(req, res) {
       user = data;
     }
 
-    // 1. GET PLOTS
+    // 1. GET PLOTS (Menggantikan plots.js)
     if (action === 'get_plots') {
       let queryId = user_id || telegram_id;
       let { data: plots, error } = await supabase
@@ -51,7 +49,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, plots });
     }
 
-    // 2. UNLOCK PLOT
+    // 2. UNLOCK PLOT (Menggantikan unlock.js)
     if (action === 'unlock_plot') {
       const unlockCosts = { 2: 250, 3: 1000, 4: 5000 };
       const cost = unlockCosts[plot_index];
@@ -70,7 +68,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, message: `Plot #${plot_index} unlocked successfully!` });
     }
 
-    // 3. CLAIM DEV BONUS
+    // 3. CLAIM DEV BONUS (Menggantikan action.js)
     if (action === 'claim_dev_bonus') {
       const { data: existingNotice } = await supabase
         .from('completed_tasks')
@@ -90,7 +88,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, message: 'Successfully claimed 15 coins bonus!' });
     }
 
-    // 4. PLANT CROP
+    // 4. PLANT CROP (Menggantikan plant.js)
     if (action === 'plant') {
       const cropConfigs = {
         'APPLE': { durationMinutes: 340, cost: 10 },
@@ -98,7 +96,8 @@ export default async function handler(req, res) {
         'ORANGE': { durationMinutes: 600, cost: 60 }
       };
 
-      const config = cropConfigs[crop_type];
+      const targetCrop = crop_type || 'APPLE';
+      const config = cropConfigs[targetCrop];
       if (!config) return res.status(400).json({ success: false, message: 'Invalid crop type!' });
 
       if (Number(user.coins) < config.cost) {
@@ -107,8 +106,9 @@ export default async function handler(req, res) {
 
       let matchKey = user_id ? 'user_id' : 'telegram_id';
       let matchVal = user_id || telegram_id;
+      let targetPlotIdx = plot_index || 1;
 
-      let { data: plot } = await supabase.from('user_plots').select('*').eq(matchKey, matchVal).eq('plot_index', plot_index).single();
+      let { data: plot } = await supabase.from('user_plots').select('*').eq(matchKey, matchVal).eq('plot_index', targetPlotIdx).single();
       if (!plot || plot.status !== 'EMPTY') {
         return res.status(400).json({ success: false, message: 'Plot is not available for planting!' });
       }
@@ -118,17 +118,26 @@ export default async function handler(req, res) {
       let userMatchVal = user_id || telegram_id;
 
       await supabase.from('users').update({ coins: Number(user.coins) - config.cost }).eq(userMatchKey, userMatchVal);
-      await supabase.from('user_plots').update({ status: 'PLANTED', crop_type, harvest_due_at: harvestTime }).eq('id', plot.id);
+      await supabase.from('user_plots').update({ status: 'PLANTED', crop_type: targetCrop, harvest_due_at: harvestTime }).eq('id', plot.id);
 
-      return res.status(200).json({ success: true, message: `Successfully planted ${crop_type}!` });
+      await supabase.from('transactions').insert([{
+        user_id: user.id,
+        type: 'PLANT_CROP',
+        amount: config.cost,
+        currency_type: 'COINS',
+        description: `Planted ${targetCrop} on Plot #${targetPlotIdx} for ${config.cost} Coins.`
+      }]);
+
+      return res.status(200).json({ success: true, message: `Successfully planted ${targetCrop}!` });
     }
 
-    // 5. HARVEST CROP
+    // 5. HARVEST CROP (Menggantikan harvest.js)
     if (action === 'harvest') {
       let matchKey = user_id ? 'user_id' : 'telegram_id';
       let matchVal = user_id || telegram_id;
+      let targetPlotIdx = plot_index || 1;
 
-      let { data: plot } = await supabase.from('user_plots').select('*').eq(matchKey, matchVal).eq('plot_index', plot_index).single();
+      let { data: plot } = await supabase.from('user_plots').select('*').eq(matchKey, matchVal).eq('plot_index', targetPlotIdx).single();
       if (!plot || plot.status !== 'PLANTED') return res.status(400).json({ success: false, message: 'No active crop!' });
       if (new Date() < new Date(plot.harvest_due_at)) return res.status(400).json({ success: false, message: 'Crop is still growing!' });
 
@@ -141,10 +150,16 @@ export default async function handler(req, res) {
       await supabase.from('user_plots').update({ status: 'EMPTY', crop_type: 'APPLE', harvest_due_at: null }).eq('id', plot.id);
       await supabase.from('farms').update({ fruits: currentFruits }).eq(matchKey, matchVal);
 
+      await supabase.from('transactions').insert([{
+        user_id: user.id,
+        type: 'HARVEST',
+        description: `Harvested ${rewardFruits}x fruits from ${plot.crop_type} (Plot #${targetPlotIdx}).`
+      }]);
+
       return res.status(200).json({ success: true, message: `Harvest successful! +${rewardFruits} fruits.` });
     }
 
-    // 6. BOOST
+    // 6. BOOST (Menggantikan boost.js)
     if (action === 'boost') {
       let matchKey = user_id ? 'user_id' : 'telegram_id';
       let matchVal = user_id || telegram_id;
@@ -152,17 +167,31 @@ export default async function handler(req, res) {
       let { data: farm } = await supabase.from('farms').select('*').eq(matchKey, matchVal).single();
       if (!farm) return res.status(404).json({ success: false, message: 'Farm data not found!' });
 
-      let updateData = {};
-      if (boost_type === 'WATER' && farm.water > 0) {
-        updateData.water = farm.water - 1;
-      } else if (boost_type === 'FERTILIZER' && farm.fertilizer > 0) {
-        updateData.fertilizer = farm.fertilizer - 1;
+      // Ambil plot aktif pertama untuk diboost jika sistem multi-plot
+      let { data: plot } = await supabase.from('user_plots').select('*').eq(matchKey, matchVal).eq('status', 'PLANTED').order('plot_index').limit(1).single();
+      if (!plot) return res.status(400).json({ success: false, message: 'No active plant to boost!' });
+
+      let currentDueTime = new Date(plot.harvest_due_at).getTime();
+      let reductionMs = 0;
+      let updateFarm = {};
+
+      if (boost_type === 'WATER') {
+        if (farm.water < 1) return res.status(400).json({ success: false, message: 'Not enough Water Supply!' });
+        reductionMs = 30 * 60 * 1000;
+        updateFarm.water = farm.water - 1;
+      } else if (boost_type === 'FERTILIZER') {
+        if (farm.fertilizer < 1) return res.status(400).json({ success: false, message: 'Not enough Fertilizer!' });
+        reductionMs = 60 * 60 * 1000;
+        updateFarm.fertilizer = farm.fertilizer - 1;
       } else {
-        return res.status(400).json({ success: false, message: 'Insufficient boost items!' });
+        return res.status(400).json({ success: false, message: 'Invalid boost type!' });
       }
 
-      await supabase.from('farms').update(updateData).eq(matchKey, matchVal);
-      return res.status(200).json({ success: true, message: `Successfully used ${boost_type} boost!` });
+      let newDueTime = Math.max(Date.now(), currentDueTime - reductionMs);
+      await supabase.from('farms').update(updateFarm).eq(matchKey, matchVal);
+      await supabase.from('user_plots').update({ harvest_due_at: new Date(newDueTime).toISOString() }).eq('id', plot.id);
+
+      return res.status(200).json({ success: true, message: `Successfully applied ${boost_type} booster!` });
     }
 
     return res.status(400).json({ success: false, message: 'Invalid action type!' });
