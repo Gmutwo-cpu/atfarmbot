@@ -66,45 +66,60 @@
             </div>
         </div>
 
-        <!-- 2. MENU MARKET -->
+        <!-- 2. MENU MARKET (NEW 2-COLUMN LAYOUT) -->
         <div id="section-market" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">Sustainable Agro Market</h2>
-            <p class="text-xs text-gray-400 mb-4">Closed-loop economy: Buy supplies, harvest, and trade securely.</p>
+            <p class="text-xs text-gray-400 mb-2">Closed-loop economy: Buy supplies, harvest, and trade securely.</p>
+            
+            <!-- Grid 2 Kolom Utama Market -->
+            <div class="grid grid-cols-2 gap-3">
+                
+                <!-- KOLOM KIRI: Suplai Pertanian (Water & Fertilizer) -->
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-[#00f076]">💧 Supplies</h3>
+                    
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
+                        <div>
+                            <h4 class="font-bold text-xs">Water Supply</h4>
+                            <p class="text-[10px] text-gray-400">Price: 20 Coins (-30m)</p>
+                        </div>
+                        <button onclick="buyItem('WATER')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-xs">Buy 1x</button>
+                    </div>
 
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">Water Supply</h3>
-                    <p class="text-xs text-gray-400">Price: 20 Coins (-30m timer)</p>
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
+                        <div>
+                            <h4 class="font-bold text-xs">Fertilizer</h4>
+                            <p class="text-[10px] text-gray-400">Price: 50 Coins (-60m)</p>
+                        </div>
+                        <button onclick="buyItem('FERTILIZER')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-xs">Buy 1x</button>
+                    </div>
                 </div>
-                <button onclick="buyItem('WATER')" class="bg-[#00f076] text-black font-bold px-4 py-1.5 rounded-lg text-xs">Buy 1x</button>
+
+                <!-- KOLOM KANAN: Perdagangan Hasil Panen & ATF (Sell Fruits & Exchange ATF) -->
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-yellow-400">📈 Trade & Exchange</h3>
+
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
+                        <div>
+                            <h4 class="font-bold text-xs">Sell Fruits</h4>
+                            <p class="text-[10px] text-gray-400">Reward: 45 Coins / Fruit</p>
+                        </div>
+                        <button onclick="transactMarket('SELL_FRUITS')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-1.5 rounded-lg text-xs">Sell All</button>
+                    </div>
+
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
+                        <div>
+                            <h4 class="font-bold text-xs">Exchange ATF</h4>
+                            <p class="text-[10px] text-gray-400">500 Coins = 1 ATF</p>
+                        </div>
+                        <button onclick="transactMarket('EXCHANGE_ATF')" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1.5 rounded-lg text-xs">Exchange</button>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">Fertilizer</h3>
-                    <p class="text-xs text-gray-400">Price: 50 Coins (-60m timer)</p>
-                </div>
-                <button onclick="buyItem('FERTILIZER')" class="bg-[#00f076] text-black font-bold px-4 py-1.5 rounded-lg text-xs">Buy 1x</button>
-            </div>
-
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">Sell Harvested Fruits</h3>
-                    <p class="text-xs text-gray-400">Reward: 45 Coins / Fruit</p>
-                </div>
-                <button onclick="transactMarket('SELL_FRUITS')" class="bg-red-600 hover:bg-red-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Sell All</button>
-            </div>
-
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm">Exchange to ATF Milestone</h3>
-                    <p class="text-xs text-gray-400">Rate: 500 Coins = 1.0000 ATF (Daily Pool Cap)</p>
-                </div>
-                <button onclick="transactMarket('EXCHANGE_ATF')" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-1.5 rounded-lg text-xs">Exchange</button>
-            </div>
-
-            <!-- MARKET TRANSACTION HISTORY -->
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl mt-6">
+            <!-- MARKET TRANSACTION HISTORY (Full-Width di Bagian Paling Bawah) -->
+            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl mt-4">
                 <h3 class="font-bold text-sm text-[#00f076] mb-3">📜 History</h3>
                 <div id="history-list" class="space-y-2 text-xs text-gray-300 max-h-48 overflow-y-auto">
                     <p class="text-gray-500 italic">Loading history...</p>
