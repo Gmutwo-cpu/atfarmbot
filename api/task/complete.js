@@ -1,6 +1,11 @@
 import { supabase } from '../../utils/supabase.js';
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
@@ -30,18 +35,18 @@ export default async function handler(req, res) {
 
     // 1. Validasi Cooldown 24 Jam khusus untuk 'claim_bonus'
     if (task_key === 'claim_bonus') {
-      const { data: lastClaim } = await supabase
+      const { data: lastClaim, error: claimErr } = await supabase
         .from('transactions')
         .select('created_at')
         .eq('user_id', user_id)
         .eq('type', 'CLAIM_BONUS')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (lastClaim) {
+      if (!claimErr && lastClaim) {
         const lastTime = new Date(lastClaim.created_at).getTime();
-        const cooldownMs = 24 * 60 * 60 * 1000; // 24 Jam dalam milidetik
+        const cooldownMs = 24 * 60 * 60 * 1000; // 24 Jam
         const nextAvailableTime = lastTime + cooldownMs;
 
         if (now.getTime() < nextAvailableTime) {
@@ -81,7 +86,7 @@ export default async function handler(req, res) {
         .select('*')
         .eq('user_id', user_id)
         .eq('task_key', task_key)
-        .single();
+        .maybeSingle();
 
       if (existingTask) {
         return res.status(400).json({ success: false, message: 'This task has already been completed!' });
