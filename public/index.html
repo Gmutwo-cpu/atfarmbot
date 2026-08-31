@@ -193,7 +193,7 @@
                     gameState.atf = Number(data.user.atf_balance);
                     gameState.fruits = data.farm.fruits;
                     
-                    // Fetch user plots via unified /api/farm action router
+                    // Fetch user plots via unified /api/farm router
                     let plotsRes = await fetch('/api/farm', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'get_plots', user_id: userData.id })
