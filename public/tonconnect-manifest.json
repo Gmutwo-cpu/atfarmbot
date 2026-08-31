@@ -1,7 +1,7 @@
 {
-  "url": "https://atfarm.vercel.app",
-  "name": "ATFarm - Fruits Farming",
+  "url": "https://atfarmbot.vercel.app/",
+  "name": "atfarmbot - Fruits Farming",
   "iconUrl": "https://via.placeholder.com/150",
-  "termsOfUseUrl": "https://atfarm.vercel.app/terms",
-  "privacyPolicyUrl": "https://atfarm.vercel.app/privacy"
+  "termsOfUseUrl": "https://atfarmbot.vercel.app/terms",
+  "privacyPolicyUrl": "https://atfarmbot.vercel.app/privacy"
 }
