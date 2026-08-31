@@ -48,7 +48,7 @@
         <div id="section-farm" class="space-y-4">
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-4">
                 <p class="text-sm font-semibold mb-2">📢 System Notice:</p>
-                <button id="btn-claim-bonus" onclick="claimDevBonus()" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-sm">Claim Daily Bonus (+15 Coins)</button>
+                <button id="btn-claim-bonus" onclick="claimDailyBonus()" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-sm">Claim Daily Bonus (+15 Coins)</button>
             </div>
 
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-3 flex justify-around text-xs">
@@ -328,7 +328,7 @@
         };
 
         let gameState = {
-            coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, plots: []
+            coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, plots: [], dailyBonusUntil: 0
         };
         let selectedPlotIndex = 1;
 
@@ -357,6 +357,9 @@
                     let plotsData = await plotsRes.json();
                     gameState.plots = plotsData.success ? plotsData.plots : [];
 
+                    // Cek status cooldown Daily Bonus terakhir via history transaksi
+                    fetchDailyBonusStatus();
+
                     updateUI();
                     fetchHistory();
                 } else {
@@ -371,6 +374,27 @@
                     loader.classList.add('opacity-0', 'pointer-events-none');
                     setTimeout(() => loader.remove(), 400);
                 }
+            }
+        }
+
+        async function fetchDailyBonusStatus() {
+            try {
+                let res = await fetch('/api/market/history', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userData.id })
+                });
+                let data = await res.json();
+                if (data.success && data.history) {
+                    let lastBonusTx = data.history.find(tx => tx.type === 'CLAIM_BONUS');
+                    if (lastBonusTx) {
+                        let lastTime = new Date(lastBonusTx.created_at).getTime();
+                        let cooldownMs = 24 * 60 * 60 * 1000;
+                        gameState.dailyBonusUntil = lastTime + cooldownMs;
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch daily bonus status");
             }
         }
 
@@ -419,68 +443,25 @@
 
             document.getElementById('ref-link').value = `https://t.me/ATFarmBot?start=ref_${userData.id}`;
 
-            renderPlotsGrid();
-        }
-
-        function renderPlotsGrid() {
-            let grid = document.getElementById('plots-grid');
-            let html = '';
-
-            for (let i = 1; i <= 4; i++) {
-                let plot = gameState.plots.find(p => p.plot_index === i) || { status: i === 1 ? 'EMPTY' : 'LOCKED' };
+            // Render Real-Time Live Countdown Timer untuk Daily Bonus
+            let bonusBtn = document.getElementById('btn-claim-bonus');
+            let now = Date.now();
+            if (gameState.dailyBonusUntil && now < gameState.dailyBonusUntil) {
+                let diff = Math.max(0, Math.floor((gameState.dailyBonusUntil - now) / 1000));
+                let h = Math.floor(diff / 3600).toString().padStart(2, '0');
+                let m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+                let s = (diff % 60).toString().padStart(2, '0');
                 
-                if (plot.status === 'LOCKED') {
-                    let cost = i === 2 ? 250 : (i === 3 ? 1000 : 5000);
-                    html += `
-                        <div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px] opacity-75">
-                            <span class="text-xs font-bold text-gray-500">Plot #${i} (Locked)</span>
-                            <div class="text-2xl my-1">🔒</div>
-                            <button onclick="unlockPlot(${i})" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 rounded-xl text-[10px]">Unlock (${cost} Coins)</button>
-                        </div>
-                    `;
-                } else if (plot.status === 'EMPTY') {
-                    html += `
-                        <div class="bg-[#131b2e] border border-gray-700 rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px]">
-                            <span class="text-xs font-bold text-[#00f076]">Plot #${i} (Empty)</span>
-                            <div class="text-2xl my-1">🌱</div>
-                            <button onclick="openCropModal(${i})" class="w-full bg-[#00f076] hover:bg-[#00d065] text-black font-bold py-1.5 rounded-xl text-[10px]">Plant Seed</button>
-                        </div>
-                    `;
-                } else if (plot.status === 'PLANTED') {
-                    let now = Date.now();
-                    let due = new Date(plot.harvest_due_at).getTime();
-                    let icon = plot.crop_type === 'STRAWBERRY' ? '🍓' : (plot.crop_type === 'ORANGE' ? '🍊' : '🍎');
-
-                    if (now >= due) {
-                        html += `
-                            <div class="bg-[#131b2e] border border-[#00f076] rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px]">
-                                <span class="text-xs font-bold text-yellow-400">Plot #${i} (${plot.crop_type})</span>
-                                <div class="text-2xl my-1 animate-bounce">${icon}</div>
-                                <button onclick="harvestPlot(${i})" class="w-full bg-[#00f076] hover:bg-[#00d065] text-black font-bold py-1.5 rounded-xl text-[10px]">Harvest Ready!</button>
-                            </div>
-                        `;
-                    } else {
-                        let diff = Math.max(0, Math.floor((due - now) / 1000));
-                        let h = Math.floor(diff / 3600).toString().padStart(2, '0');
-                        let m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
-                        let s = (diff % 60).toString().padStart(2, '0');
-                        html += `
-                            <div class="bg-[#131b2e] border border-gray-700 rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px]">
-                                <span class="text-xs font-bold text-gray-400">Plot #${i} (${plot.crop_type})</span>
-                                <div class="text-2xl my-1">${icon}</div>
-                                <div class="space-y-1">
-                                    <span class="text-[10px] text-[#00f076] font-mono font-bold block">${h}:${m}:${s}</span>
-                                    <div class="flex justify-center gap-1">
-                                        <button onclick="useBoost('WATER', ${i})" class="bg-blue-600 text-[8px] px-2 py-0.5 rounded text-white">💧 -30m</button>
-                                        <button onclick="useBoost('FERTILIZER', ${i})" class="bg-purple-600 text-[8px] px-2 py-0.5 rounded text-white">🧪 -60m</button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                }
+                bonusBtn.innerText = `Claim Cooldown (${h}:${m}:${s})`;
+                bonusBtn.disabled = true;
+                bonusBtn.className = "w-full bg-gray-700 text-gray-400 font-bold py-2 rounded-lg text-sm cursor-not-allowed";
+            } else {
+                bonusBtn.innerText = "Claim Daily Bonus (+15 Coins)";
+                bonusBtn.disabled = false;
+                bonusBtn.className = "w-full bg-[#00f076] hover:bg-[#00d065] text-black font-bold py-2 rounded-lg text-sm transition-all";
             }
-            grid.innerHTML = html;
+
+            renderPlotsGrid();
         }
 
         window.onload = () => { 
@@ -554,17 +535,31 @@
             } catch(e) { showModal("Network error while applying boost."); }
         }
 
-        async function claimDevBonus() {
+        async function claimDailyBonus() {
             try {
-                let res = await fetch('/api/farm', {
+                let res = await fetch('/api/task/complete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'claim_dev_bonus', telegram_id: userData.id })
+                    body: JSON.stringify({ user_id: userData.id, task_key: 'claim_bonus' })
                 });
                 let data = await res.json();
-                showModal(data.message || data.error);
-                if(data.success) initUserSession();
-            } catch(e) { showModal("Network error while claiming bonus."); }
+                
+                if (data.success) {
+                    showModal(data.message);
+                    if (data.cooldown_until) {
+                        gameState.dailyBonusUntil = data.cooldown_until;
+                    }
+                    initUserSession();
+                    fetchHistory();
+                } else {
+                    if (data.cooldown_until) {
+                        gameState.dailyBonusUntil = data.cooldown_until;
+                    }
+                    showModal(data.message);
+                }
+            } catch(e) { 
+                showModal("Network error while claiming daily bonus."); 
+            }
         }
 
         async function requestAtfWithdrawal() {
