@@ -6,6 +6,8 @@
     <title>ATFarm - Fruits Farming AI Trading Forex</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- TON Connect UI SDK CDN -->
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
         body { background-color: #0b0f19; color: #ffffff; font-family: sans-serif; }
     </style>
@@ -66,7 +68,7 @@
             </div>
         </div>
 
-        <!-- 2. MENU MARKET (NEW 2-COLUMN LAYOUT) -->
+        <!-- 2. MENU MARKET -->
         <div id="section-market" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">Sustainable Agro Market</h2>
             <p class="text-xs text-gray-400 mb-2">Closed-loop economy: Buy supplies, harvest, and trade securely.</p>
@@ -186,6 +188,16 @@
         <!-- 5. MENU WALLET -->
         <div id="section-wallet" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">💎 My Wallet & Top Up</h2>
+            
+            <!-- TON CONNECT BUTTON CONTAINER -->
+            <div class="bg-[#131b2e] border border-blue-500/40 p-4 rounded-xl flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-sm text-blue-400">TON Wallet Integration</h3>
+                    <p id="wallet-status-text" class="text-[10px] text-gray-400">Connect your TON wallet securely</p>
+                </div>
+                <div id="ton-connect-button"></div>
+            </div>
+
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl space-y-3">
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-400">Total Coins:</span>
@@ -335,9 +347,46 @@
         };
 
         let gameState = {
-            coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, plots: [], dailyBonusUntil: 0
+            coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, plots: [], dailyBonusUntil: 0, connectedWallet: null
         };
         let selectedPlotIndex = 1;
+
+        // Inisialisasi TON Connect UI
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: window.location.origin + '/tonconnect-manifest.json',
+            buttonRootId: 'ton-connect-button'
+        });
+
+        // Pantau status koneksi dompet secara real-time
+        tonConnectUI.onStatusChange(async (wallet) => {
+            if (wallet && wallet.account && wallet.account.address) {
+                // Konversi alamat mentah ke user-friendly (bounceable/non-bounceable format)
+                let rawAddress = wallet.account.address;
+                gameState.connectedWallet = rawAddress;
+                
+                // Simpan alamat dompet secara permanen ke database Supabase melalui endpoint init/bind
+                await syncWalletToServer(rawAddress);
+            } else {
+                gameState.connectedWallet = null;
+            }
+        });
+
+        async function syncWalletToServer(walletAddress) {
+            try {
+                let res = await fetch('/api/user/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...userData, wallet_address: walletAddress })
+                });
+                let data = await res.json();
+                if (!data.success) {
+                    console.error("Failed to bind wallet to server:", data.error);
+                    showModal("Warning: " + data.error);
+                }
+            } catch (e) {
+                console.error("Network error while syncing wallet address");
+            }
+        }
 
         async function initUserSession() {
             try {
@@ -635,12 +684,22 @@
                 return;
             }
 
+            // Pastikan dompet sudah terhubung sebelum melakukan penarikan
+            if (!gameState.connectedWallet) {
+                showModal("Please connect your TON wallet first before withdrawing ATF tokens!");
+                return;
+            }
+
             try {
                 showModal("Processing ATF withdrawal request...");
                 let res = await fetch('/api/market/withdraw', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.id, amount: Number(amountVal) })
+                    body: JSON.stringify({ 
+                        user_id: userData.id, 
+                        amount: Number(amountVal),
+                        wallet_address: gameState.connectedWallet 
+                    })
                 });
                 let data = await res.json();
                 showModal(data.message);
