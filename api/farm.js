@@ -98,7 +98,7 @@ export default async function handler(req, res) {
       if (!user) return res.status(404).json({ success: false, message: 'User not found!' });
       const cropConfigs = {
         'APPLE': { durationMinutes: 340, cost: 10 },
-        'STRAWBERRY': { durationMinutes: 120, cost: 25 },
+        'STRAWBERRY': { durationMinutes: 160, cost: 34 },
         'ORANGE': { durationMinutes: 600, cost: 60 }
       };
 
