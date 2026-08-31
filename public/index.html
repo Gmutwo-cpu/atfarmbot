@@ -33,11 +33,11 @@
         <div class="text-right space-y-1">
             <div class="flex items-center justify-end space-x-1.5">
                 <span class="text-[10px] text-gray-400">COINS: <span id="user-coins" class="text-[#00f076] font-bold">50</span></span>
-                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-[#00f076] text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform">+</button>
+                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-[#00f076] text-black font-extrabold rounded-full flex items-center justify-center text-[10px]">+</button>
             </div>
             <div class="flex items-center justify-end space-x-1.5">
                 <span class="text-[10px] text-gray-400">ATF: <span id="user-atf" class="text-yellow-400 font-bold">0.0000</span></span>
-                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-yellow-400 text-black font-extrabold rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform">+</button>
+                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-yellow-400 text-black font-extrabold rounded-full flex items-center justify-center text-[10px]">+</button>
             </div>
         </div>
     </header>
@@ -51,14 +51,12 @@
                 <p class="text-sm font-semibold mb-2">📢 System Notice:</p>
                 <button id="btn-claim-bonus" onclick="claimDailyBonus()" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-sm">Claim Daily Bonus (+15 Coins)</button>
             </div>
-
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-3 flex justify-around text-xs">
                 <span>💧 Water: <b id="res-water">1</b></span>
                 <span>🧪 Fert: <b id="res-fert">0</b></span>
                 <span>🌱 Seeds: <b id="res-seeds">1</b></span>
                 <span>🍎 Fruits: <b id="res-fruits">0</b></span>
             </div>
-
             <h2 class="text-sm font-bold text-[#00f076]">🌱 Farming Plots</h2>
             <div id="plots-grid" class="grid grid-cols-2 gap-3"></div>
         </div>
@@ -66,48 +64,114 @@
         <!-- 2. MENU MARKET -->
         <div id="section-market" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">Sustainable Agro Market</h2>
-            <p class="text-xs text-gray-400 mb-2">Closed-loop economy: Buy supplies, harvest, and trade securely.</p>
-            
             <div class="grid grid-cols-2 gap-3">
                 <div class="space-y-3">
                     <h3 class="text-xs font-bold text-[#00f076]">💧 Supplies</h3>
                     <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
-                        <div><h4 class="font-bold text-xs">Water Supply</h4><p class="text-[10px] text-gray-400">Price: 20 Coins (-30m)</p></div>
+                        <div><h4 class="font-bold text-xs">Water Supply</h4><p class="text-[10px] text-gray-400">Price: 20 Coins</p></div>
                         <button onclick="buyItem('WATER')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-xs">Buy 1x</button>
                     </div>
                     <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
-                        <div><h4 class="font-bold text-xs">Fertilizer</h4><p class="text-[10px] text-gray-400">Price: 50 Coins (-60m)</p></div>
+                        <div><h4 class="font-bold text-xs">Fertilizer</h4><p class="text-[10px] text-gray-400">Price: 50 Coins</p></div>
                         <button onclick="buyItem('FERTILIZER')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-xs">Buy 1x</button>
                     </div>
                 </div>
-
                 <div class="space-y-3">
-                    <h3 class="text-xs font-bold text-yellow-400">📈 Trade & Exchange</h3>
+                    <h3 class="text-xs font-bold text-yellow-400">📈 Trade</h3>
                     <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
-                        <div><h4 class="font-bold text-xs">Sell Fruits</h4><p class="text-[10px] text-gray-400">Reward: 45 Coins / Fruit</p></div>
-                        <button onclick="transactMarket('SELL_FRUITS')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-1.5 rounded-lg text-xs">Sell All</button>
+                        <div><h4 class="font-bold text-xs">Sell Fruits</h4><p class="text-[10px] text-gray-400">45 Coins / Fruit</p></div>
+                        <button onclick="transactMarket('SELL_FRUITS')" class="w-full bg-red-600 text-white font-bold py-1.5 rounded-lg text-xs">Sell All</button>
                     </div>
                     <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
                         <div><h4 class="font-bold text-xs">Exchange ATF</h4><p class="text-[10px] text-gray-400">500 Coins = 1 ATF</p></div>
-                        <button onclick="transactMarket('EXCHANGE_ATF')" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1.5 rounded-lg text-xs">Exchange</button>
+                        <button onclick="transactMarket('EXCHANGE_ATF')" class="w-full bg-yellow-500 text-black font-bold py-1.5 rounded-lg text-xs">Exchange</button>
                     </div>
                 </div>
             </div>
-
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl mt-4">
                 <h3 class="font-bold text-sm text-[#00f076] mb-3">📜 History</h3>
-                <div id="history-list" class="space-y-2 text-xs text-gray-300 max-h-48 overflow-y-auto">
-                    <p class="text-gray-500 italic">Loading history...</p>
-                </div>
+                <div id="history-list" class="space-y-2 text-xs text-gray-300 max-h-48 overflow-y-auto"><p class="text-gray-500 italic">Loading...</p></div>
             </div>
         </div>
 
-        <!-- 3. MENU TASK -->
+        <!-- 3. MENU TASK (DENGAN SUB-MENU ATAS & SISTEM VERIFIKASI MISI) -->
         <div id="section-task" class="space-y-4 hidden">
-            <h2 class="text-lg font-bold text-[#00f076]">⭐ Executive Missions</h2>
-            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
-                <div><h3 class="font-bold text-sm">Watch Sponsor Ads</h3><p class="text-xs text-gray-400">Support server costs (Max 3 times/day)</p></div>
-                <button onclick="completeTask('watch_ads')" class="bg-[#00f076] text-black font-bold px-4 py-1.5 rounded-lg text-xs">Watch (3/3)</button>
+            <h2 class="text-lg font-bold text-[#00f076]">🎯 Missions & Features</h2>
+            
+            <!-- SUB-MENU ATAS (BERGAYA SEPERTI NAVIGASI BAWAH) -->
+            <div class="bg-[#131b2e] border border-gray-800 rounded-xl p-1.5 flex justify-around">
+                <button id="subnav-exec" onclick="switchTaskSub('exec')" class="flex flex-col items-center px-3 py-1.5 rounded-lg text-[#00f076] font-bold text-xs bg-black/30">
+                    <span>⭐ Executive</span>
+                </button>
+                <button id="subnav-special" onclick="switchTaskSub('special')" class="flex flex-col items-center px-3 py-1.5 rounded-lg text-gray-400 text-xs">
+                    <span>🌟 Special</span>
+                </button>
+                <button id="subnav-games" onclick="switchTaskSub('games')" class="flex flex-col items-center px-3 py-1.5 rounded-lg text-gray-400 text-xs">
+                    <span>🎮 Games</span>
+                </button>
+                <button id="subnav-leaderboard" onclick="switchTaskSub('leaderboard')" class="flex flex-col items-center px-3 py-1.5 rounded-lg text-gray-400 text-xs">
+                    <span>🏆 Leaderboard</span>
+                </button>
+            </div>
+
+            <!-- KONTEN SUB-MENU 1: EXECUTIVE MISSIONS -->
+            <div id="subcontent-exec" class="space-y-3">
+                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-sm">Watch Sponsor Ads</h3>
+                        <p class="text-xs text-gray-400">Support server costs (Max 3 times/day)</p>
+                    </div>
+                    <button onclick="completeTask('watch_ads')" class="bg-[#00f076] text-black font-bold px-4 py-1.5 rounded-lg text-xs">Watch</button>
+                </div>
+            </div>
+
+            <!-- KONTEN SUB-MENU 2: SPECIAL MISSIONS -->
+            <div id="subcontent-special" class="space-y-3 hidden">
+                <div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl">
+                    <p class="text-[10px] text-yellow-400">⚠️ <b>Anti-Cheat & Audit Notice:</b> System performs random audits. Deleting badges or bio after claiming coins will result in penalties or withdrawal bans.</p>
+                </div>
+
+                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-sm">Telegram Story Share</h3>
+                        <p class="text-xs text-gray-400">Share bot link to story (Reward: +15 Coins)</p>
+                    </div>
+                    <button id="btn-task-story_share" onclick="verifyAndCompleteTask('story_share', 25)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Verify (25s)</button>
+                </div>
+
+                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-sm">Username Prefix Badge</h3>
+                        <p class="text-xs text-gray-400">Attach @ATFarmBot to name (Reward: +30 Coins)</p>
+                    </div>
+                    <button id="btn-task-username_badge" onclick="verifyAndCompleteTask('username_badge', 25)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Verify (25s)</button>
+                </div>
+
+                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-sm">Bio Referral Link</h3>
+                        <p class="text-xs text-gray-400">Put ref link in Telegram bio (Reward: +50 Coins)</p>
+                    </div>
+                    <button id="btn-task-bio_link" onclick="verifyAndCompleteTask('bio_link', 25)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Verify (25s)</button>
+                </div>
+            </div>
+
+            <!-- KONTEN SUB-MENU 3: GAMES -->
+            <div id="subcontent-games" class="space-y-3 hidden">
+                <div class="bg-[#131b2e] border border-gray-800 p-6 rounded-xl text-center space-y-3">
+                    <span class="text-3xl">🎮</span>
+                    <h3 class="font-bold text-sm text-[#00f076]">Agro Arcade Mini-Games</h3>
+                    <p class="text-xs text-gray-400">Exciting interactive farming mini-games coming soon to boost your earnings!</p>
+                </div>
+            </div>
+
+            <!-- KONTEN SUB-MENU 4: LEADERBOARD -->
+            <div id="subcontent-leaderboard" class="space-y-3 hidden">
+                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl text-center space-y-2">
+                    <span class="text-3xl">🏆</span>
+                    <h3 class="font-bold text-sm text-yellow-400">Global Tycoon Leaderboard</h3>
+                    <p class="text-xs text-gray-400">Top farmers ranked by asset valuation and ATF milestone accumulation. (Live rank sync active)</p>
+                </div>
             </div>
         </div>
 
@@ -115,92 +179,68 @@
         <div id="section-friends" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">👥 Referral System</h2>
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl text-center space-y-3">
-                <p class="text-xs text-gray-400">Invite friends and grow the community together!</p>
+                <p class="text-xs text-gray-400">Invite friends and grow together!</p>
                 <input type="text" id="ref-link" readonly class="w-full bg-black/40 border border-gray-700 p-2 rounded-lg text-xs text-center text-[#00f076]" value="">
-                <button onclick="copyRefLink()" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-xs">Copy Invite Link</button>
+                <button onclick="copyRefLink()" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-xs">Copy Link</button>
             </div>
         </div>
 
-        <!-- 5. MENU WALLET (DENGAN GRID 2 KOLOM SIMETRIS & RIWAYAT DOMPET) -->
+        <!-- 5. MENU WALLET -->
         <div id="section-wallet" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">💎 My Wallet & Top Up</h2>
-            
             <div class="bg-[#131b2e] border border-blue-500/40 p-4 rounded-xl flex items-center justify-between">
                 <div>
-                    <h3 class="font-bold text-sm text-blue-400">TON Wallet Integration</h3>
-                    <p id="wallet-status-text" class="text-[10px] text-gray-400">Connect your TON wallet securely</p>
+                    <h3 class="font-bold text-sm text-blue-400">TON Wallet</h3>
+                    <p class="text-[10px] text-gray-400">Connect securely</p>
                 </div>
                 <div id="ton-connect-button"></div>
             </div>
-
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl space-y-3">
                 <div class="flex justify-between text-sm"><span class="text-gray-400">Total Coins:</span><span id="wallet-coins" class="text-[#00f076] font-bold">50</span></div>
                 <div class="flex justify-between text-sm"><span class="text-gray-400">ATF Balance:</span><span id="wallet-atf" class="text-yellow-400 font-bold">0.0000</span></div>
             </div>
-
-            <!-- WITHDRAWAL SECTION -->
             <div class="bg-[#131b2e] border border-yellow-500/40 p-4 rounded-xl space-y-3">
-                <h3 class="text-sm font-bold text-yellow-400">💸 Withdraw ATF Tokens</h3>
-                <p class="text-[10px] text-gray-400">Rule: Max withdrawal 500 ATF/day. Minimum requirement: 25,000 Coins in balance.</p>
-                <div class="space-y-2">
-                    <input type="number" id="withdraw-amount-input" placeholder="Enter amount to withdraw (Max 500)" class="w-full bg-black/50 border border-gray-700 p-2.5 rounded-lg text-xs text-white">
-                    <button onclick="requestAtfWithdrawal()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2.5 rounded-lg text-xs">Withdraw ATF</button>
-                </div>
+                <h3 class="text-sm font-bold text-yellow-400">💸 Withdraw ATF</h3>
+                <p class="text-[10px] text-gray-400">Max 500 ATF/day. Min 25,000 Coins.</p>
+                <input type="number" id="withdraw-amount-input" placeholder="Enter amount (Max 500)" class="w-full bg-black/50 border border-gray-700 p-2.5 rounded-lg text-xs text-white">
+                <button onclick="requestAtfWithdrawal()" class="w-full bg-yellow-500 text-black font-bold py-2.5 rounded-lg text-xs">Withdraw ATF</button>
             </div>
-
-            <!-- GRID 2 KOLOM SIMETRIS UNTUK PAKET PEMBELIAN -->
             <div class="grid grid-cols-2 gap-3 mt-4">
-                
-                <!-- KOLOM KIRI: GAME COINS PACKAGES -->
                 <div class="space-y-2">
                     <h3 class="text-xs font-bold text-[#00f076]">🪙 Game Coins</h3>
-                    
                     <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
-                        <div><p class="font-bold text-xs">Starter Coins (100)</p><p class="text-[9px] text-gray-400">30 Telegram Stars</p></div>
+                        <div><p class="font-bold text-xs">Starter Coins</p><p class="text-[9px] text-gray-400">30 Stars</p></div>
                         <button onclick="handleDeposit('COINS', 'starter')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-[10px]">Buy 30 ⭐</button>
                     </div>
-
                     <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
-                        <div><p class="font-bold text-xs">Farmer Pro (500)</p><p class="text-[9px] text-gray-400">120 Telegram Stars</p></div>
+                        <div><p class="font-bold text-xs">Farmer Pro</p><p class="text-[9px] text-gray-400">120 Stars</p></div>
                         <button onclick="handleDeposit('COINS', 'popular')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-[10px]">Buy 120 ⭐</button>
                     </div>
-
                     <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
-                        <div><p class="font-bold text-xs">Agro Empire (2,500)</p><p class="text-[9px] text-gray-400">500 Telegram Stars</p></div>
+                        <div><p class="font-bold text-xs">Agro Empire</p><p class="text-[9px] text-gray-400">500 Stars</p></div>
                         <button onclick="handleDeposit('COINS', 'whale')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-[10px]">Buy 500 ⭐</button>
                     </div>
                 </div>
-
-                <!-- KOLOM KANAN: ATF TOKEN PACKAGES -->
                 <div class="space-y-2">
                     <h3 class="text-xs font-bold text-yellow-400">📈 ATF Market</h3>
-                    
                     <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
-                        <div><p class="font-bold text-xs">1.0000 ATF</p><p class="text-[9px] text-gray-400">Dynamic Rate (~150 ⭐)</p></div>
-                        <button onclick="handleDeposit('ATF', 'tier_1')" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1.5 rounded-lg text-[10px]">Buy ATF</button>
+                        <div><p class="font-bold text-xs">1.0000 ATF</p><p class="text-[9px] text-gray-400">~150 ⭐</p></div>
+                        <button onclick="handleDeposit('ATF', 'tier_1')" class="w-full bg-yellow-500 text-black font-bold py-1.5 rounded-lg text-[10px]">Buy ATF</button>
                     </div>
-
                     <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
-                        <div><p class="font-bold text-xs">5.0000 ATF</p><p class="text-[9px] text-gray-400">Dynamic Rate (~750 ⭐)</p></div>
-                        <button onclick="handleDeposit('ATF', 'tier_5')" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1.5 rounded-lg text-[10px]">Buy ATF</button>
+                        <div><p class="font-bold text-xs">5.0000 ATF</p><p class="text-[9px] text-gray-400">~750 ⭐</p></div>
+                        <button onclick="handleDeposit('ATF', 'tier_5')" class="w-full bg-yellow-500 text-black font-bold py-1.5 rounded-lg text-[10px]">Buy ATF</button>
                     </div>
-
                     <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
-                        <div><p class="font-bold text-xs">20.0000 ATF (Whale)</p><p class="text-[9px] text-gray-400">Dynamic Rate (~3,000 ⭐)</p></div>
-                        <button onclick="handleDeposit('ATF', 'tier_20')" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1.5 rounded-lg text-[10px]">Buy ATF</button>
+                        <div><p class="font-bold text-xs">20.0000 ATF</p><p class="text-[9px] text-gray-400">~3,000 ⭐</p></div>
+                        <button onclick="handleDeposit('ATF', 'tier_20')" class="w-full bg-yellow-500 text-black font-bold py-1.5 rounded-lg text-[10px]">Buy ATF</button>
                     </div>
                 </div>
-
             </div>
-
-            <!-- WALLET TRANSACTION HISTORY (KOTAK RIWAYAT KHUSUS DOMPET DI BAGIAN BAWAH) -->
             <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl mt-4">
                 <h3 class="font-bold text-sm text-[#00f076] mb-3">📜 Wallet Transaction History</h3>
-                <div id="wallet-history-list" class="space-y-2 text-xs text-gray-300 max-h-48 overflow-y-auto">
-                    <p class="text-gray-500 italic">Loading wallet history...</p>
-                </div>
+                <div id="wallet-history-list" class="space-y-2 text-xs text-gray-300 max-h-48 overflow-y-auto"><p class="text-gray-500 italic">Loading...</p></div>
             </div>
-
         </div>
 
     </main>
@@ -220,18 +260,9 @@
         <div class="bg-[#131b2e] border border-yellow-400 rounded-2xl w-full max-w-xs p-5 relative text-center space-y-3">
             <h3 class="text-sm font-bold text-yellow-400">🌱 Select Crop for Plot #<span id="active-plot-num">1</span></h3>
             <div class="space-y-2 text-left">
-                <button onclick="confirmPlant('APPLE')" class="w-full bg-black/40 border border-gray-700 hover:border-[#00f076] p-2.5 rounded-xl flex justify-between items-center text-xs">
-                    <div><b>🍎 Apple</b><p class="text-[9px] text-gray-400">Duration: 5h 40m</p></div>
-                    <span class="text-[#00f076] font-bold">10 Coins</span>
-                </button>
-                <button onclick="confirmPlant('STRAWBERRY')" class="w-full bg-black/40 border border-gray-700 hover:border-pink-500 p-2.5 rounded-xl flex justify-between items-center text-xs">
-                    <div><b>🍓 Strawberry</b><p class="text-[9px] text-gray-400">Duration: 2h 20m</p></div>
-                    <span class="text-pink-400 font-bold">34 Coins</span>
-                </button>
-                <button onclick="confirmPlant('ORANGE')" class="w-full bg-black/40 border border-gray-700 hover:border-orange-500 p-2.5 rounded-xl flex justify-between items-center text-xs">
-                    <div><b>🍊 Orange Tree</b><p class="text-[9px] text-gray-400">Duration: 10h</p></div>
-                    <span class="text-orange-400 font-bold">60 Coins</span>
-                </button>
+                <button onclick="confirmPlant('APPLE')" class="w-full bg-black/40 border border-gray-700 p-2.5 rounded-xl flex justify-between items-center text-xs"><b>🍎 Apple</b><span class="text-[#00f076]">10 Coins</span></button>
+                <button onclick="confirmPlant('STRAWBERRY')" class="w-full bg-black/40 border border-gray-700 p-2.5 rounded-xl flex justify-between items-center text-xs"><b>🍓 Strawberry</b><span class="text-pink-400">34 Coins</span></button>
+                <button onclick="confirmPlant('ORANGE')" class="w-full bg-black/40 border border-gray-700 p-2.5 rounded-xl flex justify-between items-center text-xs"><b>🍊 Orange Tree</b><span class="text-orange-400">60 Coins</span></button>
             </div>
             <button onclick="closeCropModal()" class="w-full bg-gray-700 text-white font-bold py-2 rounded-xl text-xs mt-2">Cancel</button>
         </div>
@@ -268,9 +299,8 @@
 
         tonConnectUI.onStatusChange(async (wallet) => {
             if (wallet && wallet.account && wallet.account.address) {
-                let rawAddress = wallet.account.address;
-                gameState.connectedWallet = rawAddress;
-                await syncWalletToServer(rawAddress);
+                gameState.connectedWallet = wallet.account.address;
+                await syncWalletToServer(wallet.account.address);
             } else {
                 gameState.connectedWallet = null;
             }
@@ -278,14 +308,12 @@
 
         async function syncWalletToServer(walletAddress) {
             try {
-                let res = await fetch('/api/user/init', {
+                await fetch('/api/user/init', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ...userData, wallet_address: walletAddress })
                 });
-                let data = await res.json();
-                if (!data.success) console.error("Failed to bind wallet:", data.error);
-            } catch (e) { console.error("Network error syncing wallet"); }
+            } catch (e) { console.error("Wallet sync error"); }
         }
 
         async function initUserSession() {
@@ -307,7 +335,7 @@
                     let plotsRes = await fetch('/api/farm', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'get_plots', user_id: userData.id, telegram_id: userData.id })
+                        body: JSON.stringify({ action: 'get_plots', user_id: userData.id })
                     });
                     let plotsData = await plotsRes.json();
                     gameState.plots = plotsData.success ? plotsData.plots : [];
@@ -333,27 +361,20 @@
                 let walletHistoryList = document.getElementById('wallet-history-list');
 
                 if (data.success && data.history.length > 0) {
-                    let htmlAll = data.history.map(tx => `
+                    historyList.innerHTML = data.history.map(tx => `
                         <div class="flex justify-between items-center border-b border-gray-800 pb-1">
                             <div><span class="font-bold text-[#00f076]">${tx.type}</span><p class="text-[10px] text-gray-400">${tx.description || '-'}</p></div>
                             <span class="text-right text-[10px] text-gray-400">${new Date(tx.created_at).toLocaleTimeString()}</span>
                         </div>
                     `).join('');
-                    if(historyList) historyList.innerHTML = htmlAll;
 
-                    // Saring riwayat khusus dompet (pembelian koin, pembelian ATF, & withdraw)
                     let walletTxs = data.history.filter(tx => tx.type.includes('COINS') || tx.type.includes('ATF') || tx.type === 'WITHDRAW');
-                    if (walletHistoryList) {
-                        walletHistoryList.innerHTML = walletTxs.length > 0 ? walletTxs.map(tx => `
-                            <div class="flex justify-between items-center border-b border-gray-800 pb-1">
-                                <div><span class="font-bold text-yellow-400">${tx.type}</span><p class="text-[10px] text-gray-400">${tx.description || '-'}</p></div>
-                                <span class="text-right text-[10px] text-gray-400">${new Date(tx.created_at).toLocaleTimeString()}</span>
-                            </div>
-                        `).join('') : `<p class="text-gray-500 italic">No wallet transactions recorded yet.</p>`;
-                    }
-                } else {
-                    if(historyList) historyList.innerHTML = `<p class="text-gray-500 italic">No history recorded yet.</p>`;
-                    if(walletHistoryList) walletHistoryList.innerHTML = `<p class="text-gray-500 italic">No wallet transactions recorded yet.</p>`;
+                    walletHistoryList.innerHTML = walletTxs.length > 0 ? walletTxs.map(tx => `
+                        <div class="flex justify-between items-center border-b border-gray-800 pb-1">
+                            <div><span class="font-bold text-yellow-400">${tx.type}</span><p class="text-[10px] text-gray-400">${tx.description || '-'}</p></div>
+                            <span class="text-right text-[10px] text-gray-400">${new Date(tx.created_at).toLocaleTimeString()}</span>
+                        </div>
+                    `).join('') : `<p class="text-gray-500 italic">No wallet transactions recorded yet.</p>`;
                 }
             } catch (e) { console.error("Failed to load history"); }
         }
@@ -411,21 +432,60 @@
         function openCropModal(pIdx) { selectedPlotIndex = pIdx; document.getElementById('active-plot-num').innerText = pIdx; document.getElementById('crop-modal').classList.remove('hidden'); }
         function closeCropModal() { document.getElementById('crop-modal').classList.add('hidden'); }
 
+        // NAVIGASI SUB-MENU TASK ATAS
+        function switchTaskSub(sub) {
+            ['exec', 'special', 'games', 'leaderboard'].forEach(s => {
+                let content = document.getElementById(`subcontent-${s}`);
+                let btn = document.getElementById(`subnav-${s}`);
+                if(content) content.classList.add('hidden');
+                if(btn) {
+                    btn.className = "flex flex-col items-center px-3 py-1.5 rounded-lg text-gray-400 text-xs";
+                }
+            });
+            let targetContent = document.getElementById(`subcontent-${sub}`);
+            let targetBtn = document.getElementById(`subnav-${sub}`);
+            if(targetContent) targetContent.classList.remove('hidden');
+            if(targetBtn) {
+                targetBtn.className = "flex flex-col items-center px-3 py-1.5 rounded-lg text-[#00f076] font-bold text-xs bg-black/30";
+            }
+        }
+
+        // SISTEM VERIFIKASI BERBASIS WAKTU (TRUST & COOLDOWN DELAY - 25 DETIK)
+        async function verifyAndCompleteTask(taskKey, durationSeconds) {
+            let btn = document.getElementById(`btn-task-${taskKey}`);
+            if(!btn) return;
+            
+            btn.disabled = true;
+            let countdown = durationSeconds;
+            let originalText = btn.innerText;
+
+            let timer = setInterval(async () => {
+                countdown--;
+                btn.innerText = `Verifying (${countdown}s)...`;
+                if(countdown <= 0) {
+                    clearInterval(timer);
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    await completeTask(taskKey);
+                }
+            }, 1000);
+        }
+
         async function unlockPlot(pIdx) {
-            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unlock_plot', user_id: userData.id, telegram_id: userData.id, plot_index: pIdx }) });
+            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unlock_plot', user_id: userData.id, plot_index: pIdx }) });
             let data = await res.json(); showModal(data.message || data.error); if(data.success) initUserSession();
         }
         async function confirmPlant(crop) {
             closeCropModal();
-            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'plant', user_id: userData.id, telegram_id: userData.id, plot_index: selectedPlotIndex, crop_type: crop }) });
+            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'plant', user_id: userData.id, plot_index: selectedPlotIndex, crop_type: crop }) });
             let data = await res.json(); showModal(data.message || data.error); if(data.success) initUserSession();
         }
         async function harvestPlot(pIdx) {
-            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'harvest', user_id: userData.id, telegram_id: userData.id, plot_index: pIdx }) });
+            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'harvest', user_id: userData.id, plot_index: pIdx }) });
             let data = await res.json(); showModal(data.message || data.error); if(data.success) initUserSession();
         }
         async function useBoost(type, pIdx) {
-            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'boost', user_id: userData.id, telegram_id: userData.id, boost_type: type, plot_index: pIdx }) });
+            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'boost', user_id: userData.id, boost_type: type, plot_index: pIdx }) });
             let data = await res.json(); showModal(data.message || data.error); if(data.success) initUserSession();
         }
         async function claimDailyBonus() {
@@ -464,7 +524,7 @@
         }
         async function completeTask(key) {
             let res = await fetch('/api/task/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userData.id, task_key: key }) });
-            let data = await res.json(); showModal(data.message); if(data.success) initUserSession();
+            let data = await res.json(); showModal(data.message); if(data.success) { initUserSession(); }
         }
         function copyRefLink() {
             navigator.clipboard.writeText(document.getElementById("ref-link").value);
