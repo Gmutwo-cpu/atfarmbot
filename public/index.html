@@ -46,7 +46,7 @@
         <div id="section-farm" class="space-y-4">
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-3 flex justify-around text-xs">
                 <span>🍎 Fruits: <b id="res-fruits">0</b></span>
-                <button onclick="completeTask('claim_bonus')" class="bg-[#00f076] text-black font-bold px-3 py-1 rounded text-[10px]">Daily Bonus</button>
+                <button onclick="claimBonus()" class="bg-[#00f076] text-black font-bold px-3 py-1 rounded text-[10px]">Daily Bonus</button>
             </div>
 
             <h2 class="text-sm font-bold text-[#00f076]">🌾 Multi-Crop Farming Plots</h2>
@@ -196,14 +196,14 @@
                     // Fetch user plots via unified /api/farm router
                     let plotsRes = await fetch('/api/farm', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'get_plots', user_id: userData.id })
+                        body: JSON.stringify({ action: 'get_plots', user_id: userData.id, telegram_id: userData.id })
                     });
                     let plotsData = await plotsRes.json();
                     gameState.plots = plotsData.success ? plotsData.plots : [];
 
                     updateUI();
                 }
-            } catch (e) { console.error("Init error"); }
+            } catch (e) { console.error("Init error", e); }
             finally {
                 let loader = document.getElementById('loading-screen');
                 if (loader) { loader.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => loader.remove(), 400); }
@@ -277,10 +277,10 @@
         async function unlockPlot(plotIndex) {
             let res = await fetch('/api/farm', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'unlock_plot', user_id: userData.id, plot_index: plotIndex })
+                body: JSON.stringify({ action: 'unlock_plot', user_id: userData.id, telegram_id: userData.id, plot_index: plotIndex })
             });
             let data = await res.json();
-            showModal(data.message);
+            showModal(data.message || data.error);
             if(data.success) initSession();
         }
 
@@ -288,20 +288,30 @@
             closeCropModal();
             let res = await fetch('/api/farm', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'plant', user_id: userData.id, plot_index: selectedPlotIndex, crop_type: cropType })
+                body: JSON.stringify({ action: 'plant', user_id: userData.id, telegram_id: userData.id, plot_index: selectedPlotIndex, crop_type: cropType })
             });
             let data = await res.json();
-            showModal(data.message);
+            showModal(data.message || data.error);
             if(data.success) initSession();
         }
 
         async function harvestPlot(plotIndex) {
             let res = await fetch('/api/farm', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'harvest', user_id: userData.id, plot_index: plotIndex })
+                body: JSON.stringify({ action: 'harvest', user_id: userData.id, telegram_id: userData.id, plot_index: plotIndex })
             });
             let data = await res.json();
-            showModal(data.message);
+            showModal(data.message || data.error);
+            if(data.success) initSession();
+        }
+
+        async function claimBonus() {
+            let res = await fetch('/api/farm', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'claim_dev_bonus', telegram_id: userData.id })
+            });
+            let data = await res.json();
+            showModal(data.message || data.error);
             if(data.success) initSession();
         }
 
