@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
     const now = new Date();
 
-    // 1. Validasi Cooldown / Batasan untuk 'claim_bonus' (1 kali sehari / 24 jam)
+    // 1. Validasi Cooldown 24 Jam khusus untuk 'claim_bonus'
     if (task_key === 'claim_bonus') {
       const { data: lastClaim } = await supabase
         .from('transactions')
@@ -41,12 +41,14 @@ export default async function handler(req, res) {
 
       if (lastClaim) {
         const lastTime = new Date(lastClaim.created_at).getTime();
-        const diffHours = (now.getTime() - lastTime) / (1000 * 60 * 60);
-        if (diffHours < 24) {
-          const remainingHours = Math.ceil(24 - diffHours);
+        const cooldownMs = 24 * 60 * 60 * 1000; // 24 Jam dalam milidetik
+        const nextAvailableTime = lastTime + cooldownMs;
+
+        if (now.getTime() < nextAvailableTime) {
           return res.status(400).json({ 
             success: false, 
-            message: `Daily Bonus already claimed! Available again in ~${remainingHours} hours.` 
+            cooldown_until: nextAvailableTime,
+            message: 'Daily Bonus already claimed! Please wait until the cooldown ends.' 
           });
         }
       }
@@ -116,10 +118,16 @@ export default async function handler(req, res) {
       description: `Completed task: ${task_key} (+${rewardCoins} Coins)`
     }]);
 
-    return res.status(200).json({ 
-      success: true, 
-      message: `Task completed successfully! Reward: +${rewardCoins} Coins added.` 
-    });
+    const responsePayload = {
+      success: true,
+      message: `Task completed successfully! Reward: +${rewardCoins} Coins added.`
+    };
+
+    if (task_key === 'claim_bonus') {
+      responsePayload.cooldown_until = now.getTime() + (24 * 60 * 60 * 1000);
+    }
+
+    return res.status(200).json(responsePayload);
 
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Server Error: ' + err.message });
