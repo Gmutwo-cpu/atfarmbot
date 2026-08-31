@@ -193,10 +193,10 @@
                     gameState.atf = Number(data.user.atf_balance);
                     gameState.fruits = data.farm.fruits;
                     
-                    // Fetch user plots
-                    let plotsRes = await fetch('/api/farm/plots', {
+                    // Fetch user plots via unified /api/farm action router
+                    let plotsRes = await fetch('/api/farm', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ user_id: userData.id })
+                        body: JSON.stringify({ action: 'get_plots', user_id: userData.id })
                     });
                     let plotsData = await plotsRes.json();
                     gameState.plots = plotsData.success ? plotsData.plots : [];
@@ -275,9 +275,9 @@
         }
 
         async function unlockPlot(plotIndex) {
-            let res = await fetch('/api/farm/unlock', {
+            let res = await fetch('/api/farm', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userData.id, plot_index: plotIndex })
+                body: JSON.stringify({ action: 'unlock_plot', user_id: userData.id, plot_index: plotIndex })
             });
             let data = await res.json();
             showModal(data.message);
@@ -286,9 +286,9 @@
 
         async function confirmPlant(cropType) {
             closeCropModal();
-            let res = await fetch('/api/farm/plant', {
+            let res = await fetch('/api/farm', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userData.id, plot_index: selectedPlotIndex, crop_type: cropType })
+                body: JSON.stringify({ action: 'plant', user_id: userData.id, plot_index: selectedPlotIndex, crop_type: cropType })
             });
             let data = await res.json();
             showModal(data.message);
@@ -296,9 +296,9 @@
         }
 
         async function harvestPlot(plotIndex) {
-            let res = await fetch('/api/farm/harvest', {
+            let res = await fetch('/api/farm', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userData.id, plot_index: plotIndex })
+                body: JSON.stringify({ action: 'harvest', user_id: userData.id, plot_index: plotIndex })
             });
             let data = await res.json();
             showModal(data.message);
