@@ -22,8 +22,7 @@ export default async function handler(req, res) {
       'watch_ads': 10,
       'story_share': 15,
       'username_badge': 30,
-      'bio_link': 50,
-      'bind_email': 20
+      'bio_link': 50
     };
 
     const rewardCoins = rewards[task_key];
@@ -32,10 +31,12 @@ export default async function handler(req, res) {
     }
 
     const now = new Date();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
     // 1. Validasi Cooldown 24 Jam khusus untuk 'claim_bonus'
     if (task_key === 'claim_bonus') {
-      const { data: lastClaim, error: claimErr } = await supabase
+      const { data: lastClaim } = await supabase
         .from('transactions')
         .select('created_at')
         .eq('user_id', user_id)
@@ -44,26 +45,16 @@ export default async function handler(req, res) {
         .limit(1)
         .maybeSingle();
 
-      if (!claimErr && lastClaim) {
-        const lastTime = new Date(lastClaim.created_at).getTime();
-        const cooldownMs = 24 * 60 * 60 * 1000; // 24 Jam
-        const nextAvailableTime = lastTime + cooldownMs;
-
-        if (now.getTime() < nextAvailableTime) {
-          return res.status(400).json({ 
-            success: false, 
-            cooldown_until: nextAvailableTime,
-            message: 'Daily Bonus already claimed! Please wait until the cooldown ends.' 
-          });
+      if (lastClaim) {
+        let nextAvailable = new Date(lastClaim.created_at).getTime() + (24 * 60 * 60 * 1000);
+        if (now.getTime() < nextAvailable) {
+          return res.status(400).json({ success: false, cooldown_until: nextAvailable, message: 'Daily Bonus already claimed! Please wait.' });
         }
       }
     }
 
-    // 2. Validasi Batasan untuk 'watch_ads' (Maksimal 3 kali sehari)
+    // 2. Validasi Batasan 'watch_ads' (Maksimal 3 kali sehari)
     if (task_key === 'watch_ads') {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-
       const { data: adsToday } = await supabase
         .from('transactions')
         .select('*')
@@ -72,31 +63,28 @@ export default async function handler(req, res) {
         .gte('created_at', todayStart.toISOString());
 
       if (adsToday && adsToday.length >= 3) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Daily limit reached! You can only watch sponsor ads 3 times per day.' 
-        });
+        return res.status(400).json({ success: false, message: 'Daily limit reached! Max 3 times per day.' });
       }
     }
 
-    // 3. Validasi Misi Sekali Selesai (Social Tasks)
-    if (task_key !== 'claim_bonus' && task_key !== 'watch_ads') {
-      const { data: existingTask } = await supabase
-        .from('tasks_completed')
+    // 3. Validasi Harian untuk Special Missions (Sekali sehari: story_share, username_badge, bio_link)
+    if (['story_share', 'username_badge', 'bio_link'].includes(task_key)) {
+      const txType = `SPECIAL_TASK_${task_key.toUpperCase()}`;
+      const { data: completedToday } = await supabase
+        .from('transactions')
         .select('*')
         .eq('user_id', user_id)
-        .eq('task_key', task_key)
+        .eq('type', txType)
+        .gte('created_at', todayStart.toISOString())
         .maybeSingle();
 
-      if (existingTask) {
-        return res.status(400).json({ success: false, message: 'This task has already been completed!' });
+      if (completedToday) {
+        return res.status(400).json({ success: false, message: 'You have already completed this special mission today!' });
       }
-
-      await supabase.from('tasks_completed').insert([{ user_id, task_key }]);
     }
 
     // Ambil data user
-    const { data: user, error: userError } = await supabase
+    let { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('id', user_id)
@@ -107,23 +95,21 @@ export default async function handler(req, res) {
     }
 
     const updatedCoins = Number(user.coins) + rewardCoins;
+    await supabase.from('users').update({ coins: updatedCoins, updated_at: now }).eq('id', user_id);
 
-    await supabase
-      .from('users')
-      .update({ coins: updatedCoins, updated_at: now })
-      .eq('id', user_id);
-
-    // Catat transaksi
-    let txType = task_key === 'claim_bonus' ? 'CLAIM_BONUS' : (task_key === 'watch_ads' ? 'WATCH_ADS' : 'TASK_REWARD');
+    // Tentukan tipe transaksi
+    let recordedType = task_key === 'claim_bonus' ? 'CLAIM_BONUS' : (task_key === 'watch_ads' ? 'WATCH_ADS' : `SPECIAL_TASK_${task_key.toUpperCase()}`);
+    
     await supabase.from('transactions').insert([{
       user_id,
-      type: txType,
+      type: recordedType,
       amount: rewardCoins,
       currency_type: 'COINS',
-      description: `Completed task: ${task_key} (+${rewardCoins} Coins)`
+      description: `Completed task: ${task_key} (+${rewardCoins} Coins)`,
+      created_at: now
     }]);
 
-    const responsePayload = {
+    let responsePayload = {
       success: true,
       message: `Task completed successfully! Reward: +${rewardCoins} Coins added.`
     };
@@ -134,7 +120,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json(responsePayload);
 
-  } catch (err) {
+  } catatch (err) {
     return res.status(500).json({ success: false, message: 'Server Error: ' + err.message });
   }
 }
