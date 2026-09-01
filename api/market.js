@@ -1,5 +1,19 @@
 import { supabase } from '../utils/supabase.js';
 
+/**
+ * =====================================================================
+ * ATFARM MARKET & LEADERBOARD ROUTER (SERVERLESS FUNCTION)
+ * =====================================================================
+ * SEASON REWARD FINANCIAL POLICY (Total Pool: 30 ATF / Season):
+ * - Rank 1 : 12 ATF (Min. qualification: 10 Points)
+ * - Rank 2 : 8 ATF  (Min. qualification: 7 Points)
+ * - Rank 3 : 5 ATF  (Min. qualification: 5 Points)
+ * - Rank 4 : 3 ATF  (Min. qualification: 3 Points)
+ * - Rank 5 : 2 ATF  (Min. qualification: 2 Points)
+ * Note: Designed to protect ecosystem sustainability & prevent Sybil/zero-point abuse.
+ * =====================================================================
+ */
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
@@ -20,12 +34,13 @@ export default async function handler(req, res) {
   const now = new Date();
 
   try {
-    // 0. ACTION: FETCH LEADERBOARD & USER RANK
+    // 0. ACTION: FETCH LEADERBOARD & USER RANK (FILTERED POINTS > 0)
     if (action === 'leaderboard') {
-      // Ambil 50 user teratas berdasarkan points terbanyak
+      // HANYA ambil user yang memiliki points > 0 untuk publik leaderboard
       let { data: topUsers, error: topErr } = await supabase
         .from('users')
         .select('id, username, first_name, points, atf_balance')
+        .gt('points', 0) // Filter utama agar akun 0 poin tidak tampil
         .order('points', { ascending: false })
         .order('updated_at', { ascending: true })
         .limit(50);
@@ -35,7 +50,6 @@ export default async function handler(req, res) {
       let userRankInfo = { rank: 'Unranked', points: 0 };
       
       if (userIdStr) {
-        // Ambil data user yang sedang aktif
         let { data: currentUser } = await supabase
           .from('users')
           .select('points')
@@ -45,14 +59,18 @@ export default async function handler(req, res) {
         if (currentUser) {
           userRankInfo.points = Number(currentUser.points || 0);
 
-          // Hitung posisi rank aktual secara global berdasarkan poin yang lebih tinggi
-          let { count, error: countErr } = await supabase
-            .from('users')
-            .select('*', { count: 'exact', head: true })
-            .gt('points', currentUser.points || 0);
+          if (userRankInfo.points > 0) {
+            // Hitung posisi rank global jika poin > 0
+            let { count, error: countErr } = await supabase
+              .from('users')
+              .select('*', { count: 'exact', head: true })
+              .gt('points', currentUser.points || 0);
 
-          if (!countErr) {
-            userRankInfo.rank = `#${(count || 0) + 1}`;
+            if (!countErr) {
+              userRankInfo.rank = `#${(count || 0) + 1}`;
+            }
+          } else {
+            userRankInfo.rank = 'Unranked';
           }
         }
       }
@@ -200,7 +218,7 @@ export default async function handler(req, res) {
 
         const newCoins = Number(user.coins) - requiredCoins;
         const newAtf = Number(user.atf_balance || 0) + 1.0000;
-        const newPoints = Number(user.points || 0) + 1; // Otomatis tambah +1 poin pertukaran
+        const newPoints = Number(user.points || 0) + 1;
 
         await supabase.from('users').update({ 
           coins: newCoins, 
