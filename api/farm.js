@@ -7,212 +7,228 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+    return res.status(405).json({ success: false, error: 'Method Not Allowed' });
   }
 
-  const { action, user_id, plot_index } = req.body;
+  const { action, user_id, telegram_id, plot_index, crop_type, boost_type } = req.body;
+  const targetUserId = user_id || telegram_id;
 
-  if (!user_id) {
-    return res.status(400).json({ success: false, message: 'Missing user_id!' });
+  if (!targetUserId) {
+    return res.status(400).json({ success: false, error: 'Missing user ID!' });
   }
 
-  const userIdStr = String(user_id);
+  const userIdStr = String(targetUserId);
   const now = new Date();
 
   try {
-    // 1. GET PLOTS & USER INVENTORY
+    // 1. GET PLOTS (Pastikan Plot #1 otomatis ter-generate jika kosong)
     if (action === 'get_plots') {
-      let { data: farm, error: farmErr } = await supabase
-        .from('user_farms')
+      let { data: plots, error } = await supabase
+        .from('farming_plots')
         .select('*')
         .eq('user_id', userIdStr)
-        .single();
+        .order('plot_index', { ascending: true });
 
-      if (farmErr || !farm) {
-        return res.status(404).json({ success: false, message: 'Farm data not found!' });
+      if (error) throw error;
+
+      // Jika user belum punya plot sama sekali, buatkan Plot #1 secara otomatis
+      if (!plots || plots.length === 0) {
+        const { data: newPlot, error: insErr } = await supabase
+          .from('farming_plots')
+          .insert([{
+            user_id: userIdStr,
+            plot_index: 1,
+            status: 'EMPTY',
+            crop_type: null,
+            harvest_due_at: null,
+            updated_at: now
+          }])
+          .select();
+
+        if (!insErr && newPlot) {
+          plots = newPlot;
+        }
       }
 
-      let plots = farm.plots;
-      if (!plots || !Array.isArray(plots) || plots.length === 0) {
-        plots = [
-          { index: 0, unlocked: true, status: 'empty', planted_at: null, harvest_at: null },
-          { index: 1, unlocked: false, status: 'locked', planted_at: null, harvest_at: null },
-          { index: 2, unlocked: false, status: 'locked', planted_at: null, harvest_at: null },
-          { index: 3, unlocked: false, status: 'locked', planted_at: null, harvest_at: null }
-        ];
-        await supabase.from('user_farms').update({ plots, updated_at: now }).eq('user_id', userIdStr);
-      }
-
-      return res.status(200).json({
-        success: true,
-        plots: plots,
-        seeds: farm.seeds || 0,
-        water: farm.water || 0,
-        fertilizer: farm.fertilizer || 0,
-        fruits: farm.fruits || 0
-      });
+      return res.status(200).json({ success: true, plots: plots || [] });
     }
 
     // 2. UNLOCK PLOT
     if (action === 'unlock_plot') {
-      let { data: farm } = await supabase.from('user_farms').select('*').eq('user_id', userIdStr).single();
-      let { data: user } = await supabase.from('users').select('*').eq('id', userIdStr).single();
+      const costs = { 2: 250, 3: 1000, 4: 5000 };
+      const cost = costs[plot_index];
+      if (!cost) return res.status(400).json({ success: false, error: 'Invalid plot index.' });
 
-      if (!farm || !user) return res.status(404).json({ success: false, message: 'Data not found!' });
-
-      let plots = farm.plots || [];
-      const targetPlot = plots.find(p => p.index === Number(plot_index));
-
-      if (!targetPlot) return res.status(400).json({ success: false, message: 'Invalid plot index!' });
-      if (targetPlot.unlocked) return res.status(400).json({ success: false, message: 'Plot is already unlocked!' });
-
-      const unlockCost = 100 * Number(plot_index); // Plot 1: 100, Plot 2: 200, Plot 3: 300 Coins
-      if (Number(user.coins) < unlockCost) {
-        return res.status(400).json({ success: false, message: `Insufficient Coins! Need ${unlockCost} Coins to unlock.` });
+      let { data: user } = await supabase.from('users').select('coins').eq('id', userIdStr).single();
+      if (!user || Number(user.coins) < cost) {
+        return res.status(400).json({ success: false, error: 'Insufficient coins to unlock this plot!' });
       }
 
-      targetPlot.unlocked = true;
-      targetPlot.status = 'empty';
+      let { data: existingPlot } = await supabase
+        .from('farming_plots')
+        .select('*')
+        .eq('user_id', userIdStr)
+        .eq('plot_index', plot_index)
+        .maybeSingle();
 
-      await supabase.from('users').update({ coins: Number(user.coins) - unlockCost, updated_at: now }).eq('id', userIdStr);
-      await supabase.from('user_farms').update({ plots, updated_at: now }).eq('user_id', userIdStr);
+      await supabase.from('users').update({ coins: Number(user.coins) - cost }).eq('id', userIdStr);
 
-      await supabase.from('transactions').insert([{
-        user_id: userIdStr,
-        type: 'UNLOCK_PLOT',
-        amount: unlockCost,
-        currency_type: 'COINS',
-        description: `Unlocked Farming Plot #${plot_index}`,
-        created_at: now
-      }]);
+      if (existingPlot) {
+        await supabase.from('farming_plots').update({ status: 'EMPTY', updated_at: now }).eq('id', existingPlot.id);
+      } else {
+        await supabase.from('farming_plots').insert([{
+          user_id: userIdStr,
+          plot_index,
+          status: 'EMPTY',
+          updated_at: now
+        }]);
+      }
 
       return res.status(200).json({ success: true, message: `Successfully unlocked Plot #${plot_index}!` });
     }
 
-    // 3. PLANT SEED
+    // 3. PLANT CROP
     if (action === 'plant') {
-      let { data: farm } = await supabase.from('user_farms').select('*').eq('user_id', userIdStr).single();
-      if (!farm) return res.status(404).json({ success: false, message: 'Farm not found!' });
+      const cropConfig = {
+        'APPLE': { cost: 10, durationHours: 5.66 },
+        'STRAWBERRY': { cost: 34, durationHours: 2.33 },
+        'ORANGE': { cost: 60, durationHours: 10.0 }
+      };
 
-      if ((farm.seeds || 0) < 1) {
-        return res.status(400).json({ success: false, message: 'No seeds available! Please buy seeds from the Market.' });
+      const crop = cropConfig[crop_type];
+      if (!crop) return res.status(400).json({ success: false, error: 'Invalid crop type.' });
+
+      let { data: user } = await supabase.from('users').select('coins').eq('id', userIdStr).single();
+      if (!user || Number(user.coins) < crop.cost) {
+        return res.status(400).json({ success: false, error: 'Insufficient coins to buy this seed!' });
       }
 
-      let plots = farm.plots || [];
-      const targetPlot = plots.find(p => p.index === Number(plot_index));
+      let { data: plot } = await supabase
+        .from('farming_plots')
+        .select('*')
+        .eq('user_id', userIdStr)
+        .eq('plot_index', plot_index)
+        .maybeSingle();
 
-      if (!targetPlot || !targetPlot.unlocked) return res.status(400).json({ success: false, message: 'Plot is locked or invalid!' });
-      if (targetPlot.status !== 'empty') return res.status(400).json({ success: false, message: 'Plot is already occupied!' });
+      if (!plot) {
+        return res.status(400).json({ success: false, error: 'Plot not found or locked.' });
+      }
 
-      const harvestDurationMs = 60 * 1000; // 1 Menit durasi tumbuh (bisa disesuaikan)
-      targetPlot.status = 'growing';
-      targetPlot.planted_at = now.toISOString();
-      targetPlot.harvest_at = new Date(now.getTime() + harvestDurationMs).toISOString();
+      if (plot.status !== 'EMPTY') {
+        return res.status(400).json({ success: false, error: 'Plot is already planted or locked.' });
+      }
 
-      await supabase.from('user_farms').update({
-        seeds: farm.seeds - 1,
-        plots,
+      const dueTime = new Date(now.getTime() + crop.durationHours * 3600 * 1000);
+
+      await supabase.from('users').update({ coins: Number(user.coins) - crop.cost }).eq('id', userIdStr);
+      
+      let { error: plantErr } = await supabase.from('farming_plots').update({
+        status: 'PLANTED',
+        crop_type,
+        harvest_due_at: dueTime,
         updated_at: now
-      }).eq('user_id', userIdStr);
+      }).eq('id', plot.id);
 
-      return res.status(200).json({ success: true, message: 'Successfully planted seed!' });
+      if (plantErr) throw plantErr;
+
+      return res.status(200).json({ success: true, message: `Successfully planted ${crop_type} on Plot #${plot_index}!` });
     }
 
-    // 4. HARVEST FRUITS (DENGAN INTEGRASI VALIDASI REFERRAL OTOMATIS)
+    // 4. HARVEST CROP
     if (action === 'harvest') {
-      let { data: farm } = await supabase.from('user_farms').select('*').eq('user_id', userIdStr).single();
-      let { data: user } = await supabase.from('users').select('*').eq('id', userIdStr).single();
+      let { data: plot } = await supabase
+        .from('farming_plots')
+        .select('*')
+        .eq('user_id', userIdStr)
+        .eq('plot_index', plot_index)
+        .maybeSingle();
 
-      if (!farm || !user) return res.status(404).json({ success: false, message: 'Data not found!' });
-
-      let plots = farm.plots || [];
-      const targetPlot = plots.find(p => p.index === Number(plot_index));
-
-      if (!targetPlot || targetPlot.status !== 'growing') {
-        return res.status(400).json({ success: false, message: 'Nothing to harvest here!' });
+      if (!plot || plot.status !== 'PLANTED') {
+        return res.status(400).json({ success: false, error: 'No active crop to harvest on this plot.' });
       }
 
-      if (new Date() < new Date(targetPlot.harvest_at)) {
-        return res.status(400).json({ success: false, message: 'Crop is still growing!' });
+      if (new Date() < new Date(plot.harvest_due_at)) {
+        return res.status(400).json({ success: false, error: 'Crop is still growing!' });
       }
 
-      // Reset plot jadi empty
-      targetPlot.status = 'empty';
-      targetPlot.planted_at = null;
-      targetPlot.harvest_at = null;
+      let rewardFruits = plot.crop_type === 'STRAWBERRY' ? 2 : (plot.crop_type === 'ORANGE' ? 5 : 1);
 
-      const earnedFruits = (farm.fruits || 0) + 1;
+      let { data: farm } = await supabase.from('user_farms').select('*').eq('user_id', userIdStr).maybeSingle();
+      let currentFruits = farm ? (farm.fruits || 0) : 0;
 
       await supabase.from('user_farms').update({
-        fruits: earnedFruits,
-        plots,
+        fruits: currentFruits + rewardFruits,
         updated_at: now
       }).eq('user_id', userIdStr);
 
-      // --- INTEGRASI VALIDASI REFERRAL OTOMATIS ---
-      // Jika user berstatus PENDING dan memiliki pengajak (referred_by), ubah jadi ACTIVE dan beri reward inviter
-      if (user.referral_status === 'PENDING' && user.referred_by) {
-        await supabase.from('users').update({ referral_status: 'ACTIVE', updated_at: now }).eq('id', userIdStr);
+      await supabase.from('farming_plots').update({
+        status: 'EMPTY',
+        crop_type: null,
+        harvest_due_at: null,
+        updated_at: now
+      }).eq('id', plot.id);
 
-        let { data: inviter } = await supabase.from('users').select('*').eq('id', user.referred_by).maybeSingle();
-        if (inviter) {
-          const updatedInviterCoins = Number(inviter.coins || 0) + 50.00;
-          const updatedInviterAtf = Number(inviter.atf_balance || 0) + 1.0000;
-          const updatedInviterPoints = Number(inviter.points || 0) + 1;
-
-          await supabase.from('users').update({
-            coins: updatedInviterCoins,
-            atf_balance: updatedInviterAtf,
-            points: updatedInviterPoints,
-            updated_at: now
-          }).eq('id', inviter.id);
-
-          await supabase.from('transactions').insert([{
-            user_id: inviter.id,
-            type: 'REFERRAL_BONUS',
-            amount: 1.0000,
-            currency_type: 'ATF',
-            description: `Referral reward from @${user.username || user.first_name}: +1 ATF, +1 Point, +50 Coins`,
-            created_at: now
-          }]);
-        }
-      }
-      // -------------------------------------------
-
-      return res.status(200).json({ success: true, message: 'Successfully harvested fruit!' });
+      return res.status(200).json({ success: true, message: `Successfully harvested +${rewardFruits} fruits!` });
     }
 
-    // 5. USE BOOST / WATER / FERTILIZER
+    // 5. BOOST CROP (WATER / FERTILIZER)
     if (action === 'boost') {
-      let { data: farm } = await supabase.from('user_farms').select('*').eq('user_id', userIdStr).single();
-      if (!farm) return res.status(404).json({ success: false, message: 'Farm not found!' });
+      let { data: farm } = await supabase
+        .from('user_farms')
+        .select('*')
+        .eq('user_id', userIdStr)
+        .maybeSingle();
 
-      let plots = farm.plots || [];
-      const targetPlot = plots.find(p => p.index === Number(plot_index));
-
-      if (!targetPlot || targetPlot.status !== 'growing') {
-        return res.status(400).json({ success: false, message: 'No active crop to boost!' });
+      if (!farm) {
+        return res.status(400).json({ success: false, error: 'Farm inventory not found!' });
       }
 
-      if ((farm.water || 0) < 1) {
-        return res.status(400).json({ success: false, message: 'No water available! Buy water from Market.' });
+      let currentWater = farm.water || 0;
+      let currentFert = farm.fertilizer || 0;
+
+      if (boost_type === 'WATER') {
+        if (currentWater <= 0) {
+          return res.status(400).json({ success: false, error: 'Not enough Water Supply!' });
+        }
+      } else if (boost_type === 'FERTILIZER') {
+        if (currentFert <= 0) {
+          return res.status(400).json({ success: false, error: 'Not enough Fertilizer Supply!' });
+        }
+      } else {
+        return res.status(400).json({ success: false, error: 'Invalid boost type.' });
       }
 
-      // Kurangi waktu panen instan (percepat selesai)
-      targetPlot.harvest_at = new Date().toISOString();
+      let { data: plot } = await supabase
+        .from('farming_plots')
+        .select('*')
+        .eq('user_id', userIdStr)
+        .eq('plot_index', plot_index)
+        .maybeSingle();
 
-      await supabase.from('user_farms').update({
-        water: farm.water - 1,
-        plots,
-        updated_at: now
-      }).eq('user_id', userIdStr);
+      if (!plot || plot.status !== 'PLANTED') {
+        return res.status(400).json({ success: false, error: 'No active growing crop on this plot to boost.' });
+      }
 
-      return res.status(200).json({ success: true, message: 'Crop boosted successfully! Ready to harvest.' });
+      let currentDue = new Date(plot.harvest_due_at).getTime();
+      let reductionMs = boost_type === 'WATER' ? 30 * 60 * 1000 : 60 * 60 * 1000;
+      let newDue = new Date(Math.max(now.getTime(), currentDue - reductionMs));
+
+      let updateFarmData = { updated_at: now };
+      if (boost_type === 'WATER') updateFarmData.water = currentWater - 1;
+      if (boost_type === 'FERTILIZER') updateFarmData.fertilizer = currentFert - 1;
+
+      await supabase.from('user_farms').update(updateFarmData).eq('user_id', userIdStr);
+      await supabase.from('farming_plots').update({ harvest_due_at: newDue, updated_at: now }).eq('id', plot.id);
+
+      return res.status(200).json({ 
+        success: true, 
+        message: `Successfully applied ${boost_type} boost! Growth time reduced.` 
+      });
     }
 
-    return res.status(400).json({ success: false, message: 'Invalid farm action.' });
+    return res.status(400).json({ success: false, error: 'Invalid farm action.' });
 
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Server Exception: ' + err.message });
+    return res.status(500).json({ success: false, error: 'Server error: ' + err.message });
   }
 }
