@@ -54,7 +54,7 @@
             <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-3 flex justify-around text-xs">
                 <span>💧 Water: <b id="res-water">1</b></span>
                 <span>🧪 Fert: <b id="res-fert">0</b></span>
-                <span>🌱 Seeds: <b id="res-seeds">1</b></span>
+                <span>🏆 Points: <b id="res-points">0</b></span>
                 <span>🍎 Fruits: <b id="res-fruits">0</b></span>
             </div>
             <h2 class="text-sm font-bold text-[#00f076]">🌱 Farming Plots</h2>
@@ -83,7 +83,7 @@
                         <button onclick="transactMarket('SELL_FRUITS')" class="w-full bg-red-600 text-white font-bold py-1.5 rounded-lg text-xs">Sell All</button>
                     </div>
                     <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
-                        <div><h4 class="font-bold text-xs">Exchange ATF</h4><p class="text-[10px] text-gray-400">500 Coins = 1 ATF</p></div>
+                        <div><h4 class="font-bold text-xs">Exchange ATF</h4><p class="text-[10px] text-gray-400">500 Coins = 1 ATF (+1 Pt)</p></div>
                         <button onclick="transactMarket('EXCHANGE_ATF')" class="w-full bg-yellow-500 text-black font-bold py-1.5 rounded-lg text-xs">Exchange</button>
                     </div>
                 </div>
@@ -94,11 +94,11 @@
             </div>
         </div>
 
-        <!-- 3. MENU TASK (DENGAN SUB-MENU ATAS & SISTEM VERIFIKASI MISI) -->
+        <!-- 3. MENU TASK (DENGAN SUB-MENU ATAS & LEADERBOARD) -->
         <div id="section-task" class="space-y-4 hidden">
             <h2 class="text-lg font-bold text-[#00f076]">🎯 Missions & Features</h2>
             
-            <!-- SUB-MENU ATAS (BERGAYA SEPERTI NAVIGASI BAWAH) -->
+            <!-- SUB-MENU ATAS -->
             <div class="bg-[#131b2e] border border-gray-800 rounded-xl p-1.5 flex justify-around">
                 <button id="subnav-exec" onclick="switchTaskSub('exec')" class="flex flex-col items-center px-3 py-1.5 rounded-lg text-[#00f076] font-bold text-xs bg-black/30">
                     <span>⭐ Executive</span>
@@ -163,10 +163,24 @@
 
             <!-- KONTEN SUB-MENU 4: LEADERBOARD -->
             <div id="subcontent-leaderboard" class="space-y-3 hidden">
-                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl text-center space-y-2">
-                    <span class="text-3xl">🏆</span>
-                    <h3 class="font-bold text-sm text-yellow-400">Global Tycoon Leaderboard</h3>
-                    <p class="text-xs text-gray-400">Top farmers ranked by asset valuation and ATF milestone accumulation. (Live rank sync active)</p>
+                <!-- KARTU PERSONAL RANK -->
+                <div class="bg-gradient-to-r from-[#131b2e] to-[#1f293d] border border-yellow-500/50 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <span class="text-[10px] text-yellow-400 uppercase tracking-wider font-bold">Your Standing</span>
+                        <h3 class="font-bold text-sm text-white" id="my-standing-name">Farmer</h3>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-gray-300">Rank: <b class="text-yellow-400" id="my-standing-rank">--</b></span>
+                        <p class="text-xs text-[#00f076] font-bold" id="my-standing-points">0 Points</p>
+                    </div>
+                </div>
+
+                <!-- LIST RANK 1 - 50 -->
+                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl space-y-3">
+                    <h3 class="font-bold text-sm text-yellow-400 mb-2">🏆 Global Top 50 Tycoons</h3>
+                    <div id="leaderboard-list" class="space-y-2 text-xs text-gray-300 max-h-72 overflow-y-auto">
+                        <p class="text-gray-500 italic text-center py-4">Loading leaderboard...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -285,7 +299,7 @@
             photo_url: tg.initDataUnsafe?.user?.photo_url || "https://via.placeholder.com/48"
         };
 
-        let gameState = { coins: 50, atf: 0, water: 1, fert: 0, seeds: 1, fruits: 0, plots: [], dailyBonusUntil: 0, connectedWallet: null };
+        let gameState = { coins: 50, atf: 0, water: 1, fert: 0, points: 0, fruits: 0, plots: [], dailyBonusUntil: 0, connectedWallet: null };
         let selectedPlotIndex = 1;
 
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -325,7 +339,7 @@
                     gameState.atf = Number(result.user.atf_balance);
                     gameState.water = result.farm.water;
                     gameState.fert = result.farm.fertilizer;
-                    gameState.seeds = result.farm.seeds;
+                    gameState.points = Number(result.user.points || 0);
                     gameState.fruits = result.farm.fruits;
                     
                     let plotsRes = await fetch('/api/farm', {
@@ -338,11 +352,54 @@
 
                     updateUI();
                     fetchHistory();
+                    fetchLeaderboard();
                 }
             } catch (err) { console.error(err); } finally {
                 let loader = document.getElementById('loading-screen');
                 if (loader) { loader.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => loader.remove(), 400); }
             }
+        }
+
+        async function fetchLeaderboard() {
+            try {
+                let res = await fetch('/api/market', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'leaderboard', user_id: userData.id })
+                });
+                let data = await res.json();
+                if (data.success) {
+                    // Update User Standing
+                    document.getElementById('my-standing-name').innerText = userData.first_name;
+                    document.getElementById('my-standing-rank').innerText = data.user_rank.rank;
+                    document.getElementById('my-standing-points').innerText = `${data.user_rank.points} Points`;
+
+                    // Update Top 50 List
+                    let listContainer = document.getElementById('leaderboard-list');
+                    if (data.leaderboard && data.leaderboard.length > 0) {
+                        listContainer.innerHTML = data.leaderboard.map((item, idx) => {
+                            let rankBadge = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `#${idx + 1}`));
+                            return `
+                                <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="font-bold text-yellow-400 w-6">${rankBadge}</span>
+                                        <div>
+                                            <span class="font-bold text-white">${item.first_name || 'Farmer'}</span>
+                                            <p class="text-[9px] text-gray-400">${item.username || '@user'}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="font-bold text-[#00f076]">${item.points || 0} Pts</span>
+                                        <p class="text-[9px] text-gray-400">${Number(item.atf_balance || 0).toFixed(2)} ATF</p>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        listContainer.innerHTML = `<p class="text-gray-500 italic text-center py-4">No ranking records found yet.</p>`;
+                    }
+                }
+            } catch (e) { console.error("Failed to load leaderboard"); }
         }
 
         async function fetchHistory() {
@@ -388,7 +445,7 @@
             
             document.getElementById('res-water').innerText = gameState.water;
             document.getElementById('res-fert').innerText = gameState.fert;
-            document.getElementById('res-seeds').innerText = gameState.seeds;
+            document.getElementById('res-points').innerText = gameState.points;
             document.getElementById('res-fruits').innerText = gameState.fruits;
             document.getElementById('ref-link').value = `https://t.me/ATFarmBot?start=ref_${userData.id}`;
 
@@ -443,6 +500,9 @@
             if(targetContent) targetContent.classList.remove('hidden');
             if(targetBtn) {
                 targetBtn.className = "flex flex-col items-center px-3 py-1.5 rounded-lg text-[#00f076] font-bold text-xs bg-black/30";
+            }
+            if(sub === 'leaderboard') {
+                fetchLeaderboard();
             }
         }
 
@@ -516,7 +576,7 @@
         }
         async function transactMarket(actionType) {
             let res = await fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'transact', user_id: userData.id, action_type: actionType }) });
-            let data = await res.json(); showModal(data.message); if(data.success) { initUserSession(); fetchHistory(); }
+            let data = await res.json(); showModal(data.message); if(data.success) { initUserSession(); fetchHistory(); fetchLeaderboard(); }
         }
         async function completeTask(key) {
             let res = await fetch('/api/task/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userData.id, task_key: key }) });
