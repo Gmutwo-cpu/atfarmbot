@@ -1,135 +1,417 @@
-<!-- FRIENDS TAB VIEW -->
-<div id="view-friends" class="view-section hidden p-4 pb-20 space-y-4">
-  <h1 class="text-xl font-bold text-center text-emerald-400">Invite & Earn</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ATFarm - Fruits Farming AI Trading Forex</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { user-select: none; -webkit-user-select: none; }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans antialiased min-h-screen flex flex-col justify-between">
 
-  <!-- Statistik 2 Kolom Simetris -->
-  <div class="grid grid-cols-2 gap-3">
-    <div class="bg-gray-800/80 border border-emerald-500/30 rounded-xl p-3 text-center">
-      <p class="text-xs text-gray-400 uppercase">Active</p>
-      <p id="ref-active-count" class="text-2xl font-black text-emerald-400">0</p>
-      <p class="text-[10px] text-gray-500">Harvest Verified</p>
-    </div>
-    <div class="bg-gray-800/80 border border-yellow-500/30 rounded-xl p-3 text-center">
-      <p class="text-xs text-gray-400 uppercase">Pending</p>
-      <p id="ref-pending-count" class="text-2xl font-black text-yellow-400">0</p>
-      <p class="text-[10px] text-gray-500">Awaiting Harvest</p>
-    </div>
+  <!-- SPLASH SCREEN -->
+  <div id="splash-screen" class="fixed inset-0 z-50 bg-gray-950 flex flex-col items-center justify-center space-y-4">
+    <div class="text-5xl animate-bounce">🌱</div>
+    <h1 class="text-xl font-black text-emerald-400 tracking-wider">ATFARM</h1>
+    <p class="text-xs text-gray-400 animate-pulse">Initializing Ecosystem...</p>
   </div>
 
-  <!-- Ringkasan Total Pendapatan Referensi -->
-  <div class="bg-gradient-to-r from-emerald-900/40 to-gray-900 border border-emerald-500/40 rounded-xl p-3 flex justify-around text-center">
-    <div>
-      <span class="text-[10px] text-gray-400 block">Total ATF</span>
-      <span id="ref-total-atf" class="text-sm font-bold text-emerald-300">0.0000</span>
-    </div>
-    <div>
-      <span class="text-[10px] text-gray-400 block">Total Points</span>
-      <span id="ref-total-points" class="text-sm font-bold text-yellow-300">0</span>
-    </div>
-    <div>
-      <span class="text-[10px] text-gray-400 block">Total Coins</span>
-      <span id="ref-total-coins" class="text-sm font-bold text-cyan-300">0</span>
-    </div>
+  <!-- MAIN CONTAINER -->
+  <div class="flex-1 flex flex-col max-w-md mx-auto w-full relative overflow-hidden">
+
+    <!-- HEADER PROFILE -->
+    <header class="p-4 bg-gray-900/80 border-b border-gray-800 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <div class="w-9 h-9 rounded-full bg-emerald-600/30 border border-emerald-500/50 flex items-center justify-center font-bold text-emerald-400 text-xs" id="user-initial">F</div>
+        <div>
+          <h2 id="username-display" class="text-xs font-bold text-gray-200">Farmer</h2>
+          <p class="text-[10px] text-emerald-400 flex items-center gap-1">Rank: <span id="user-rank-display">Unranked</span></p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3 bg-gray-950/60 border border-gray-800 rounded-full px-3 py-1">
+        <div class="flex items-center space-x-1">
+          <span class="text-xs">🪙</span>
+          <span id="coins-display" class="text-xs font-bold text-yellow-400">0.00</span>
+        </div>
+        <div class="flex items-center space-x-1 border-l border-gray-800 pl-3">
+          <span class="text-xs">💎</span>
+          <span id="atf-display" class="text-xs font-bold text-emerald-400">0.0000</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT VIEWS WRAPPER -->
+    <main class="flex-1 overflow-y-auto">
+
+      <!-- 1. FARM TAB -->
+      <div id="view-farm" class="view-section p-4 pb-24 space-y-4">
+        <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 text-center">
+          <h2 class="text-sm font-bold text-emerald-400">Farming Plots</h2>
+          <p class="text-[11px] text-gray-400">Plant seeds, water them, and harvest orange fruits!</p>
+        </div>
+        <div id="plots-container" class="grid grid-cols-2 gap-3">
+          <!-- Dynamically rendered plots -->
+        </div>
+        <!-- Inventory mini bar -->
+        <div class="bg-gray-900/60 border border-gray-800 rounded-xl p-3 flex justify-around text-center text-xs">
+          <div><span class="text-gray-400 block text-[10px]">Seeds</span><span id="inv-seeds" class="font-bold text-emerald-400">0</span></div>
+          <div><span class="text-gray-400 block text-[10px]">Water</span><span id="inv-water" class="font-bold text-cyan-400">0</span></div>
+          <div><span class="text-gray-400 block text-[10px]">Fertilizer</span><span id="inv-fertilizer" class="font-bold text-purple-400">0</span></div>
+          <div><span class="text-gray-400 block text-[10px]">Fruits</span><span id="inv-fruits" class="font-bold text-yellow-400">0</span></div>
+        </div>
+      </div>
+
+      <!-- 2. MARKET TAB -->
+      <div id="view-market" class="view-section hidden p-4 pb-24 space-y-4">
+        <h1 class="text-xl font-bold text-center text-emerald-400">Market & Exchange</h1>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 text-center space-y-2">
+            <span class="text-2xl">🌱</span>
+            <h3 class="text-xs font-bold">Seed (34 Coins)</h3>
+            <button onclick="buyItem('SEED')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-1.5 rounded-lg font-bold">Buy Seed</button>
+          </div>
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 text-center space-y-2">
+            <span class="text-2xl">💧</span>
+            <h3 class="text-xs font-bold">Water (20 Coins)</h3>
+            <button onclick="buyItem('WATER')" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs py-1.5 rounded-lg font-bold">Buy Water</button>
+          </div>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 space-y-3">
+          <h3 class="text-xs font-bold text-emerald-400 text-center">Trade Center</h3>
+          <button onclick="sellFruits()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white text-xs py-2 rounded-lg font-bold">Sell All Harvested Fruits (45 Coins/ea)</button>
+          <button onclick="exchangeAtf()" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white text-xs py-2 rounded-lg font-bold">Exchange 500 Coins for 1.0 ATF & +1 Point</button>
+        </div>
+
+        <div class="space-y-2">
+          <h3 class="text-xs font-bold text-gray-300">Transaction History</h3>
+          <div id="history-list" class="space-y-1.5 max-h-36 overflow-y-auto text-xs">
+            <div class="text-center text-gray-500 py-2">Loading history...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. FRIENDS / REFERRAL TAB -->
+      <div id="view-friends" class="view-section hidden p-4 pb-24 space-y-4">
+        <h1 class="text-xl font-bold text-center text-emerald-400">Invite & Earn</h1>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-800/80 border border-emerald-500/30 rounded-xl p-3 text-center">
+            <p class="text-xs text-gray-400 uppercase">Active</p>
+            <p id="ref-active-count" class="text-2xl font-black text-emerald-400">0</p>
+            <p class="text-[10px] text-gray-500">Harvest Verified</p>
+          </div>
+          <div class="bg-gray-800/80 border border-yellow-500/30 rounded-xl p-3 text-center">
+            <p class="text-xs text-gray-400 uppercase">Pending</p>
+            <p id="ref-pending-count" class="text-2xl font-black text-yellow-400">0</p>
+            <p class="text-[10px] text-gray-500">Awaiting Harvest</p>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-emerald-900/40 to-gray-900 border border-emerald-500/40 rounded-xl p-3 flex justify-around text-center">
+          <div>
+            <span class="text-[10px] text-gray-400 block">Total ATF</span>
+            <span id="ref-total-atf" class="text-sm font-bold text-emerald-300">0.0000</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-gray-400 block">Total Points</span>
+            <span id="ref-total-points" class="text-sm font-bold text-yellow-300">0</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-gray-400 block">Total Coins</span>
+            <span id="ref-total-coins" class="text-sm font-bold text-cyan-300">0</span>
+          </div>
+        </div>
+
+        <div class="bg-gray-800/90 border border-gray-700 rounded-xl p-3 space-y-2">
+          <label class="text-xs text-gray-300 font-medium">Your Referral Link</label>
+          <div class="flex gap-2">
+            <input type="text" id="ref-link-input" readonly class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 text-xs text-gray-300 focus:outline-none" />
+            <button onclick="copyRefLink()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition">Copy</button>
+          </div>
+          <button onclick="shareTelegramRef()" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-lg transition flex items-center justify-center gap-2">
+            <span>Share to Telegram</span>
+          </button>
+        </div>
+
+        <div class="bg-gray-900/60 border border-gray-800 rounded-xl p-3 text-[11px] text-gray-400 space-y-1">
+          <p class="font-bold text-gray-300">📌 Referral Rules & Rewards:</p>
+          <p>• You get <span class="text-emerald-400">1 ATF + 1 Point + 50 Coins</span> when your friend completes their first harvest.</p>
+          <p>• Your friend gets <span class="text-cyan-400">50 Coins + 0.1 ATF</span> welcome bonus instantly.</p>
+        </div>
+
+        <div class="space-y-2">
+          <h2 class="text-sm font-bold text-gray-200">My Invites</h2>
+          <div id="ref-invites-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <div class="text-center text-xs text-gray-500 py-4">Loading invites...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. TASK TAB -->
+      <div id="view-task" class="view-section hidden p-4 pb-24 space-y-4">
+        <h1 class="text-xl font-bold text-center text-emerald-400">Daily Tasks & Leaderboard</h1>
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center space-y-2">
+          <p class="text-xs text-gray-400">Global Top 50 Tycoons Leaderboard</p>
+          <div id="leaderboard-list" class="space-y-1 text-xs max-h-60 overflow-y-auto">
+            <div class="text-gray-500">Loading leaderboard...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. WALLET TAB -->
+      <div id="view-wallet" class="view-section hidden p-4 pb-24 space-y-4">
+        <h1 class="text-xl font-bold text-center text-emerald-400">Web3 Wallet & Withdrawal</h1>
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+          <p class="text-xs text-gray-400">Withdraw your ATF tokens (Min. 25,000 Coins balance required).</p>
+          <input type="number" id="withdraw-amount" placeholder="Amount to withdraw" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-xs text-white" />
+          <button onclick="withdrawAtf()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 rounded-lg">Withdraw ATF</button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="absolute bottom-0 left-0 right-0 bg-gray-900/95 border-t border-gray-800 py-2 px-4 flex justify-around items-center z-40">
+      <button onclick="switchTab('farm')" class="nav-btn flex flex-col items-center text-emerald-400" data-target="farm">
+        <span class="text-lg">🌱</span>
+        <span class="text-[10px]">FARM</span>
+      </button>
+      <button onclick="switchTab('market')" class="nav-btn flex flex-col items-center text-gray-400" data-target="market">
+        <span class="text-lg">🛒</span>
+        <span class="text-[10px]">MARKET</span>
+      </button>
+      <button onclick="switchTab('friends')" class="nav-btn flex flex-col items-center text-gray-400" data-target="friends">
+        <span class="text-lg">👥</span>
+        <span class="text-[10px]">FRIENDS</span>
+      </button>
+      <button onclick="switchTab('task')" class="nav-btn flex flex-col items-center text-gray-400" data-target="task">
+        <span class="text-lg">🏆</span>
+        <span class="text-[10px]">TASK</span>
+      </button>
+      <button onclick="switchTab('wallet')" class="nav-btn flex flex-col items-center text-gray-400" data-target="wallet">
+        <span class="text-lg">👛</span>
+        <span class="text-[10px]">WALLET</span>
+      </button>
+    </nav>
+
   </div>
 
-  <!-- Kotak Link & Tombol Aksi Bagikan -->
-  <div class="bg-gray-800/90 border border-gray-700 rounded-xl p-3 space-y-2">
-    <label class="text-xs text-gray-300 font-medium">Your Referral Link</label>
-    <div class="flex gap-2">
-      <input type="text" id="ref-link-input" readonly class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 text-xs text-gray-300 focus:outline-none" value="" />
-      <button onclick="copyRefLink()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition">Copy</button>
-    </div>
-    <button onclick="shareTelegramRef()" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-lg transition flex items-center justify-center gap-2">
-      <span>Share to Telegram</span>
-    </button>
-  </div>
+  <script>
+    let currentUser = null;
 
-  <!-- Cuplikan Persyaratan (Terms & Conditions) -->
-  <div class="bg-gray-900/60 border border-gray-800 rounded-xl p-3 text-[11px] text-gray-400 space-y-1">
-    <p class="font-bold text-gray-300">📌 Referral Rules & Rewards:</p>
-    <p>• You get <span class="text-emerald-400">1 ATF + 1 Point + 50 Coins</span> when your friend completes their first harvest.</p>
-    <p>• Your friend gets <span class="text-cyan-400">50 Coins + 0.1 ATF</span> welcome bonus instantly.</p>
-  </div>
+    window.addEventListener('DOMContentLoaded', () => {
+      const tg = window.Telegram?.WebApp;
+      if (tg) tg.expand();
 
-  <!-- Daftar Riwayat "My Invites" -->
-  <div class="space-y-2">
-    <h2 class="text-sm font-bold text-gray-200">My Invites</h2>
-    <div id="ref-invites-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-      <div class="text-center text-xs text-gray-500 py-4">Loading invites...</div>
-    </div>
-  </div>
-</div>
+      const initData = {
+        id: tg?.initDataUnsafe?.user?.id || 12345,
+        username: tg?.initDataUnsafe?.user?.username || 'TestFarmer',
+        first_name: tg?.initDataUnsafe?.user?.first_name || 'Farmer',
+        start_param: tg?.initDataUnsafe?.start_param || null
+      };
 
-<script>
-  function loadReferralData() {
-    if (!currentUser || !currentUser.id) return;
-    
-    const botUsername = "ATFarmBot"; 
-    const refUrl = `https://t.me/${botUsername}?start=ref_${currentUser.id}`;
-    document.getElementById('ref-link-input').value = refUrl;
-
-    fetch('/api/market', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'referral_stats', user_id: currentUser.id })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        document.getElementById('ref-active-count').innerText = data.stats.active;
-        document.getElementById('ref-pending-count').innerText = data.stats.pending;
-        document.getElementById('ref-total-atf').innerText = Number(data.stats.total_atf).toFixed(4);
-        document.getElementById('ref-total-points').innerText = data.stats.total_points;
-        document.getElementById('ref-total-coins').innerText = data.stats.total_coins;
-
-        const listContainer = document.getElementById('ref-invites-list');
-        if (data.invites.length === 0) {
-          listContainer.innerHTML = `<div class="text-center text-xs text-gray-500 py-4 bg-gray-800/40 rounded-xl">No friends invited yet. Start sharing!</div>`;
-          return;
+      fetch('/api/user/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(initData)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          currentUser = data.user;
+          updateUI(currentUser);
+          loadFarmPlots();
+          document.getElementById('splash-screen').classList.add('hidden');
         }
+      })
+      .catch(err => {
+        console.error("Init error:", err);
+        document.getElementById('splash-screen').innerHTML = `<p class="text-red-500 text-xs">Failed to connect to server.</p>`;
+      });
+    });
 
-        listContainer.innerHTML = data.invites.map(inv => {
-          const isActive = inv.referral_status === 'ACTIVE';
-          return `
-            <div class="bg-gray-800/80 border border-gray-700/60 rounded-xl p-2.5 flex items-center justify-between text-xs">
+    function updateUI(user) {
+      document.getElementById('username-display').innerText = `@${user.username || user.first_name}`;
+      document.getElementById('user-initial').innerText = (user.first_name || 'F').charAt(0).toUpperCase();
+      document.getElementById('coins-display').innerText = Number(user.coins || 0).toFixed(2);
+      document.getElementById('atf-display').innerText = Number(user.atf_balance || 0).toFixed(4);
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`view-${tabName}`).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-emerald-400');
+        btn.classList.add('text-gray-400');
+        if (btn.getAttribute('data-target') === tabName) {
+          btn.classList.remove('text-gray-400');
+          btn.classList.add('text-emerald-400');
+        }
+      });
+
+      if (tabName === 'market') loadHistory();
+      if (tabName === 'friends') loadReferralData();
+      if (tabName === 'task') loadLeaderboard();
+    }
+
+    function loadFarmPlots() {
+      fetch('/api/farm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_plots', user_id: currentUser.id })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById('inv-seeds').innerText = data.seeds;
+          document.getElementById('inv-water').innerText = data.water;
+          document.getElementById('inv-fertilizer').innerText = data.fertilizer;
+          document.getElementById('inv-fruits').innerText = data.fruits;
+
+          const container = document.getElementById('plots-container');
+          container.innerHTML = data.plots.map(plot => {
+            if (!plot.unlocked) {
+              return `
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 text-center flex flex-col justify-center items-center space-y-2 h-32">
+                  <span class="text-xl">🔒</span>
+                  <span class="text-[10px] text-gray-400">Plot #${plot.index} Locked</span>
+                  <button onclick="unlockPlot(${plot.index})" class="bg-gray-800 hover:bg-gray-700 text-emerald-400 text-[10px] font-bold px-3 py-1 rounded">Unlock (${100 * plot.index} Coins)</button>
+                </div>
+              `;
+            } else if (plot.status === 'empty') {
+              return `
+                <div class="bg-gray-900 border border-emerald-500/30 rounded-xl p-3 text-center flex flex-col justify-center items-center space-y-2 h-32">
+                  <span class="text-xl">🟫</span>
+                  <span class="text-[10px] text-emerald-400">Plot #${plot.index} Empty</span>
+                  <button onclick="plantSeed(${plot.index})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded">Plant Seed</button>
+                </div>
+              `;
+            } else {
+              return `
+                <div class="bg-gray-900 border border-yellow-500/30 rounded-xl p-3 text-center flex flex-col justify-center items-center space-y-2 h-32">
+                  <span class="text-xl animate-bounce">🍊</span>
+                  <span class="text-[10px] text-yellow-400">Growing...</span>
+                  <div class="flex gap-1">
+                    <button onclick="harvestPlot(${plot.index})" class="bg-yellow-600 hover:bg-yellow-500 text-white text-[9px] font-bold px-2 py-1 rounded">Harvest</button>
+                    <button onclick="boostPlot(${plot.index})" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[9px] font-bold px-2 py-1 rounded">Boost</button>
+                  </div>
+                </div>
+              `;
+            }
+          }).join('');
+        }
+      });
+    }
+
+    function unlockPlot(index) {
+      fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unlock_plot', user_id: currentUser.id, plot_index: index }) })
+      .then(res => res.json()).then(res => { alert(res.message); if(res.success) location.reload(); });
+    }
+
+    function plantSeed(index) {
+      fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'plant', user_id: currentUser.id, plot_index: index }) })
+      .then(res => res.json()).then(res => { alert(res.message); if(res.success) loadFarmPlots(); });
+    }
+
+    function harvestPlot(index) {
+      fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'harvest', user_id: currentUser.id, plot_index: index }) })
+      .then(res => res.json()).then(res => { alert(res.message); if(res.success) { location.reload(); } });
+    }
+
+    function boostPlot(index) {
+      fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'boost', user_id: currentUser.id, plot_index: index }) })
+      .then(res => res.json()).then(res => { alert(res.message); if(res.success) loadFarmPlots(); });
+    }
+
+    function buyItem(type) {
+      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'buy_item', user_id: currentUser.id, item_type: type }) })
+      .then(res => res.json()).then(res => { alert(res.message); if(res.success) location.reload(); });
+    }
+
+    function sellFruits() {
+      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'transact', action_type: 'SELL_FRUITS', user_id: currentUser.id }) })
+      .then(res => res.json()).then(res => { alert(res.message); if(res.success) location.reload(); });
+    }
+
+    function exchangeAtf() {
+      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'transact', action_type: 'EXCHANGE_ATF', user_id: currentUser.id }) })
+      .then(res => res.json()).then(res => { alert(res.message); if(res.success) location.reload(); });
+    }
+
+    function loadHistory() {
+      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'history', user_id: currentUser.id }) })
+      .then(res => res.json()).then(res => {
+        if (res.success) {
+          const list = document.getElementById('history-list');
+          list.innerHTML = res.history.length ? res.history.map(h => `<div class="bg-gray-950 p-2 rounded flex justify-between"><span>${h.description}</span><span class="text-gray-500">${new Date(h.created_at).toLocaleTimeString()}</span></div>`).join('') : '<div class="text-center text-gray-500">No history found.</div>';
+        }
+      });
+    }
+
+    function loadLeaderboard() {
+      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'leaderboard', user_id: currentUser.id }) })
+      .then(res => res.json()).then(res => {
+        if (res.success) {
+          document.getElementById('user-rank-display').innerText = res.user_rank.rank;
+          const list = document.getElementById('leaderboard-list');
+          list.innerHTML = res.leaderboard.map((u, i) => `<div class="flex justify-between bg-gray-950 p-2 rounded"><span>#${i+1} @${u.username || u.first_name}</span><span class="text-yellow-400 font-bold">${u.points} Points</span></div>`).join('');
+        }
+      });
+    }
+
+    function loadReferralData() {
+      const botUsername = "ATFarmBot"; 
+      document.getElementById('ref-link-input').value = `https://t.me/${botUsername}?start=ref_${currentUser.id}`;
+
+      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'referral_stats', user_id: currentUser.id }) })
+      .then(res => res.json()).then(data => {
+        if (data.success) {
+          document.getElementById('ref-active-count').innerText = data.stats.active;
+          document.getElementById('ref-pending-count').innerText = data.stats.pending;
+          document.getElementById('ref-total-atf').innerText = Number(data.stats.total_atf).toFixed(4);
+          document.getElementById('ref-total-points').innerText = data.stats.total_points;
+          document.getElementById('ref-total-coins').innerText = data.stats.total_coins;
+
+          const listContainer = document.getElementById('ref-invites-list');
+          listContainer.innerHTML = data.invites.length ? data.invites.map(inv => `
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-2.5 flex items-center justify-between text-xs">
               <div>
                 <p class="font-bold text-gray-200">@${inv.username || inv.first_name}</p>
                 <span class="text-[10px] text-gray-400">Joined: ${new Date(inv.created_at).toLocaleDateString()}</span>
               </div>
               <div class="text-right">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-emerald-900/60 text-emerald-400 border border-emerald-500/30' : 'bg-yellow-900/60 text-yellow-400 border border-yellow-500/30'}">
-                  ${inv.referral_status}
-                </span>
-                ${isActive ? '<p class="text-[9px] text-emerald-300 mt-0.5">+1 ATF, +1 Pt, +50 Coins</p>' : '<p class="text-[9px] text-gray-500 mt-0.5">Awaiting harvest</p>'}
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${inv.referral_status === 'ACTIVE' ? 'bg-emerald-900/60 text-emerald-400' : 'bg-yellow-900/60 text-yellow-400'}">${inv.referral_status}</span>
               </div>
             </div>
-          `;
-        }).join('');
-      }
-    })
-    .catch(err => console.error("Failed loading referral stats:", err));
-  }
+          `).join('') : '<div class="text-center text-xs text-gray-500 py-4">No friends invited yet.</div>';
+        }
+      });
+    }
 
-  function copyRefLink() {
-    const input = document.getElementById('ref-link-input');
-    input.select();
-    input.setSelectionRange(0, 99999);
-    navigator.clipboard.writeText(input.value);
-    if (window.Telegram && window.Telegram.WebApp) {
-      window.Telegram.WebApp.showAlert("Referral link copied to clipboard!");
-    } else {
+    function copyRefLink() {
+      const input = document.getElementById('ref-link-input');
+      input.select();
+      navigator.clipboard.writeText(input.value);
       alert("Referral link copied!");
     }
-  }
 
-  function shareTelegramRef() {
-    const link = document.getElementById('ref-link-input').value;
-    const text = encodeURIComponent("🌱 Join ATFarm, plant fruits, and earn real Web3 rewards with me! Start playing here:");
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`;
-    if (window.Telegram && window.Telegram.WebApp) {
-      window.Telegram.WebApp.openTelegramLink(shareUrl);
-    } else {
+    function shareTelegramRef() {
+      const link = document.getElementById('ref-link-input').value;
+      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("🌱 Join ATFarm, plant fruits, and earn real Web3 rewards with me!")}`;
       window.open(shareUrl, '_blank');
     }
-  }
-</script>
+
+    function withdrawAtf() {
+      const amt = document.getElementById('withdraw-amount').value;
+      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'withdraw', user_id: currentUser.id, amount: amt }) })
+      .then(res => res.json()).then(res => { alert(res.message); if(res.success) location.reload(); });
+    }
+  </script>
+</body>
+</html>
