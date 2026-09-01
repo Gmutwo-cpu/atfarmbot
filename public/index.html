@@ -1,417 +1,591 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ATFarm - Fruits Farming AI Trading Forex</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body { user-select: none; -webkit-user-select: none; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATFarm - Fruits Farming AI Trading Forex</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; font-family: sans-serif; }
+    </style>
 </head>
-<body class="bg-gray-950 text-gray-100 font-sans antialiased min-h-screen flex flex-col justify-between">
+<body class="min-h-screen pb-24 flex flex-col justify-between">
 
-  <!-- SPLASH SCREEN -->
-  <div id="splash-screen" class="fixed inset-0 z-50 bg-gray-950 flex flex-col items-center justify-center space-y-4">
-    <div class="text-5xl animate-bounce">🌱</div>
-    <h1 class="text-xl font-black text-emerald-400 tracking-wider">ATFARM</h1>
-    <p class="text-xs text-gray-400 animate-pulse">Initializing Ecosystem...</p>
-  </div>
+    <!-- SPLASH SCREEN -->
+    <div id="loading-screen" class="fixed inset-0 bg-[#0b0f19] flex flex-col items-center justify-center z-50 transition-opacity duration-500">
+        <div class="text-5xl animate-bounce mb-4">🌱</div>
+        <h2 class="text-[#00f076] font-bold text-xl mb-1">ATFarm</h2>
+        <p class="text-xs text-gray-400 animate-pulse">Initializing your agricultural hub...</p>
+    </div>
 
-  <!-- MAIN CONTAINER -->
-  <div class="flex-1 flex flex-col max-w-md mx-auto w-full relative overflow-hidden">
-
-    <!-- HEADER PROFILE -->
-    <header class="p-4 bg-gray-900/80 border-b border-gray-800 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <div class="w-9 h-9 rounded-full bg-emerald-600/30 border border-emerald-500/50 flex items-center justify-center font-bold text-emerald-400 text-xs" id="user-initial">F</div>
-        <div>
-          <h2 id="username-display" class="text-xs font-bold text-gray-200">Farmer</h2>
-          <p class="text-[10px] text-emerald-400 flex items-center gap-1">Rank: <span id="user-rank-display">Unranked</span></p>
+    <!-- HEADER PROFIL USER -->
+    <header class="p-4 flex items-center justify-between bg-[#131b2e] border-b border-gray-800">
+        <div class="flex items-center space-x-3">
+            <img id="user-avatar" src="https://via.placeholder.com/48" alt="Avatar" class="w-12 h-12 rounded-full border-2 border-[#00f076] object-cover">
+            <div>
+                <h2 id="user-name" class="font-bold text-xs text-white">Farmer</h2>
+                <p id="user-username" class="text-[10px] text-gray-400">@username</p>
+                <p id="user-id" class="text-[10px] text-gray-500">ID: --</p>
+            </div>
         </div>
-      </div>
-      <div class="flex items-center space-x-3 bg-gray-950/60 border border-gray-800 rounded-full px-3 py-1">
-        <div class="flex items-center space-x-1">
-          <span class="text-xs">🪙</span>
-          <span id="coins-display" class="text-xs font-bold text-yellow-400">0.00</span>
+        <div class="text-right space-y-1">
+            <div class="flex items-center justify-end space-x-1.5">
+                <span class="text-[10px] text-gray-400">COINS: <span id="user-coins" class="text-[#00f076] font-bold">50</span></span>
+                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-[#00f076] text-black font-extrabold rounded-full flex items-center justify-center text-[10px]">+</button>
+            </div>
+            <div class="flex items-center justify-end space-x-1.5">
+                <span class="text-[10px] text-gray-400">ATF: <span id="user-atf" class="text-yellow-400 font-bold">0.0000</span></span>
+                <button onclick="switchTab('wallet')" class="w-4 h-4 bg-yellow-400 text-black font-extrabold rounded-full flex items-center justify-center text-[10px]">+</button>
+            </div>
         </div>
-        <div class="flex items-center space-x-1 border-l border-gray-800 pl-3">
-          <span class="text-xs">💎</span>
-          <span id="atf-display" class="text-xs font-bold text-emerald-400">0.0000</span>
-        </div>
-      </div>
     </header>
 
-    <!-- CONTENT VIEWS WRAPPER -->
-    <main class="flex-1 overflow-y-auto">
-
-      <!-- 1. FARM TAB -->
-      <div id="view-farm" class="view-section p-4 pb-24 space-y-4">
-        <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 text-center">
-          <h2 class="text-sm font-bold text-emerald-400">Farming Plots</h2>
-          <p class="text-[11px] text-gray-400">Plant seeds, water them, and harvest orange fruits!</p>
-        </div>
-        <div id="plots-container" class="grid grid-cols-2 gap-3">
-          <!-- Dynamically rendered plots -->
-        </div>
-        <!-- Inventory mini bar -->
-        <div class="bg-gray-900/60 border border-gray-800 rounded-xl p-3 flex justify-around text-center text-xs">
-          <div><span class="text-gray-400 block text-[10px]">Seeds</span><span id="inv-seeds" class="font-bold text-emerald-400">0</span></div>
-          <div><span class="text-gray-400 block text-[10px]">Water</span><span id="inv-water" class="font-bold text-cyan-400">0</span></div>
-          <div><span class="text-gray-400 block text-[10px]">Fertilizer</span><span id="inv-fertilizer" class="font-bold text-purple-400">0</span></div>
-          <div><span class="text-gray-400 block text-[10px]">Fruits</span><span id="inv-fruits" class="font-bold text-yellow-400">0</span></div>
-        </div>
-      </div>
-
-      <!-- 2. MARKET TAB -->
-      <div id="view-market" class="view-section hidden p-4 pb-24 space-y-4">
-        <h1 class="text-xl font-bold text-center text-emerald-400">Market & Exchange</h1>
+    <!-- KONTEN UTAMA -->
+    <main class="p-4 flex-1">
         
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 text-center space-y-2">
-            <span class="text-2xl">🌱</span>
-            <h3 class="text-xs font-bold">Seed (34 Coins)</h3>
-            <button onclick="buyItem('SEED')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-1.5 rounded-lg font-bold">Buy Seed</button>
-          </div>
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 text-center space-y-2">
-            <span class="text-2xl">💧</span>
-            <h3 class="text-xs font-bold">Water (20 Coins)</h3>
-            <button onclick="buyItem('WATER')" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs py-1.5 rounded-lg font-bold">Buy Water</button>
-          </div>
+        <!-- 1. MENU FARM -->
+        <div id="section-farm" class="space-y-4">
+            <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-4">
+                <p class="text-sm font-semibold mb-2">📢 System Notice:</p>
+                <button id="btn-claim-bonus" onclick="claimDailyBonus()" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-sm">Claim Daily Bonus</button>
+            </div>
+            <div class="bg-[#131b2e] border border-gray-700 rounded-xl p-3 flex justify-around text-xs">
+                <span>💧 Water: <b id="res-water">1</b></span>
+                <span>🧪 Fert: <b id="res-fert">0</b></span>
+                <span>🏆 Points: <b id="res-points">0</b></span>
+                <span>🍎 Fruits: <b id="res-fruits">0</b></span>
+            </div>
+            <h2 class="text-sm font-bold text-[#00f076]">🌱 Farming Plots</h2>
+            <div id="plots-grid" class="grid grid-cols-2 gap-3"></div>
         </div>
 
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 space-y-3">
-          <h3 class="text-xs font-bold text-emerald-400 text-center">Trade Center</h3>
-          <button onclick="sellFruits()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white text-xs py-2 rounded-lg font-bold">Sell All Harvested Fruits (45 Coins/ea)</button>
-          <button onclick="exchangeAtf()" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white text-xs py-2 rounded-lg font-bold">Exchange 500 Coins for 1.0 ATF & +1 Point</button>
+        <!-- 2. MENU MARKET -->
+        <div id="section-market" class="space-y-4 hidden">
+            <h2 class="text-lg font-bold text-[#00f076]">Market</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-[#00f076]">💧 Supplies</h3>
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
+                        <div><h4 class="font-bold text-xs">Water Supply</h4><p class="text-[10px] text-gray-400">Price: 20 Coins</p></div>
+                        <button onclick="buyItem('WATER')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-xs">Buy 1x</button>
+                    </div>
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
+                        <div><h4 class="font-bold text-xs">Fertilizer</h4><p class="text-[10px] text-gray-400">Price: 50 Coins</p></div>
+                        <button onclick="buyItem('FERTILIZER')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-xs">Buy 1x</button>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-yellow-400">📈 Trade</h3>
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
+                        <div><h4 class="font-bold text-xs">Sell Fruits</h4><p class="text-[10px] text-gray-400">45 Coins / Fruit</p></div>
+                        <button onclick="transactMarket('SELL_FRUITS')" class="w-full bg-red-600 text-white font-bold py-1.5 rounded-lg text-xs">Sell All</button>
+                    </div>
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[110px]">
+                        <div><h4 class="font-bold text-xs">Exchange ATF</h4><p class="text-[10px] text-gray-400">500 Coins = 1 ATF (+1 Pt)</p></div>
+                        <button onclick="transactMarket('EXCHANGE_ATF')" class="w-full bg-yellow-500 text-black font-bold py-1.5 rounded-lg text-xs">Exchange</button>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl mt-4">
+                <h3 class="font-bold text-sm text-[#00f076] mb-3">📜 History</h3>
+                <div id="history-list" class="space-y-2 text-xs text-gray-300 max-h-48 overflow-y-auto"><p class="text-gray-500 italic">Loading...</p></div>
+            </div>
         </div>
 
-        <div class="space-y-2">
-          <h3 class="text-xs font-bold text-gray-300">Transaction History</h3>
-          <div id="history-list" class="space-y-1.5 max-h-36 overflow-y-auto text-xs">
-            <div class="text-center text-gray-500 py-2">Loading history...</div>
-          </div>
-        </div>
-      </div>
+        <!-- 3. MENU TASK (DENGAN SUB-MENU ATAS & LEADERBOARD) -->
+        <div id="section-task" class="space-y-4 hidden">
+            <h2 class="text-lg font-bold text-[#00f076]">🎯 Missions & Features</h2>
+            
+            <!-- SUB-MENU ATAS -->
+            <div class="bg-[#131b2e] border border-gray-800 rounded-xl p-1.5 flex justify-around">
+                <button id="subnav-exec" onclick="switchTaskSub('exec')" class="flex flex-col items-center px-3 py-1.5 rounded-lg text-[#00f076] font-bold text-xs bg-black/30">
+                    <span>⭐ Executive</span>
+                </button>
+                <button id="subnav-special" onclick="switchTaskSub('special')" class="flex flex-col items-center px-3 py-1.5 rounded-lg text-gray-400 text-xs">
+                    <span>🌟 Special</span>
+                </button>
+                <button id="subnav-games" onclick="switchTaskSub('games')" class="flex flex-col items-center px-3 py-1.5 rounded-lg text-gray-400 text-xs">
+                    <span>🎮 Games</span>
+                </button>
+                <button id="subnav-leaderboard" onclick="switchTaskSub('leaderboard')" class="flex flex-col items-center px-3 py-1.5 rounded-lg text-gray-400 text-xs">
+                    <span>🏆 Leaderboard</span>
+                </button>
+            </div>
 
-      <!-- 3. FRIENDS / REFERRAL TAB -->
-      <div id="view-friends" class="view-section hidden p-4 pb-24 space-y-4">
-        <h1 class="text-xl font-bold text-center text-emerald-400">Invite & Earn</h1>
+            <!-- KONTEN SUB-MENU 1: EXECUTIVE MISSIONS -->
+            <div id="subcontent-exec" class="space-y-3">
+                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-sm">Watch Sponsor Ads</h3>
+                        <p class="text-xs text-gray-400">Support server costs (Max 3 times/day)</p>
+                    </div>
+                    <button onclick="completeTask('watch_ads')" class="bg-[#00f076] text-black font-bold px-4 py-1.5 rounded-lg text-xs">Watch</button>
+                </div>
+            </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-gray-800/80 border border-emerald-500/30 rounded-xl p-3 text-center">
-            <p class="text-xs text-gray-400 uppercase">Active</p>
-            <p id="ref-active-count" class="text-2xl font-black text-emerald-400">0</p>
-            <p class="text-[10px] text-gray-500">Harvest Verified</p>
-          </div>
-          <div class="bg-gray-800/80 border border-yellow-500/30 rounded-xl p-3 text-center">
-            <p class="text-xs text-gray-400 uppercase">Pending</p>
-            <p id="ref-pending-count" class="text-2xl font-black text-yellow-400">0</p>
-            <p class="text-[10px] text-gray-500">Awaiting Harvest</p>
-          </div>
+            <!-- KONTEN SUB-MENU 2: SPECIAL MISSIONS -->
+            <div id="subcontent-special" class="space-y-3 hidden">
+                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-sm">Telegram Story Share</h3>
+                        <p class="text-xs text-gray-400">Share bot link to story (Reward: +15 Coins)</p>
+                    </div>
+                    <button id="btn-task-story_share" onclick="verifyAndCompleteTask('story_share', 25)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Verify</button>
+                </div>
+
+                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-sm">Username Prefix Badge</h3>
+                        <p class="text-xs text-gray-400">Attach @ATFarmBot to name (Reward: +30 Coins)</p>
+                    </div>
+                    <button id="btn-task-username_badge" onclick="verifyAndCompleteTask('username_badge', 25)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Verify</button>
+                </div>
+
+                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-sm">Bio Referral Link</h3>
+                        <p class="text-xs text-gray-400">Put ref link in Telegram bio (Reward: +50 Coins)</p>
+                    </div>
+                    <button id="btn-task-bio_link" onclick="verifyAndCompleteTask('bio_link', 25)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Verify</button>
+                </div>
+            </div>
+
+            <!-- KONTEN SUB-MENU 3: GAMES -->
+            <div id="subcontent-games" class="space-y-3 hidden">
+                <div class="bg-[#131b2e] border border-gray-800 p-6 rounded-xl text-center space-y-3">
+                    <span class="text-3xl">🎮</span>
+                    <h3 class="font-bold text-sm text-[#00f076]">Agro Arcade Mini-Games</h3>
+                    <p class="text-xs text-gray-400">Exciting interactive farming mini-games coming soon to boost your earnings!</p>
+                </div>
+            </div>
+
+            <!-- KONTEN SUB-MENU 4: LEADERBOARD -->
+            <div id="subcontent-leaderboard" class="space-y-3 hidden">
+                <!-- KARTU PERSONAL RANK -->
+                <div class="bg-gradient-to-r from-[#131b2e] to-[#1f293d] border border-yellow-500/50 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <span class="text-[10px] text-yellow-400 uppercase tracking-wider font-bold">Your Standing</span>
+                        <h3 class="font-bold text-sm text-white" id="my-standing-name">Farmer</h3>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-gray-300">Rank: <b class="text-yellow-400" id="my-standing-rank">--</b></span>
+                        <p class="text-xs text-[#00f076] font-bold" id="my-standing-points">0 Points</p>
+                    </div>
+                </div>
+
+                <!-- LIST RANK 1 - 50 -->
+                <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl space-y-3">
+                    <h3 class="font-bold text-sm text-yellow-400 mb-2">🏆 Global Top 50 Tycoons</h3>
+                    <div id="leaderboard-list" class="space-y-2 text-xs text-gray-300 max-h-72 overflow-y-auto">
+                        <p class="text-gray-500 italic text-center py-4">Loading leaderboard...</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="bg-gradient-to-r from-emerald-900/40 to-gray-900 border border-emerald-500/40 rounded-xl p-3 flex justify-around text-center">
-          <div>
-            <span class="text-[10px] text-gray-400 block">Total ATF</span>
-            <span id="ref-total-atf" class="text-sm font-bold text-emerald-300">0.0000</span>
-          </div>
-          <div>
-            <span class="text-[10px] text-gray-400 block">Total Points</span>
-            <span id="ref-total-points" class="text-sm font-bold text-yellow-300">0</span>
-          </div>
-          <div>
-            <span class="text-[10px] text-gray-400 block">Total Coins</span>
-            <span id="ref-total-coins" class="text-sm font-bold text-cyan-300">0</span>
-          </div>
+        <!-- 4. MENU FRIENDS -->
+        <div id="section-friends" class="space-y-4 hidden">
+            <h2 class="text-lg font-bold text-[#00f076]">👥 Referral System</h2>
+            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl text-center space-y-3">
+                <p class="text-xs text-gray-400">Invite friends and grow together!</p>
+                <input type="text" id="ref-link" readonly class="w-full bg-black/40 border border-gray-700 p-2 rounded-lg text-xs text-center text-[#00f076]" value="">
+                <button onclick="copyRefLink()" class="w-full bg-[#00f076] text-black font-bold py-2 rounded-lg text-xs">Copy Link</button>
+            </div>
         </div>
 
-        <div class="bg-gray-800/90 border border-gray-700 rounded-xl p-3 space-y-2">
-          <label class="text-xs text-gray-300 font-medium">Your Referral Link</label>
-          <div class="flex gap-2">
-            <input type="text" id="ref-link-input" readonly class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 text-xs text-gray-300 focus:outline-none" />
-            <button onclick="copyRefLink()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition">Copy</button>
-          </div>
-          <button onclick="shareTelegramRef()" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-lg transition flex items-center justify-center gap-2">
-            <span>Share to Telegram</span>
-          </button>
+        <!-- 5. MENU WALLET -->
+        <div id="section-wallet" class="space-y-4 hidden">
+            <h2 class="text-lg font-bold text-[#00f076]">💎 My Wallet & Top Up</h2>
+            <div class="bg-[#131b2e] border border-blue-500/40 p-4 rounded-xl flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-sm text-blue-400">TON Wallet</h3>
+                    <p class="text-[10px] text-gray-400">Connect securely</p>
+                </div>
+                <div id="ton-connect-button"></div>
+            </div>
+            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl space-y-3">
+                <div class="flex justify-between text-sm"><span class="text-gray-400">Total Coins:</span><span id="wallet-coins" class="text-[#00f076] font-bold">50</span></div>
+                <div class="flex justify-between text-sm"><span class="text-gray-400">ATF Balance:</span><span id="wallet-atf" class="text-yellow-400 font-bold">0.0000</span></div>
+            </div>
+            <div class="bg-[#131b2e] border border-yellow-500/40 p-4 rounded-xl space-y-3">
+                <h3 class="text-sm font-bold text-yellow-400">💸 Withdraw ATF</h3>
+                <p class="text-[10px] text-gray-400">Max 500 ATF/day. Min 25,000 Coins.</p>
+                <input type="number" id="withdraw-amount-input" placeholder="Enter amount (Max 500)" class="w-full bg-black/50 border border-gray-700 p-2.5 rounded-lg text-xs text-white">
+                <button onclick="requestAtfWithdrawal()" class="w-full bg-yellow-500 text-black font-bold py-2.5 rounded-lg text-xs">Withdraw ATF</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold text-[#00f076]">🪙 Game Coins</h3>
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
+                        <div><p class="font-bold text-xs">Starter Coins</p><p class="text-[9px] text-gray-400">30 Stars</p></div>
+                        <button onclick="handleDeposit('COINS', 'starter')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-[10px]">Buy 30 ⭐</button>
+                    </div>
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
+                        <div><p class="font-bold text-xs">Farmer Pro</p><p class="text-[9px] text-gray-400">120 Stars</p></div>
+                        <button onclick="handleDeposit('COINS', 'popular')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-[10px]">Buy 120 ⭐</button>
+                    </div>
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
+                        <div><p class="font-bold text-xs">Agro Empire</p><p class="text-[9px] text-gray-400">500 Stars</p></div>
+                        <button onclick="handleDeposit('COINS', 'whale')" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-lg text-[10px]">Buy 500 ⭐</button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold text-yellow-400">📈 ATF Market</h3>
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
+                        <div><p class="font-bold text-xs">1.0000 ATF</p><p class="text-[9px] text-gray-400">~150 ⭐</p></div>
+                        <button onclick="handleDeposit('ATF', 'tier_1')" class="w-full bg-yellow-500 text-black font-bold py-1.5 rounded-lg text-[10px]">Buy ATF</button>
+                    </div>
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
+                        <div><p class="font-bold text-xs">5.0000 ATF</p><p class="text-[9px] text-gray-400">~750 ⭐</p></div>
+                        <button onclick="handleDeposit('ATF', 'tier_5')" class="w-full bg-yellow-500 text-black font-bold py-1.5 rounded-lg text-[10px]">Buy ATF</button>
+                    </div>
+                    <div class="bg-[#131b2e] border border-gray-800 p-3 rounded-xl flex flex-col justify-between h-[115px]">
+                        <div><p class="font-bold text-xs">20.0000 ATF</p><p class="text-[9px] text-gray-400">~3,000 ⭐</p></div>
+                        <button onclick="handleDeposit('ATF', 'tier_20')" class="w-full bg-yellow-500 text-black font-bold py-1.5 rounded-lg text-[10px]">Buy ATF</button>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-[#131b2e] border border-gray-800 p-4 rounded-xl mt-4">
+                <h3 class="font-bold text-sm text-[#00f076] mb-3">📜 Wallet Transaction History</h3>
+                <div id="wallet-history-list" class="space-y-2 text-xs text-gray-300 max-h-48 overflow-y-auto"><p class="text-gray-500 italic">Loading...</p></div>
+            </div>
         </div>
-
-        <div class="bg-gray-900/60 border border-gray-800 rounded-xl p-3 text-[11px] text-gray-400 space-y-1">
-          <p class="font-bold text-gray-300">📌 Referral Rules & Rewards:</p>
-          <p>• You get <span class="text-emerald-400">1 ATF + 1 Point + 50 Coins</span> when your friend completes their first harvest.</p>
-          <p>• Your friend gets <span class="text-cyan-400">50 Coins + 0.1 ATF</span> welcome bonus instantly.</p>
-        </div>
-
-        <div class="space-y-2">
-          <h2 class="text-sm font-bold text-gray-200">My Invites</h2>
-          <div id="ref-invites-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-            <div class="text-center text-xs text-gray-500 py-4">Loading invites...</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4. TASK TAB -->
-      <div id="view-task" class="view-section hidden p-4 pb-24 space-y-4">
-        <h1 class="text-xl font-bold text-center text-emerald-400">Daily Tasks & Leaderboard</h1>
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center space-y-2">
-          <p class="text-xs text-gray-400">Global Top 50 Tycoons Leaderboard</p>
-          <div id="leaderboard-list" class="space-y-1 text-xs max-h-60 overflow-y-auto">
-            <div class="text-gray-500">Loading leaderboard...</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 5. WALLET TAB -->
-      <div id="view-wallet" class="view-section hidden p-4 pb-24 space-y-4">
-        <h1 class="text-xl font-bold text-center text-emerald-400">Web3 Wallet & Withdrawal</h1>
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-          <p class="text-xs text-gray-400">Withdraw your ATF tokens (Min. 25,000 Coins balance required).</p>
-          <input type="number" id="withdraw-amount" placeholder="Amount to withdraw" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-xs text-white" />
-          <button onclick="withdrawAtf()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 rounded-lg">Withdraw ATF</button>
-        </div>
-      </div>
 
     </main>
 
-    <!-- BOTTOM NAVIGATION -->
-    <nav class="absolute bottom-0 left-0 right-0 bg-gray-900/95 border-t border-gray-800 py-2 px-4 flex justify-around items-center z-40">
-      <button onclick="switchTab('farm')" class="nav-btn flex flex-col items-center text-emerald-400" data-target="farm">
-        <span class="text-lg">🌱</span>
-        <span class="text-[10px]">FARM</span>
-      </button>
-      <button onclick="switchTab('market')" class="nav-btn flex flex-col items-center text-gray-400" data-target="market">
-        <span class="text-lg">🛒</span>
-        <span class="text-[10px]">MARKET</span>
-      </button>
-      <button onclick="switchTab('friends')" class="nav-btn flex flex-col items-center text-gray-400" data-target="friends">
-        <span class="text-lg">👥</span>
-        <span class="text-[10px]">FRIENDS</span>
-      </button>
-      <button onclick="switchTab('task')" class="nav-btn flex flex-col items-center text-gray-400" data-target="task">
-        <span class="text-lg">🏆</span>
-        <span class="text-[10px]">TASK</span>
-      </button>
-      <button onclick="switchTab('wallet')" class="nav-btn flex flex-col items-center text-gray-400" data-target="wallet">
-        <span class="text-lg">👛</span>
-        <span class="text-[10px]">WALLET</span>
-      </button>
+    <!-- CUSTOM POPUP MODAL -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#131b2e] border border-[#00f076] rounded-2xl w-full max-w-sm p-5 relative shadow-xl">
+            <button onclick="closeModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white font-bold text-lg">✕</button>
+            <h3 class="text-[#00f076] font-bold text-center text-lg mb-2">Notice</h3>
+            <p id="modal-message" class="text-sm text-center text-gray-200 mb-6">Message goes here</p>
+            <button onclick="closeModal()" class="w-full bg-[#00f076] text-black font-bold py-2.5 rounded-xl">OK</button>
+        </div>
+    </div>
+
+    <!-- MODAL PEMILIHAN BIBIT -->
+    <div id="crop-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-[#131b2e] border border-yellow-400 rounded-2xl w-full max-w-xs p-5 relative text-center space-y-3">
+            <h3 class="text-sm font-bold text-yellow-400">🌱 Select Crop for Plot #<span id="active-plot-num">1</span></h3>
+            <div class="space-y-2 text-left">
+                <button onclick="confirmPlant('APPLE')" class="w-full bg-black/40 border border-gray-700 p-2.5 rounded-xl flex justify-between items-center text-xs"><b>🍎 Apple</b><span class="text-[#00f076]">10 Coins</span></button>
+                <button onclick="confirmPlant('STRAWBERRY')" class="w-full bg-black/40 border border-gray-700 p-2.5 rounded-xl flex justify-between items-center text-xs"><b>🍓 Strawberry</b><span class="text-pink-400">34 Coins</span></button>
+                <button onclick="confirmPlant('ORANGE')" class="w-full bg-black/40 border border-gray-700 p-2.5 rounded-xl flex justify-between items-center text-xs"><b>🍊 Orange Tree</b><span class="text-orange-400">60 Coins</span></button>
+            </div>
+            <button onclick="closeCropModal()" class="w-full bg-gray-700 text-white font-bold py-2 rounded-xl text-xs mt-2">Cancel</button>
+        </div>
+    </div>
+
+    <!-- NAVIGASI BAWAH -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-[#131b2e] border-t border-gray-800 flex justify-around py-2 z-40">
+        <button id="nav-farm" onclick="switchTab('farm')" class="flex flex-col items-center text-[#00f076] font-bold"><span class="text-xl mb-0.5">🌱</span><span class="text-[10px]">FARM</span></button>
+        <button id="nav-market" onclick="switchTab('market')" class="flex flex-col items-center text-gray-400"><span class="text-xl mb-0.5">📈</span><span class="text-[10px]">MARKET</span></button>
+        <button id="nav-task" onclick="switchTab('task')" class="flex flex-col items-center text-gray-400"><span class="text-xl mb-0.5">📋</span><span class="text-[10px]">TASK</span></button>
+        <button id="nav-friends" onclick="switchTab('friends')" class="flex flex-col items-center text-gray-400"><span class="text-xl mb-0.5">👥</span><span class="text-[10px]">FRIENDS</span></button>
+        <button id="nav-wallet" onclick="switchTab('wallet')" class="flex flex-col items-center text-gray-400"><span class="text-xl mb-0.5">💎</span><span class="text-[10px]">WALLET</span></button>
     </nav>
 
-  </div>
+    <!-- LOGIKA JAVASCRIPT -->
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
 
-  <script>
-    let currentUser = null;
+        let userData = {
+            id: tg.initDataUnsafe?.user?.id || 8560233709,
+            username: tg.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : "@moneytree_game_bot",
+            first_name: tg.initDataUnsafe?.user?.first_name || "Gamutwo",
+            photo_url: tg.initDataUnsafe?.user?.photo_url || "https://via.placeholder.com/48"
+        };
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const tg = window.Telegram?.WebApp;
-      if (tg) tg.expand();
+        let gameState = { coins: 50, atf: 0, water: 1, fert: 0, points: 0, fruits: 0, plots: [], dailyBonusUntil: 0, connectedWallet: null };
+        let selectedPlotIndex = 1;
 
-      const initData = {
-        id: tg?.initDataUnsafe?.user?.id || 12345,
-        username: tg?.initDataUnsafe?.user?.username || 'TestFarmer',
-        first_name: tg?.initDataUnsafe?.user?.first_name || 'Farmer',
-        start_param: tg?.initDataUnsafe?.start_param || null
-      };
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: window.location.origin + '/tonconnect-manifest.json',
+            buttonRootId: 'ton-connect-button'
+        });
 
-      fetch('/api/user/init', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(initData)
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          currentUser = data.user;
-          updateUI(currentUser);
-          loadFarmPlots();
-          document.getElementById('splash-screen').classList.add('hidden');
-        }
-      })
-      .catch(err => {
-        console.error("Init error:", err);
-        document.getElementById('splash-screen').innerHTML = `<p class="text-red-500 text-xs">Failed to connect to server.</p>`;
-      });
-    });
-
-    function updateUI(user) {
-      document.getElementById('username-display').innerText = `@${user.username || user.first_name}`;
-      document.getElementById('user-initial').innerText = (user.first_name || 'F').charAt(0).toUpperCase();
-      document.getElementById('coins-display').innerText = Number(user.coins || 0).toFixed(2);
-      document.getElementById('atf-display').innerText = Number(user.atf_balance || 0).toFixed(4);
-    }
-
-    function switchTab(tabName) {
-      document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-      document.getElementById(`view-${tabName}`).classList.remove('hidden');
-
-      document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('text-emerald-400');
-        btn.classList.add('text-gray-400');
-        if (btn.getAttribute('data-target') === tabName) {
-          btn.classList.remove('text-gray-400');
-          btn.classList.add('text-emerald-400');
-        }
-      });
-
-      if (tabName === 'market') loadHistory();
-      if (tabName === 'friends') loadReferralData();
-      if (tabName === 'task') loadLeaderboard();
-    }
-
-    function loadFarmPlots() {
-      fetch('/api/farm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get_plots', user_id: currentUser.id })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          document.getElementById('inv-seeds').innerText = data.seeds;
-          document.getElementById('inv-water').innerText = data.water;
-          document.getElementById('inv-fertilizer').innerText = data.fertilizer;
-          document.getElementById('inv-fruits').innerText = data.fruits;
-
-          const container = document.getElementById('plots-container');
-          container.innerHTML = data.plots.map(plot => {
-            if (!plot.unlocked) {
-              return `
-                <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 text-center flex flex-col justify-center items-center space-y-2 h-32">
-                  <span class="text-xl">🔒</span>
-                  <span class="text-[10px] text-gray-400">Plot #${plot.index} Locked</span>
-                  <button onclick="unlockPlot(${plot.index})" class="bg-gray-800 hover:bg-gray-700 text-emerald-400 text-[10px] font-bold px-3 py-1 rounded">Unlock (${100 * plot.index} Coins)</button>
-                </div>
-              `;
-            } else if (plot.status === 'empty') {
-              return `
-                <div class="bg-gray-900 border border-emerald-500/30 rounded-xl p-3 text-center flex flex-col justify-center items-center space-y-2 h-32">
-                  <span class="text-xl">🟫</span>
-                  <span class="text-[10px] text-emerald-400">Plot #${plot.index} Empty</span>
-                  <button onclick="plantSeed(${plot.index})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded">Plant Seed</button>
-                </div>
-              `;
+        tonConnectUI.onStatusChange(async (wallet) => {
+            if (wallet && wallet.account && wallet.account.address) {
+                gameState.connectedWallet = wallet.account.address;
+                await syncWalletToServer(wallet.account.address);
             } else {
-              return `
-                <div class="bg-gray-900 border border-yellow-500/30 rounded-xl p-3 text-center flex flex-col justify-center items-center space-y-2 h-32">
-                  <span class="text-xl animate-bounce">🍊</span>
-                  <span class="text-[10px] text-yellow-400">Growing...</span>
-                  <div class="flex gap-1">
-                    <button onclick="harvestPlot(${plot.index})" class="bg-yellow-600 hover:bg-yellow-500 text-white text-[9px] font-bold px-2 py-1 rounded">Harvest</button>
-                    <button onclick="boostPlot(${plot.index})" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[9px] font-bold px-2 py-1 rounded">Boost</button>
-                  </div>
-                </div>
-              `;
+                gameState.connectedWallet = null;
             }
-          }).join('');
+        });
+
+        async function syncWalletToServer(walletAddress) {
+            try {
+                await fetch('/api/user/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...userData, wallet_address: walletAddress })
+                });
+            } catch (e) { console.error("Wallet sync error"); }
         }
-      });
-    }
 
-    function unlockPlot(index) {
-      fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unlock_plot', user_id: currentUser.id, plot_index: index }) })
-      .then(res => res.json()).then(res => { alert(res.message); if(res.success) location.reload(); });
-    }
+        async function initUserSession() {
+            try {
+                let response = await fetch('/api/user/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                let result = await response.json();
+                if (result.success) {
+                    gameState.coins = Number(result.user.coins);
+                    gameState.atf = Number(result.user.atf_balance);
+                    gameState.water = result.farm.water;
+                    gameState.fert = result.farm.fertilizer;
+                    gameState.points = Number(result.user.points || 0);
+                    gameState.fruits = result.farm.fruits;
+                    
+                    let plotsRes = await fetch('/api/farm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'get_plots', user_id: userData.id })
+                    });
+                    let plotsData = await plotsRes.json();
+                    gameState.plots = plotsData.success ? plotsData.plots : [];
 
-    function plantSeed(index) {
-      fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'plant', user_id: currentUser.id, plot_index: index }) })
-      .then(res => res.json()).then(res => { alert(res.message); if(res.success) loadFarmPlots(); });
-    }
-
-    function harvestPlot(index) {
-      fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'harvest', user_id: currentUser.id, plot_index: index }) })
-      .then(res => res.json()).then(res => { alert(res.message); if(res.success) { location.reload(); } });
-    }
-
-    function boostPlot(index) {
-      fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'boost', user_id: currentUser.id, plot_index: index }) })
-      .then(res => res.json()).then(res => { alert(res.message); if(res.success) loadFarmPlots(); });
-    }
-
-    function buyItem(type) {
-      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'buy_item', user_id: currentUser.id, item_type: type }) })
-      .then(res => res.json()).then(res => { alert(res.message); if(res.success) location.reload(); });
-    }
-
-    function sellFruits() {
-      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'transact', action_type: 'SELL_FRUITS', user_id: currentUser.id }) })
-      .then(res => res.json()).then(res => { alert(res.message); if(res.success) location.reload(); });
-    }
-
-    function exchangeAtf() {
-      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'transact', action_type: 'EXCHANGE_ATF', user_id: currentUser.id }) })
-      .then(res => res.json()).then(res => { alert(res.message); if(res.success) location.reload(); });
-    }
-
-    function loadHistory() {
-      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'history', user_id: currentUser.id }) })
-      .then(res => res.json()).then(res => {
-        if (res.success) {
-          const list = document.getElementById('history-list');
-          list.innerHTML = res.history.length ? res.history.map(h => `<div class="bg-gray-950 p-2 rounded flex justify-between"><span>${h.description}</span><span class="text-gray-500">${new Date(h.created_at).toLocaleTimeString()}</span></div>`).join('') : '<div class="text-center text-gray-500">No history found.</div>';
+                    updateUI();
+                    fetchHistory();
+                    fetchLeaderboard();
+                }
+            } catch (err) { console.error(err); } finally {
+                let loader = document.getElementById('loading-screen');
+                if (loader) { loader.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => loader.remove(), 400); }
+            }
         }
-      });
-    }
 
-    function loadLeaderboard() {
-      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'leaderboard', user_id: currentUser.id }) })
-      .then(res => res.json()).then(res => {
-        if (res.success) {
-          document.getElementById('user-rank-display').innerText = res.user_rank.rank;
-          const list = document.getElementById('leaderboard-list');
-          list.innerHTML = res.leaderboard.map((u, i) => `<div class="flex justify-between bg-gray-950 p-2 rounded"><span>#${i+1} @${u.username || u.first_name}</span><span class="text-yellow-400 font-bold">${u.points} Points</span></div>`).join('');
+        async function fetchLeaderboard() {
+            try {
+                let res = await fetch('/api/market', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'leaderboard', user_id: userData.id })
+                });
+                let data = await res.json();
+                if (data.success) {
+                    // Update User Standing
+                    document.getElementById('my-standing-name').innerText = userData.first_name;
+                    document.getElementById('my-standing-rank').innerText = data.user_rank.rank;
+                    document.getElementById('my-standing-points').innerText = `${data.user_rank.points} Points`;
+
+                    // Update Top 50 List
+                    let listContainer = document.getElementById('leaderboard-list');
+                    if (data.leaderboard && data.leaderboard.length > 0) {
+                        listContainer.innerHTML = data.leaderboard.map((item, idx) => {
+                            let rankBadge = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `#${idx + 1}`));
+                            return `
+                                <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="font-bold text-yellow-400 w-6">${rankBadge}</span>
+                                        <div>
+                                            <span class="font-bold text-white">${item.first_name || 'Farmer'}</span>
+                                            <p class="text-[9px] text-gray-400">${item.username || '@user'}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="font-bold text-[#00f076]">${item.points || 0} Pts</span>
+                                        <p class="text-[9px] text-gray-400">${Number(item.atf_balance || 0).toFixed(2)} ATF</p>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        listContainer.innerHTML = `<p class="text-gray-500 italic text-center py-4">No ranking records found yet.</p>`;
+                    }
+                }
+            } catch (e) { console.error("Failed to load leaderboard"); }
         }
-      });
-    }
 
-    function loadReferralData() {
-      const botUsername = "ATFarmBot"; 
-      document.getElementById('ref-link-input').value = `https://t.me/${botUsername}?start=ref_${currentUser.id}`;
+        async function fetchHistory() {
+            try {
+                let res = await fetch('/api/market', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'history', user_id: userData.id })
+                });
+                let data = await res.json();
+                let historyList = document.getElementById('history-list');
+                let walletHistoryList = document.getElementById('wallet-history-list');
 
-      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'referral_stats', user_id: currentUser.id }) })
-      .then(res => res.json()).then(data => {
-        if (data.success) {
-          document.getElementById('ref-active-count').innerText = data.stats.active;
-          document.getElementById('ref-pending-count').innerText = data.stats.pending;
-          document.getElementById('ref-total-atf').innerText = Number(data.stats.total_atf).toFixed(4);
-          document.getElementById('ref-total-points').innerText = data.stats.total_points;
-          document.getElementById('ref-total-coins').innerText = data.stats.total_coins;
+                if (data.success && data.history.length > 0) {
+                    historyList.innerHTML = data.history.map(tx => `
+                        <div class="flex justify-between items-center border-b border-gray-800 pb-1">
+                            <div><span class="font-bold text-[#00f076]">${tx.type}</span><p class="text-[10px] text-gray-400">${tx.description || '-'}</p></div>
+                            <span class="text-right text-[10px] text-gray-400">${new Date(tx.created_at).toLocaleTimeString()}</span>
+                        </div>
+                    `).join('');
 
-          const listContainer = document.getElementById('ref-invites-list');
-          listContainer.innerHTML = data.invites.length ? data.invites.map(inv => `
-            <div class="bg-gray-900 border border-gray-800 rounded-xl p-2.5 flex items-center justify-between text-xs">
-              <div>
-                <p class="font-bold text-gray-200">@${inv.username || inv.first_name}</p>
-                <span class="text-[10px] text-gray-400">Joined: ${new Date(inv.created_at).toLocaleDateString()}</span>
-              </div>
-              <div class="text-right">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${inv.referral_status === 'ACTIVE' ? 'bg-emerald-900/60 text-emerald-400' : 'bg-yellow-900/60 text-yellow-400'}">${inv.referral_status}</span>
-              </div>
-            </div>
-          `).join('') : '<div class="text-center text-xs text-gray-500 py-4">No friends invited yet.</div>';
+                    let walletTxs = data.history.filter(tx => tx.type.includes('COINS') || tx.type.includes('ATF') || tx.type === 'WITHDRAW');
+                    walletHistoryList.innerHTML = walletTxs.length > 0 ? walletTxs.map(tx => `
+                        <div class="flex justify-between items-center border-b border-gray-800 pb-1">
+                            <div><span class="font-bold text-yellow-400">${tx.type}</span><p class="text-[10px] text-gray-400">${tx.description || '-'}</p></div>
+                            <span class="text-right text-[10px] text-gray-400">${new Date(tx.created_at).toLocaleTimeString()}</span>
+                        </div>
+                    `).join('') : `<p class="text-gray-500 italic">No wallet transactions recorded yet.</p>`;
+                }
+            } catch (e) { console.error("Failed to load history"); }
         }
-      });
-    }
 
-    function copyRefLink() {
-      const input = document.getElementById('ref-link-input');
-      input.select();
-      navigator.clipboard.writeText(input.value);
-      alert("Referral link copied!");
-    }
+        function updateUI() {
+            document.getElementById('user-name').innerText = userData.first_name;
+            document.getElementById('user-username').innerText = userData.username;
+            document.getElementById('user-id').innerText = `ID: ${userData.id}`;
+            if(userData.photo_url) document.getElementById('user-avatar').src = userData.photo_url;
+            
+            document.getElementById('user-coins').innerText = gameState.coins;
+            document.getElementById('user-atf').innerText = gameState.atf.toFixed(4);
+            document.getElementById('wallet-coins').innerText = gameState.coins;
+            document.getElementById('wallet-atf').innerText = gameState.atf.toFixed(4);
+            
+            document.getElementById('res-water').innerText = gameState.water;
+            document.getElementById('res-fert').innerText = gameState.fert;
+            document.getElementById('res-points').innerText = gameState.points;
+            document.getElementById('res-fruits').innerText = gameState.fruits;
+            document.getElementById('ref-link').value = `https://t.me/ATFarmBot?start=ref_${userData.id}`;
 
-    function shareTelegramRef() {
-      const link = document.getElementById('ref-link-input').value;
-      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("🌱 Join ATFarm, plant fruits, and earn real Web3 rewards with me!")}`;
-      window.open(shareUrl, '_blank');
-    }
+            renderPlotsGrid();
+        }
 
-    function withdrawAtf() {
-      const amt = document.getElementById('withdraw-amount').value;
-      fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'withdraw', user_id: currentUser.id, amount: amt }) })
-      .then(res => res.json()).then(res => { alert(res.message); if(res.success) location.reload(); });
-    }
-  </script>
+        function renderPlotsGrid() {
+            let grid = document.getElementById('plots-grid');
+            let html = '';
+            for (let i = 1; i <= 4; i++) {
+                let plot = gameState.plots.find(p => p.plot_index === i) || { status: i === 1 ? 'EMPTY' : 'LOCKED' };
+                if (plot.status === 'LOCKED') {
+                    let cost = i === 2 ? 250 : (i === 3 ? 1000 : 5000);
+                    html += `<div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px] opacity-75"><span class="text-xs font-bold text-gray-500">Plot #${i} (Locked)</span><div class="text-2xl my-1">🔒</div><button onclick="unlockPlot(${i})" class="w-full bg-gray-700 text-white font-bold py-1.5 rounded-xl text-[10px]">Unlock (${cost} Coins)</button></div>`;
+                } else if (plot.status === 'EMPTY') {
+                    html += `<div class="bg-[#131b2e] border border-gray-700 rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px]"><span class="text-xs font-bold text-[#00f076]">Plot #${i} (Empty)</span><div class="text-2xl my-1">🌱</div><button onclick="openCropModal(${i})" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-xl text-[10px]">Plant Seed</button></div>`;
+                } else if (plot.status === 'PLANTED') {
+                    let now = Date.now(), due = new Date(plot.harvest_due_at).getTime(), icon = plot.crop_type === 'STRAWBERRY' ? '🍓' : (plot.crop_type === 'ORANGE' ? '🍊' : '🍎');
+                    if (now >= due) {
+                        html += `<div class="bg-[#131b2e] border border-[#00f076] rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px]"><span class="text-xs font-bold text-yellow-400">Plot #${i} (${plot.crop_type})</span><div class="text-2xl my-1 animate-bounce">${icon}</div><button onclick="harvestPlot(${i})" class="w-full bg-[#00f076] text-black font-bold py-1.5 rounded-xl text-[10px]">Harvest Ready!</button></div>`;
+                    } else {
+                        let diff = Math.max(0, Math.floor((due - now) / 1000));
+                        let h = Math.floor(diff / 3600).toString().padStart(2, '0');
+                        let m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+                        let s = (diff % 60).toString().padStart(2, '0');
+                        html += `<div class="bg-[#131b2e] border border-gray-700 rounded-2xl p-4 text-center flex flex-col justify-between min-h-[140px]"><span class="text-xs font-bold text-gray-400">Plot #${i} (${plot.crop_type})</span><div class="text-2xl my-1">${icon}</div><div class="space-y-1"><span class="text-[10px] text-[#00f076] font-mono font-bold block">${h}:${m}:${s}</span><div class="flex justify-center gap-1"><button onclick="useBoost('WATER', ${i})" class="bg-blue-600 text-[8px] px-2 py-0.5 rounded text-white">💧 -30m</button><button onclick="useBoost('FERTILIZER', ${i})" class="bg-purple-600 text-[8px] px-2 py-0.5 rounded text-white">🧪 -60m</button></div></div></div>`;
+                    }
+                }
+            }
+            grid.innerHTML = html;
+        }
+
+        window.onload = () => { initUserSession(); setInterval(updateUI, 1000); };
+
+        function showModal(msg) { document.getElementById('modal-message').innerText = msg; document.getElementById('custom-modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
+        function openCropModal(pIdx) { selectedPlotIndex = pIdx; document.getElementById('active-plot-num').innerText = pIdx; document.getElementById('crop-modal').classList.remove('hidden'); }
+        function closeCropModal() { document.getElementById('crop-modal').classList.add('hidden'); }
+
+        // NAVIGASI SUB-MENU TASK ATAS
+        function switchTaskSub(sub) {
+            ['exec', 'special', 'games', 'leaderboard'].forEach(s => {
+                let content = document.getElementById(`subcontent-${s}`);
+                let btn = document.getElementById(`subnav-${s}`);
+                if(content) content.classList.add('hidden');
+                if(btn) {
+                    btn.className = "flex flex-col items-center px-3 py-1.5 rounded-lg text-gray-400 text-xs";
+                }
+            });
+            let targetContent = document.getElementById(`subcontent-${sub}`);
+            let targetBtn = document.getElementById(`subnav-${sub}`);
+            if(targetContent) targetContent.classList.remove('hidden');
+            if(targetBtn) {
+                targetBtn.className = "flex flex-col items-center px-3 py-1.5 rounded-lg text-[#00f076] font-bold text-xs bg-black/30";
+            }
+            if(sub === 'leaderboard') {
+                fetchLeaderboard();
+            }
+        }
+
+        // SISTEM VERIFIKASI BERBASIS WAKTU (TRUST & COOLDOWN DELAY - 25 DETIK)
+        async function verifyAndCompleteTask(taskKey, durationSeconds) {
+            let btn = document.getElementById(`btn-task-${taskKey}`);
+            if(!btn) return;
+            
+            btn.disabled = true;
+            let countdown = durationSeconds;
+            let originalText = btn.innerText;
+
+            let timer = setInterval(async () => {
+                countdown--;
+                btn.innerText = `Verifying (${countdown}s)...`;
+                if(countdown <= 0) {
+                    clearInterval(timer);
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    await completeTask(taskKey);
+                }
+            }, 1000);
+        }
+
+        async function unlockPlot(pIdx) {
+            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unlock_plot', user_id: userData.id, plot_index: pIdx }) });
+            let data = await res.json(); showModal(data.message || data.error); if(data.success) initUserSession();
+        }
+        async function confirmPlant(crop) {
+            closeCropModal();
+            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'plant', user_id: userData.id, plot_index: selectedPlotIndex, crop_type: crop }) });
+            let data = await res.json(); showModal(data.message || data.error); if(data.success) initUserSession();
+        }
+        async function harvestPlot(pIdx) {
+            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'harvest', user_id: userData.id, plot_index: pIdx }) });
+            let data = await res.json(); showModal(data.message || data.error); if(data.success) initUserSession();
+        }
+        async function useBoost(type, pIdx) {
+            let res = await fetch('/api/farm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'boost', user_id: userData.id, boost_type: type, plot_index: pIdx }) });
+            let data = await res.json(); showModal(data.message || data.error); if(data.success) initUserSession();
+        }
+        async function claimDailyBonus() {
+            let res = await fetch('/api/task/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userData.id, task_key: 'claim_bonus' }) });
+            let data = await res.json(); showModal(data.message); if(data.success) { initUserSession(); fetchHistory(); }
+        }
+        async function requestAtfWithdrawal() {
+            let amountVal = document.getElementById('withdraw-amount-input').value;
+            if (!amountVal || Number(amountVal) <= 0) { showModal("Please enter valid amount."); return; }
+            if (!gameState.connectedWallet) { showModal("Please connect your TON wallet first!"); return; }
+            let res = await fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'withdraw', user_id: userData.id, amount: Number(amountVal), wallet_address: gameState.connectedWallet }) });
+            let data = await res.json(); showModal(data.message); if(data.success) { document.getElementById('withdraw-amount-input').value = ''; initUserSession(); fetchHistory(); }
+        }
+        async function handleDeposit(pkg, tier) {
+            let res = await fetch('/api/payment/create-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userData.id, package_type: pkg, tier_id: tier }) });
+            let data = await res.json();
+            if(data.success && data.invoice_link) {
+                tg.openInvoice(data.invoice_link, (status) => { if(status === 'paid') { showModal("Payment success!"); initUserSession(); fetchHistory(); } });
+            } else { showModal(data.message || "Invoice error."); }
+        }
+        function switchTab(tab) {
+            ['farm', 'market', 'task', 'friends', 'wallet'].forEach(t => {
+                document.getElementById(`section-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "flex flex-col items-center text-gray-400";
+            });
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-${tab}`).className = "flex flex-col items-center text-[#00f076] font-bold";
+        }
+        async function buyItem(type) {
+            let res = await fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'buy_item', user_id: userData.id, item_type: type }) });
+            let data = await res.json(); showModal(data.message); if(data.success) { initUserSession(); fetchHistory(); }
+        }
+        async function transactMarket(actionType) {
+            let res = await fetch('/api/market', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'transact', user_id: userData.id, action_type: actionType }) });
+            let data = await res.json(); showModal(data.message); if(data.success) { initUserSession(); fetchHistory(); fetchLeaderboard(); }
+        }
+        async function completeTask(key) {
+            let res = await fetch('/api/task/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userData.id, task_key: key }) });
+            let data = await res.json(); showModal(data.message); if(data.success) { initUserSession(); }
+        }
+        function copyRefLink() {
+            navigator.clipboard.writeText(document.getElementById("ref-link").value);
+            showModal("Invite link copied!");
+        }
+    </script>
 </body>
 </html>
