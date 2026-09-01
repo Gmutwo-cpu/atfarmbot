@@ -12,14 +12,58 @@ export default async function handler(req, res) {
 
   const { action, user_id, item_type, action_type, amount, wallet_address } = req.body;
 
-  if (!user_id) {
+  if (!user_id && action !== 'leaderboard') {
     return res.status(400).json({ success: false, message: 'Missing user_id!' });
   }
 
-  const userIdStr = String(user_id);
+  const userIdStr = user_id ? String(user_id) : null;
   const now = new Date();
 
   try {
+    // 0. ACTION: FETCH LEADERBOARD & USER RANK
+    if (action === 'leaderboard') {
+      // Ambil 50 user teratas berdasarkan points terbanyak
+      let { data: topUsers, error: topErr } = await supabase
+        .from('users')
+        .select('id, username, first_name, points, atf_balance')
+        .order('points', { ascending: false })
+        .order('updated_at', { ascending: true })
+        .limit(50);
+
+      if (topErr) throw topErr;
+
+      let userRankInfo = { rank: 'Unranked', points: 0 };
+      
+      if (userIdStr) {
+        // Ambil data user yang sedang aktif
+        let { data: currentUser } = await supabase
+          .from('users')
+          .select('points')
+          .eq('id', userIdStr)
+          .maybeSingle();
+
+        if (currentUser) {
+          userRankInfo.points = Number(currentUser.points || 0);
+
+          // Hitung posisi rank aktual secara global berdasarkan poin yang lebih tinggi
+          let { count, error: countErr } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .gt('points', currentUser.points || 0);
+
+          if (!countErr) {
+            userRankInfo.rank = `#${(count || 0) + 1}`;
+          }
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        leaderboard: topUsers || [],
+        user_rank: userRankInfo
+      });
+    }
+
     // 1. ACTION: BUY SUPPLIES (SEED, WATER, FERTILIZER)
     if (action === 'buy_item' || action_type === 'BUY_ITEM') {
       const prices = { SEED: 10, WATER: 20, FERTILIZER: 50 };
@@ -156,10 +200,12 @@ export default async function handler(req, res) {
 
         const newCoins = Number(user.coins) - requiredCoins;
         const newAtf = Number(user.atf_balance || 0) + 1.0000;
+        const newPoints = Number(user.points || 0) + 1; // Otomatis tambah +1 poin pertukaran
 
         await supabase.from('users').update({ 
           coins: newCoins, 
-          atf_balance: newAtf, 
+          atf_balance: newAtf,
+          points: newPoints,
           updated_at: now 
         }).eq('id', userIdStr);
 
@@ -168,13 +214,13 @@ export default async function handler(req, res) {
           type: 'EXCHANGE_ATF',
           amount: 1.0000,
           currency_type: 'ATF',
-          description: 'Exchanged 500 Coins for 1.0000 ATF Achievement',
+          description: 'Exchanged 500 Coins for 1.0000 ATF & +1 Point',
           created_at: now
         }]);
 
         return res.status(200).json({ 
           success: true, 
-          message: 'Successfully exchanged 500 Coins for 1.0000 ATF Achievement! (Off-chain milestone recorded).' 
+          message: 'Successfully exchanged 500 Coins for 1.0000 ATF & +1 Point!' 
         });
       }
     }
